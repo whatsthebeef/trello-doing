@@ -25,6 +25,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Broadcast Receiver that will process AppWidget updates -->
+        <receiver android:name=".DoingWidget" android:label="@string/widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_doing" />
+        </receiver>
+
+        <!-- Service to perform web API queries -->
+        <service android:name=".DoingWidget$UpdateService" >
+            <intent-filter>
+                <action android:name="com.zode64.trellodoing.intent.action.CLOCK_OFF" />
+            </intent-filter>
+        </service>
+
     </application>
 
 </manifest>

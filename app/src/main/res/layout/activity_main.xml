@@ -1,7 +1,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
@@ -9,8 +9,111 @@
     tools:context=".MainActivity">
 
     <TextView
-        android:text="@string/hello_world"
+        android:id="@+id/title"
+        android:text="@string/header_main"
+        android:layout_marginBottom="20px"
+        android:textSize="10pt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/click_app_key_link"
+        android:layout_below="@+id/title"
+        android:text="@string/click_app_key_link"
+        android:layout_marginBottom="20px"
+        android:textSize="7pt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/app_key_link"
+        android:layout_below="@+id/click_app_key_link"
+        android:text="@string/app_key_link_here"
+        android:autoLink="web"
+        android:layout_marginBottom="20px"
+        android:textSize="7pt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <RelativeLayout
+        android:id="@+id/app_key_layout"
+        android:layout_below="@id/app_key_link"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:id="@+id/app_key"
+            android:hint="@string/app_key_hint"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:singleLine="true"
+            android:layout_alignParentLeft="true"
+            android:layout_marginBottom="20px"
+            android:layout_toLeftOf="@+id/app_key_submit" />
+
+        <Button
+            android:id="@+id/app_key_submit"
+            android:layout_width="wrap_content"
+            android:text="@string/submit_button"
+            android:layout_alignParentRight="true"
+            android:layout_alignBottom="@+id/app_key"
+            android:layout_height="wrap_content" />
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/click_link"
+        android:layout_below="@+id/app_key_layout"
+        android:text="@string/click_token_link"
+        android:layout_marginBottom="20px"
+        android:textSize="7pt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/token_link"
+        android:layout_below="@+id/click_link"
+        android:text="@string/token_link_here"
+        android:autoLink="web"
+        android:layout_marginBottom="20px"
+        android:textSize="7pt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <RelativeLayout
+        android:id="@+id/token_layout"
+        android:layout_width="fill_parent"
+        android:layout_below="@+id/token_link"
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:id="@+id/token"
+            android:hint="@string/token_hint"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:layout_alignParentLeft="true"
+            android:singleLine="true"
+            android:layout_toLeftOf="@+id/token_submit"
+            android:layout_marginBottom="20px" />
+
+        <Button
+            android:id="@id/token_submit"
+            android:layout_width="wrap_content"
+            android:layout_alignBottom="@id/token"
+            android:text="@string/submit_button"
+            android:layout_alignParentRight="true"
+            android:layout_height="wrap_content" />
+
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/boards"
+        android:layout_below="@+id/token_layout"
+        android:text="@string/boards_here"
+        android:layout_marginBottom="20px"
+        android:textSize="7pt"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" />
 
 </RelativeLayout>

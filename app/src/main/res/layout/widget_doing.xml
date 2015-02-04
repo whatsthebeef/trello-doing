@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="@drawable/layout_board"
+    android:layout_width="match_parent"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp"
+    android:paddingBottom="10dp"
+    android:gravity="center"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/widget_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:textColor="@color/white"
+        android:text="@string/widget_name"
+        android:textStyle="bold"
+        android:textSize="20dip"></TextView>
+
+    <RelativeLayout
+
+        android:id="@+id/list"
+        android:layout_below="@id/widget_name"
+        android:orientation="vertical"
+        android:background="@drawable/layout_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/card_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="20dp"
+            android:linksClickable="true"
+            android:autoLink="web"
+            android:background="@android:drawable/dialog_holo_light_frame"
+            android:textColor="@color/black"
+            android:text="@string/no_card"
+            android:textSize="15dip"></TextView>
+
+        <TextView
+            android:id="@+id/clock_out"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="20dp"
+            android:gravity="center"
+            android:layout_below="@id/card_name"
+            android:background="@android:drawable/dialog_holo_light_frame"
+            android:textColor="@android:color/holo_green_light"
+            android:text="@string/clock_out"
+            android:textStyle="bold"
+            android:textSize="15dip"></TextView>
+
+    </RelativeLayout>
+
+
+</RelativeLayout>
