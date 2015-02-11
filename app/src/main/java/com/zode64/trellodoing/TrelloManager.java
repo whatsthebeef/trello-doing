@@ -45,31 +45,67 @@ public class TrelloManager {
     }
 
     public List<Board> boards() {
-        return get("/members/me/boards?filter=open&lists=open&fields=name,shortUrl", new TypeToken<List<Board>>() {}.getType());
+        try {
+            return get("/members/me/boards?filter=open&lists=open&fields=name,shortUrl", new TypeToken<List<Board>>() {}.getType());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public List<Action> actions() {
-        return get("/members/me/actions?filter=updateCard:idList&memberCreator=false&fields=data",
-                        new TypeToken<List<Action>>() {}.getType());
+        try {
+            return get("/members/me/actions?filter=updateCard:idList&memberCreator=false&fields=data",
+                            new TypeToken<List<Action>>() {}.getType());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public Member member() {
-        return get("/members/me?actions=updateCard:idList&action_fields=data&board_lists=all&fields=initials&boards=open&board_fields=lists,name",
-                Member.class);
+        try {
+            return get("/members/me?actions=updateCard:idList&action_fields=data&board_lists=all&fields=initials&boards=open&board_fields=lists,name",
+                    Member.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public List<Card> doingListCards(String listId) {
-        return get("/lists/" + listId + "/cards", new TypeToken<List<Card>>() {}.getType());
+        try {
+            return get("/lists/" + listId + "/cards", new TypeToken<List<Card>>() {}.getType());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
-    public void clockOff(String cardId, String clockedOffListId) {
-        post("/cards/" + cardId + "/idList", clockedOffListId);
+    public boolean clockOff() {
+        String cardId = mPreferences.getString("cardId", null);
+        String clockedOffListId = mPreferences.getString("clockedOffListId", null);
+        if(cardId == null || clockedOffListId == null) {
+            throw new RuntimeException("Unexpected preference state : no cardId or clockedOffListId");
+        }
+        try {
+            put("/cards/" + cardId + "/idList", clockedOffListId);
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private String constructTrelloPutURL(String baseURL) {
+        return TRELLO_URL + baseURL;
     }
 
     private String constructTrelloURL(String baseURL) {
         if (baseURL.contains("?")) {
             return TRELLO_URL + baseURL + "&key=" + mPreferences.getString("app_key", "")
                     + "&token=" + mPreferences.getString("token", "");
+
         } else {
             return TRELLO_URL + baseURL + "?key=" + mPreferences.getString("app_key", "")
                     + "&token=" + mPreferences.getString("token", "");
@@ -81,7 +117,7 @@ public class TrelloManager {
      * @param path
      * @return
      */
-    private <T> T get(String path, Class<T> type) {
+    private <T> T get(String path, Class<T> type) throws IOException {
         Log.v(TAG, path + " - " + type.toString());
         URL to = null;
         HttpURLConnection urlConnection = null;
@@ -95,7 +131,9 @@ public class TrelloManager {
             return member;
         }
         catch (IOException e) {
-            throw new RuntimeException("Problem with URL : " + to + " or server");
+            Log.e(TAG, "IOException from GET request");
+            e.printStackTrace();
+            throw new IOException("Problem with URL : " + to + " or server");
         }
         finally {
             if (urlConnection != null) {
@@ -109,7 +147,7 @@ public class TrelloManager {
      * @param path
      * @return
      */
-    private List get(String path, Type type) {
+    private List get(String path, Type type) throws IOException {
         Log.v(TAG, path + " - " + type.toString());
         URL to = null;
         HttpURLConnection urlConnection = null;
@@ -123,7 +161,9 @@ public class TrelloManager {
             return boards;
         }
         catch (IOException e) {
-            throw new RuntimeException("Problem with URL : " + to + " or server");
+            Log.e(TAG, "IOException from GET request");
+            e.printStackTrace();
+            throw new IOException("Problem with URL : " + to + " or server");
         }
         finally {
             if (urlConnection != null) {
@@ -137,12 +177,12 @@ public class TrelloManager {
      * @param path
      * @return
      */
-    private void post(String path, String value) {
+    private void put(String path, String value) throws IOException {
         Log.v(TAG, path + " - " + value);
         URL to = null;
         HttpURLConnection urlConnection = null;
         try {
-            to = new URL(constructTrelloURL(path));
+            to = new URL(constructTrelloPutURL(path));
             urlConnection = (HttpURLConnection) to.openConnection();
             urlConnection.setDoOutput(true);
             urlConnection.setRequestMethod("PUT");
@@ -158,7 +198,7 @@ public class TrelloManager {
         catch (IOException e) {
             Log.e(TAG, "IOException from PUT request");
             e.printStackTrace();
-            throw new RuntimeException("Problem with URL : " + to + " or server");
+            throw new IOException("Problem with URL : " + to + " or server");
         }
         finally {
             if (urlConnection != null) {

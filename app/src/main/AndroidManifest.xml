@@ -3,6 +3,7 @@
     package="com.zode64.trellodoing" >
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -42,6 +43,11 @@
             </intent-filter>
         </service>
 
+        <receiver android:name=".DoingWidget$NetworkChangeReceiver">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
