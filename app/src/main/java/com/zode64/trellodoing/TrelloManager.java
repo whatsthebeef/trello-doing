@@ -147,10 +147,17 @@ public class TrelloManager {
             urlConnection.setDoOutput(true);
             urlConnection.setRequestMethod("PUT");
             OutputStreamWriter out = new OutputStreamWriter(urlConnection.getOutputStream());
-            out.write("value=" + value);
+            out.write("value="+value);
+            out.write("&token="+mPreferences.getString("token", ""));
+            out.write("&key="+mPreferences.getString("app_key", ""));
             out.close();
+            InputStream response = urlConnection.getInputStream();
+            Log.v(TAG, "Output from PUT request : " + convertStreamToString(response));
+            response.close();
         }
         catch (IOException e) {
+            Log.e(TAG, "IOException from PUT request");
+            e.printStackTrace();
             throw new RuntimeException("Problem with URL : " + to + " or server");
         }
         finally {
@@ -158,5 +165,10 @@ public class TrelloManager {
                 urlConnection.disconnect();
             }
         }
+    }
+
+    private String convertStreamToString(InputStream is) {
+        java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
+        return s.hasNext() ? s.next() : "";
     }
 }

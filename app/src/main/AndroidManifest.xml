@@ -38,6 +38,7 @@
         <service android:name=".DoingWidget$UpdateService" >
             <intent-filter>
                 <action android:name="com.zode64.trellodoing.intent.action.CLOCK_OFF" />
+                <action android:name="com.zode64.trellodoing.intent.action.REFRESH" />
             </intent-filter>
         </service>
 

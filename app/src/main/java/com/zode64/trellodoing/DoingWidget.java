@@ -29,17 +29,28 @@ public class DoingWidget extends AppWidgetProvider {
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         Log.d(TAG, "onUpdate()");
+
+        Intent refresh = new Intent(UpdateService.ACTION_REFRESH);
+        PendingIntent pendingRefresh = PendingIntent.getService(context, 0, refresh, 0);
+        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_doing);
+        views.setOnClickPendingIntent(R.id.refresh, pendingRefresh);
+        ComponentName thisWidget = new ComponentName(context, DoingWidget.class);
+        AppWidgetManager manager = AppWidgetManager.getInstance(context);
+        manager.updateAppWidget(thisWidget, views);
+
         context.startService(new Intent(context, UpdateService.class));
     }
 
     @Override
     public void onEnabled(Context context) {
+        Log.d(TAG, "onEnabled()");
         context.startService(new Intent(context, UpdateService.class));
     }
 
     public static class UpdateService extends IntentService {
 
         public final static String ACTION_CLOCK_OFF = "com.zode64.trellodoing.intent.action.CLOCK_OFF";
+        public final static String ACTION_REFRESH = "com.zode64.trellodoing.intent.action.REFRESH";
 
         public UpdateService() {
             super("Trello service");
@@ -48,12 +59,19 @@ public class DoingWidget extends AppWidgetProvider {
         @Override
         protected void onHandleIntent(Intent intent) {
 
-            if(ACTION_CLOCK_OFF.equals(intent.getAction())) {
-                TrelloManager trelloManager = new TrelloManager(PreferenceManager.getDefaultSharedPreferences(this));
-                trelloManager.clockOff(intent.getStringExtra("cardId"), intent.getStringExtra("clockedOffListId"));
-            }
+            RemoteViews views = new RemoteViews(this.getPackageName(), R.layout.widget_doing);
 
             Log.d(TAG, "onHandleIntent()");
+            if(ACTION_CLOCK_OFF.equals(intent.getAction())) {
+                views.setInt(R.id.clock_out, "setBackgroundResource", android.R.drawable.editbox_background );
+                TrelloManager trelloManager = new TrelloManager(PreferenceManager.getDefaultSharedPreferences(this));
+                trelloManager.clockOff(intent.getStringExtra("cardId"), intent.getStringExtra("clockedOffListId"));
+                // Push update for this widget to the home screen
+                ComponentName thisWidget = new ComponentName(this, DoingWidget.class);
+                AppWidgetManager manager = AppWidgetManager.getInstance(this);
+                manager.updateAppWidget(thisWidget, views);
+                return;
+            }
 
             // Build the widget update for today
             RemoteViews updateViews = buildUpdate(this);
@@ -85,18 +103,18 @@ public class DoingWidget extends AppWidgetProvider {
                         Date today = Calendar.getInstance().getTime();
                         String reportDate = df.format(today);
 
-                        views.setTextViewText(R.id.card_name, action.getCard().getName()
-                                    + "\n\n" + context.getString(R.string.last_checked) + " " + reportDate);
+                        views.setTextViewText(R.id.card_name, action.getCard().getName());
+                        views.setTextViewText(R.id.last_checked, context.getString(R.string.last_checked) + " " + reportDate);
 
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(action.getBoard().getShortUrl()));
-                        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
-                        views.setOnClickPendingIntent(R.id.card_name, pendingIntent);
+                        Intent getBoard = new Intent(Intent.ACTION_VIEW, Uri.parse(action.getBoard().getShortUrl()));
+                        PendingIntent pendingGetBoard = PendingIntent.getActivity(context, 0, getBoard, 0);
+                        views.setOnClickPendingIntent(R.id.card_name, pendingGetBoard);
 
-                        intent = new Intent(ACTION_CLOCK_OFF);
-                        intent.putExtra("clockedOffListId", member.getClockedOffList(action.getBoard().getId()).getId());
-                        intent.putExtra("cardId", action.getCard().getId());
-                        pendingIntent = PendingIntent.getService(context, 0, intent, 0);
-                        views.setOnClickPendingIntent(R.id.clock_out, pendingIntent);
+                        Intent clockOff = new Intent(ACTION_CLOCK_OFF);
+                        clockOff.putExtra("clockedOffListId", member.getClockedOffList(action.getBoard().getId()).getId());
+                        clockOff.putExtra("cardId", action.getCard().getId());
+                        PendingIntent pendingClockOff = PendingIntent.getService(context, 0, clockOff, 0);
+                        views.setOnClickPendingIntent(R.id.clock_out, pendingClockOff);
 
                         break;
                     }

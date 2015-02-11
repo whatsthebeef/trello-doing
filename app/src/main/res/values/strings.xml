@@ -22,4 +22,5 @@
     <string name="no_card">There is no card</string>
     <string name="clock_out">Clock Out</string>
     <string name="last_checked">Last checked</string>
+    <string name="refresh">Refresh</string>
 </resources>

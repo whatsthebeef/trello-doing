@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/base"
     android:orientation="vertical"
     android:background="@drawable/layout_board"
     android:layout_width="match_parent"
     android:paddingLeft="10dp"
     android:paddingRight="10dp"
-    android:paddingBottom="10dp"
     android:gravity="center"
     android:layout_height="match_parent">
 
@@ -20,10 +20,35 @@
         android:textStyle="bold"
         android:textSize="20dip"></TextView>
 
-    <RelativeLayout
 
+    <TextView
+        android:id="@+id/last_checked"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:paddingRight="5dp"
+        android:gravity="center_vertical"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:text="@string/last_checked"
+        android:textColor="@color/white"
+        android:textSize="10dip"></TextView>
+
+    <TextView
+        android:id="@+id/refresh"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:paddingLeft="5dp"
+        android:gravity="center_vertical"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:text="@string/refresh"
+        android:textColor="@color/white"
+        android:textSize="10dip"></TextView>
+
+    <RelativeLayout
         android:id="@+id/list"
         android:layout_below="@id/widget_name"
+        android:layout_above="@id/last_checked"
         android:orientation="vertical"
         android:background="@drawable/layout_list"
         android:layout_width="match_parent"
@@ -55,6 +80,5 @@
             android:textSize="15dip"></TextView>
 
     </RelativeLayout>
-
 
 </RelativeLayout>

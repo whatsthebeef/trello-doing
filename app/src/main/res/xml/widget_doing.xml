@@ -4,7 +4,7 @@
     android:minWidth="250dip"
     android:resizeMode="vertical|horizontal"
     android:minHeight="110dip"
-    android:widgetCategory="home_screen|keyguard"
+    android:widgetCategory="home_screen"
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/widget_doing" />
 
