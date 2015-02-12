@@ -32,19 +32,30 @@ public class DoingWidget extends AppWidgetProvider {
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
+        // super.onUpdate(context, appWidgetManager, appWidgetIds);
         Log.d(TAG, "onUpdate()");
         context.startService(new Intent(context, UpdateService.class));
     }
 
     @Override
     public void onEnabled(Context context) {
+        super.onEnabled(context);
         Log.d(TAG, "onEnabled()");
+        // start alarm
         context.startService(new Intent(context, UpdateService.class));
+    }
+
+    @Override
+    public void onDisabled(Context context) {
+        super.onDisabled(context);
+        Log.d(TAG, "onDisabled()");
+        WidgetAlarm widgetAlarm = new WidgetAlarm(context.getApplicationContext());
+        widgetAlarm.stopAlarm();
     }
 
     public static class NetworkChangeReceiver extends BroadcastReceiver {
 
-        public NetworkChangeReceiver(){
+        public NetworkChangeReceiver() {
             super();
         }
 
@@ -56,7 +67,7 @@ public class DoingWidget extends AppWidgetProvider {
 
             NetworkInfo netInfo = connMgr.getActiveNetworkInfo();
             //should check null because in air plan mode it will be null
-            if(netInfo != null && netInfo.isConnectedOrConnecting()) {
+            if (netInfo != null && netInfo.isConnectedOrConnecting()) {
                 Log.d(TAG, "Connected to network");
                 context.startService(new Intent(context, UpdateService.class));
             }
@@ -67,6 +78,8 @@ public class DoingWidget extends AppWidgetProvider {
 
         public final static String ACTION_CLOCK_OFF = "com.zode64.trellodoing.intent.action.CLOCK_OFF";
         public final static String ACTION_REFRESH = "com.zode64.trellodoing.intent.action.REFRESH";
+        public static final String ACTION_AUTO_UPDATE = "com.zode64.trellodoing.intent.action.AUTO_UPDATE";
+
 
         public UpdateService() {
             super("Trello service");
@@ -75,6 +88,11 @@ public class DoingWidget extends AppWidgetProvider {
         @Override
         protected void onHandleIntent(Intent intent) {
             Log.d(TAG, "onHandleIntent()");
+            Log.d(TAG, "Intent action : " + intent.getAction());
+            Log.d(TAG, "cardId : " + intent.getStringExtra("cardId"));
+
+            WidgetAlarm appWidgetAlarm = new WidgetAlarm(this.getApplicationContext());
+            appWidgetAlarm.setAlarm();
 
             RemoteViews views = new RemoteViews(this.getPackageName(), R.layout.widget_doing);
             ComponentName thisWidget = new ComponentName(this, DoingWidget.class);
@@ -86,19 +104,19 @@ public class DoingWidget extends AppWidgetProvider {
             views.setOnClickPendingIntent(R.id.refresh, pendingRefresh);
 
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            if(ACTION_CLOCK_OFF.equals(intent.getAction()) || preferences.getBoolean("commitPending", false)) {
-                if(ACTION_CLOCK_OFF.equals(intent.getAction())) {
+            if (ACTION_CLOCK_OFF.equals(intent.getAction()) || preferences.getBoolean("commitPending", false)) {
+                if (ACTION_CLOCK_OFF.equals(intent.getAction())) {
                     String cardId = intent.getStringExtra("cardId");
                     String clockedOffListId = intent.getStringExtra("clockedOffListId");
+                    Log.d(TAG, "cardId : " + cardId);
                     setButtonDown(R.id.clock_out, views);
                     handleClockOffCall(preferences, cardId, clockedOffListId);
                 }
                 TrelloManager trelloManager = new TrelloManager(preferences);
-                if(trelloManager.clockOff()) {
+                if (trelloManager.clockOff()) {
                     handleClockOffSuccess(preferences);
                     setButtonUp(R.id.clock_out, views);
-                }
-                else {
+                } else {
                     manager.updateAppWidget(thisWidget, views);
                     return;
                 }
@@ -111,15 +129,17 @@ public class DoingWidget extends AppWidgetProvider {
             // Push update for this widget to the home screen
             manager.updateAppWidget(thisWidget, views);
             Log.d(TAG, "Widget updated");
+
         }
 
 
         public RemoteViews buildUpdate(Context context, RemoteViews views) {
 
-            TrelloManager trelloManager = new TrelloManager(PreferenceManager.getDefaultSharedPreferences(context));
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+            TrelloManager trelloManager = new TrelloManager(preferences);
 
             Member member = trelloManager.member();
-            if(member == null) {
+            if (member == null) {
                 return views;
             }
 
@@ -134,15 +154,22 @@ public class DoingWidget extends AppWidgetProvider {
                         shifts.remove(action.getCard().getId());
                     } else {
                         isDoing = true;
+                        saveBoard(preferences, action.getBoard().getShortUrl());
+
+                        DoingNotification.manage(isDoing, action.getBoard().getShortUrl(), this.getApplicationContext());
+
                         views.setTextViewText(R.id.card_name, action.getCard().getName());
 
                         Intent getBoard = new Intent(Intent.ACTION_VIEW, Uri.parse(action.getBoard().getShortUrl()));
                         PendingIntent pendingGetBoard = PendingIntent.getActivity(context, 0, getBoard, 0);
                         views.setOnClickPendingIntent(R.id.card_name, pendingGetBoard);
 
+
+                        Log.d(TAG, "cardId : " + action.getCard().getId());
                         Intent clockOff = new Intent(ACTION_CLOCK_OFF);
                         clockOff.putExtra("clockedOffListId", member.getClockedOffList(action.getBoard().getId()).getId());
                         clockOff.putExtra("cardId", action.getCard().getId());
+                        clockOff.setDataAndType(Uri.parse(clockOff.toUri(Intent.URI_INTENT_SCHEME)), "text/plain");
                         PendingIntent pendingClockOff = PendingIntent.getService(context, 0, clockOff, 0);
                         views.setOnClickPendingIntent(R.id.clock_out, pendingClockOff);
 
@@ -154,10 +181,11 @@ public class DoingWidget extends AppWidgetProvider {
                 }
             }
 
-            if(!isDoing) {
+            if (!isDoing) {
                 setButtonDown(R.id.card_name, views);
                 setButtonDown(R.id.clock_out, views);
                 views.setTextViewText(R.id.card_name, getString(R.string.no_card));
+                DoingNotification.manage(isDoing, preferences.getString("lastDoingBoard", null), this.getApplicationContext());
             }
 
             DateFormat df = new SimpleDateFormat("HH:mm dd/MM");
@@ -166,6 +194,12 @@ public class DoingWidget extends AppWidgetProvider {
             views.setTextViewText(R.id.last_checked, context.getString(R.string.last_checked) + " " + reportDate);
 
             return views;
+        }
+
+        private void saveBoard(SharedPreferences preferences, String url){
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putString("lastDoingBoard", url);
+            editor.commit();
         }
 
         private void handleClockOffCall(SharedPreferences preferences, String cardId, String clockedOffListId) {
