@@ -8,22 +8,23 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.RemoteViews;
 
 import com.zode64.trellodoing.models.Action;
+import com.zode64.trellodoing.models.Card;
 import com.zode64.trellodoing.models.Member;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DoingWidget extends AppWidgetProvider {
@@ -50,7 +51,8 @@ public class DoingWidget extends AppWidgetProvider {
         super.onDisabled(context);
         Log.d(TAG, "onDisabled()");
         WidgetAlarm widgetAlarm = new WidgetAlarm(context.getApplicationContext());
-        widgetAlarm.stopAlarm();
+        widgetAlarm.stopStandardAlarm();
+        widgetAlarm.stopDeadlineAlarm();
     }
 
     public static class NetworkChangeReceiver extends BroadcastReceiver {
@@ -68,8 +70,12 @@ public class DoingWidget extends AppWidgetProvider {
             NetworkInfo netInfo = connMgr.getActiveNetworkInfo();
             //should check null because in air plan mode it will be null
             if (netInfo != null && netInfo.isConnectedOrConnecting()) {
+                // When the network returns any checks will begin as normal even if 'Keep Doing' alarm is set.
                 Log.d(TAG, "Connected to network");
                 context.startService(new Intent(context, UpdateService.class));
+            } else {
+                Log.d(TAG, "No network, stop checking for now");
+                context.startService(new Intent(UpdateService.ACTION_STOP_ALARM, null, context, UpdateService.class));
             }
         }
     }
@@ -78,8 +84,10 @@ public class DoingWidget extends AppWidgetProvider {
 
         public final static String ACTION_CLOCK_OFF = "com.zode64.trellodoing.intent.action.CLOCK_OFF";
         public final static String ACTION_REFRESH = "com.zode64.trellodoing.intent.action.REFRESH";
-        public static final String ACTION_AUTO_UPDATE = "com.zode64.trellodoing.intent.action.AUTO_UPDATE";
-
+        public final static String ACTION_AUTO_UPDATE = "com.zode64.trellodoing.intent.action.AUTO_UPDATE";
+        public final static String ACTION_STOP_ALARM = "com.zode64.trellodoing.intent.action.STOP_ALARM";
+        public final static String ACTION_KEEP_DOING = "com.zode64.trellodoing.intent.action.KEEP_DOING";
+        public final static String ACTION_SET_DEADLINE = "com.zode64.trellodoing.intent.action.SET_DEADLINE";
 
         public UpdateService() {
             super("Trello service");
@@ -89,42 +97,116 @@ public class DoingWidget extends AppWidgetProvider {
         protected void onHandleIntent(Intent intent) {
             Log.d(TAG, "onHandleIntent()");
             Log.d(TAG, "Intent action : " + intent.getAction());
-            Log.d(TAG, "cardId : " + intent.getStringExtra("cardId"));
 
             WidgetAlarm appWidgetAlarm = new WidgetAlarm(this.getApplicationContext());
-            appWidgetAlarm.setAlarm();
+            if (ACTION_STOP_ALARM.equals(intent.getAction())) {
+                appWidgetAlarm.stopStandardAlarm();
+                return;
+            }
 
             RemoteViews views = new RemoteViews(this.getPackageName(), R.layout.widget_doing);
             ComponentName thisWidget = new ComponentName(this, DoingWidget.class);
             AppWidgetManager manager = AppWidgetManager.getInstance(this);
+            DoingNotification notifications = new DoingNotification(this);
+            notifications.removeAll();
 
-            // Set refresh button
-            Intent refresh = new Intent(UpdateService.ACTION_REFRESH);
-            PendingIntent pendingRefresh = PendingIntent.getService(this, 0, refresh, 0);
-            views.setOnClickPendingIntent(R.id.refresh, pendingRefresh);
+            if (ACTION_KEEP_DOING.equals(intent.getAction())) {
+                appWidgetAlarm.delayAlarm();
+                setKeepDoingDown(views);
+                manager.updateAppWidget(thisWidget, views);
+                return;
+            }
 
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            if (ACTION_CLOCK_OFF.equals(intent.getAction()) || preferences.getBoolean("commitPending", false)) {
+            DoingPreferences preferences = new DoingPreferences(this);
+            if (ACTION_SET_DEADLINE.equals(intent.getAction())) {
+                String cardId = intent.getStringExtra("deadlineCardId");
+                if (cardId != null) {
+                    Calendar alarm = appWidgetAlarm.deadlineAlarm();
+                    preferences.handleSetDeadlineCall(cardId, alarm);
+                    setSetDeadlineDown(views);
+                    Log.d(TAG, "Setting deadline");
+                    manager.updateAppWidget(thisWidget, views);
+                }
+                return;
+            }
+
+            setButtonUp(R.id.keep_doing, views);
+            setCardUp(views);
+            TrelloManager trelloManager = new TrelloManager(preferences.getSharedPreferences());
+            appWidgetAlarm.setAlarm();
+
+            if (ACTION_CLOCK_OFF.equals(intent.getAction()) || preferences.isCommitPending()) {
                 if (ACTION_CLOCK_OFF.equals(intent.getAction())) {
+                    preferences.handleDeadlineCardComplete();
                     String cardId = intent.getStringExtra("cardId");
                     String clockedOffListId = intent.getStringExtra("clockedOffListId");
                     Log.d(TAG, "cardId : " + cardId);
-                    setButtonDown(R.id.clock_out, views);
-                    handleClockOffCall(preferences, cardId, clockedOffListId);
+                    setClockOffDown(views);
+                    manager.updateAppWidget(thisWidget, views);
+                    preferences.handleClockOffCall(cardId, clockedOffListId);
                 }
-                TrelloManager trelloManager = new TrelloManager(preferences);
+                // So we don't set the clocked off button down twice
                 if (trelloManager.clockOff()) {
-                    handleClockOffSuccess(preferences);
-                    setButtonUp(R.id.clock_out, views);
+                    preferences.handleClockOffSuccess();
                 } else {
                     manager.updateAppWidget(thisWidget, views);
                     return;
                 }
             }
 
-            // Build the widget update for today
-            buildUpdate(this, views);
+            setRefreshClickListener(views);
+            setKeepDoingClickListener(views);
+
+            Member member = trelloManager.member();
+            if (member == null) {
+                return;
+            }
+            List<Action> actions = member.findDoingActions();
+            if (!actions.isEmpty()) {
+                notifications.removeMultipleDoings();
+                Action action = actions.get(0);
+                preferences.saveBoard(action.getBoard().getShortUrl());
+                views.setTextViewText(R.id.card_name, action.getCard().getName());
+                String deadlineCardId = preferences.getDeadlineCardId();
+                if (deadlineCardId != null) {
+                    if (action.getCard().getId().equals(deadlineCardId)) {
+                        if (preferences.pastDeadline()) {
+                            Log.d(TAG, "Card not complete after deadline");
+                            setCardReachedDeadline(views);
+                            notifications.deadline(action.getBoard().getShortUrl());
+                        }
+                    } else {
+                        preferences.handleDeadlineCardComplete();
+                        appWidgetAlarm.stopDeadlineAlarm();
+                    }
+                }
+
+                notifications.standard(true, action.getBoard().getShortUrl());
+                setCardClickListener(action, views);
+                Log.d(TAG, "cardId : " + action.getCard().getId());
+                setClockOffListener(action, member, views);
+
+                if (!preferences.hasDeadline()) {
+                    setSetDeadlineListener(action, views);
+                }
+                setButtonUp(R.id.clock_out, views);
+                if(actions.size() > 1) {
+                    notifications.multiDoings(actions.get(0).getBoard().getShortUrl());
+                }
+            } else {
+                notifications.removeMultipleDoings();
+                setCardDown(views);
+                setButtonDown(R.id.set_deadline, views);
+                setButtonDown(R.id.clock_out, views);
+                views.setTextViewText(R.id.card_name, getString(R.string.no_card));
+                notifications.standard(false, preferences.getLastDoingBoard());
+                preferences.handleDeadlineCardComplete();
+                appWidgetAlarm.stopDeadlineAlarm();
+            }
+
             Log.d(TAG, "Update built");
+
+            setLastChecked(views);
 
             // Push update for this widget to the home screen
             manager.updateAppWidget(thisWidget, views);
@@ -133,89 +215,35 @@ public class DoingWidget extends AppWidgetProvider {
         }
 
 
-        public RemoteViews buildUpdate(Context context, RemoteViews views) {
-
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-            TrelloManager trelloManager = new TrelloManager(preferences);
-
-            Member member = trelloManager.member();
-            if (member == null) {
-                return views;
-            }
-
-            Map<String, Boolean> shifts = new HashMap<String, Boolean>();
-            // Cycles from most recent to least recent
-            boolean isDoing = false;
-            for (Action action : member.getActions()) {
-                if (action.isStoppedDoingAction()) {
-                    shifts.put(action.getCard().getId(), true);
-                } else if (action.isDoingAction()) {
-                    if (shifts.containsKey(action.getCard().getId())) {
-                        shifts.remove(action.getCard().getId());
-                    } else {
-                        isDoing = true;
-                        saveBoard(preferences, action.getBoard().getShortUrl());
-
-                        DoingNotification.manage(isDoing, action.getBoard().getShortUrl(), this.getApplicationContext());
-
-                        views.setTextViewText(R.id.card_name, action.getCard().getName());
-
-                        Intent getBoard = new Intent(Intent.ACTION_VIEW, Uri.parse(action.getBoard().getShortUrl()));
-                        PendingIntent pendingGetBoard = PendingIntent.getActivity(context, 0, getBoard, 0);
-                        views.setOnClickPendingIntent(R.id.card_name, pendingGetBoard);
-
-
-                        Log.d(TAG, "cardId : " + action.getCard().getId());
-                        Intent clockOff = new Intent(ACTION_CLOCK_OFF);
-                        clockOff.putExtra("clockedOffListId", member.getClockedOffList(action.getBoard().getId()).getId());
-                        clockOff.putExtra("cardId", action.getCard().getId());
-                        clockOff.setDataAndType(Uri.parse(clockOff.toUri(Intent.URI_INTENT_SCHEME)), "text/plain");
-                        PendingIntent pendingClockOff = PendingIntent.getService(context, 0, clockOff, 0);
-                        views.setOnClickPendingIntent(R.id.clock_out, pendingClockOff);
-
-                        setButtonUp(R.id.card_name, views);
-                        setButtonUp(R.id.clock_out, views);
-
-                        break;
-                    }
-                }
-            }
-
-            if (!isDoing) {
-                setButtonDown(R.id.card_name, views);
-                setButtonDown(R.id.clock_out, views);
-                views.setTextViewText(R.id.card_name, getString(R.string.no_card));
-                DoingNotification.manage(isDoing, preferences.getString("lastDoingBoard", null), this.getApplicationContext());
-            }
-
-            DateFormat df = new SimpleDateFormat("HH:mm dd/MM");
-            Date today = Calendar.getInstance().getTime();
-            String reportDate = df.format(today);
-            views.setTextViewText(R.id.last_checked, context.getString(R.string.last_checked) + " " + reportDate);
-
-            return views;
+        private void setSetDeadlineDown(RemoteViews views) {
+            setButtonDown(R.id.set_deadline, views);
+            setButtonDown(R.id.keep_doing, views);
         }
 
-        private void saveBoard(SharedPreferences preferences, String url){
-            SharedPreferences.Editor editor = preferences.edit();
-            editor.putString("lastDoingBoard", url);
-            editor.commit();
+        private void setKeepDoingDown(RemoteViews views) {
+            setButtonDown(R.id.keep_doing, views);
         }
 
-        private void handleClockOffCall(SharedPreferences preferences, String cardId, String clockedOffListId) {
-            SharedPreferences.Editor editor = preferences.edit();
-            editor.putBoolean("commitPending", true);
-            editor.putString("cardId", cardId);
-            editor.putString("clockedOffListId", clockedOffListId);
-            editor.commit();
+        private void setClockOffDown(RemoteViews views) {
+            setButtonDown(R.id.set_deadline, views);
+            setButtonDown(R.id.clock_out, views);
         }
 
-        private void handleClockOffSuccess(SharedPreferences preferences) {
-            SharedPreferences.Editor editor = preferences.edit();
-            editor.putBoolean("commitPending", false);
-            editor.remove("cardId");
-            editor.remove("clockedOffListId");
-            editor.commit();
+        private void setCardDown(RemoteViews views) {
+            views.setTextColor(R.id.card_name, getResources().getColor(R.color.black));
+            setButtonDown(R.id.card_name, views);
+        }
+
+        private void setCardUp(RemoteViews views) {
+            views.setTextColor(R.id.card_name, getResources().getColor(R.color.black));
+            setButtonUp(R.id.card_name, views);
+        }
+
+        private void setCardReachedDeadline(RemoteViews views) {
+            views.setInt(R.id.card_name, "setBackgroundResource", R.drawable.layout_card_red);
+            views.setTextColor(R.id.card_name, getResources().getColor(R.color.white));
+            views.setViewPadding(R.id.card_name, 50, 50, 50, 50);
+            setSetDeadlineDown(views);
         }
 
         private void setButtonDown(int viewId, RemoteViews views) {
@@ -226,6 +254,49 @@ public class DoingWidget extends AppWidgetProvider {
         private void setButtonUp(int viewId, RemoteViews views) {
             views.setInt(viewId, "setBackgroundResource", R.drawable.layout_card_up);
             views.setViewPadding(viewId, 50, 50, 50, 50);
+        }
+
+        private void setLastChecked(RemoteViews views) {
+            DateFormat df = new SimpleDateFormat("HH:mm dd/MM");
+            Date today = Calendar.getInstance().getTime();
+            String reportDate = df.format(today);
+            views.setTextViewText(R.id.last_checked, getString(R.string.last_updated) + " " + reportDate);
+        }
+
+        private void setRefreshClickListener(RemoteViews views) {
+            Intent refresh = new Intent(UpdateService.ACTION_REFRESH);
+            PendingIntent pendingRefresh = PendingIntent.getService(this, 0, refresh, 0);
+            views.setOnClickPendingIntent(R.id.refresh, pendingRefresh);
+        }
+
+        private void setKeepDoingClickListener(RemoteViews views) {
+            Intent keepDoing = new Intent(UpdateService.ACTION_KEEP_DOING);
+            PendingIntent pendingKeepDoing = PendingIntent.getService(this, 0, keepDoing, 0);
+            views.setOnClickPendingIntent(R.id.keep_doing, pendingKeepDoing);
+        }
+
+        private void setCardClickListener(Action action, RemoteViews views) {
+            Intent getBoard = new Intent(Intent.ACTION_VIEW, Uri.parse(action.getBoard().getShortUrl()));
+            PendingIntent pendingGetBoard = PendingIntent.getActivity(this, 0, getBoard, 0);
+            views.setOnClickPendingIntent(R.id.card_name, pendingGetBoard);
+        }
+
+        private void setClockOffListener(Action action, Member member, RemoteViews views) {
+            Intent clockOff = new Intent(ACTION_CLOCK_OFF);
+            clockOff.putExtra("clockedOffListId", member.getClockedOffList(action.getBoard().getId()).getId());
+            clockOff.putExtra("cardId", action.getCard().getId());
+            clockOff.setDataAndType(Uri.parse(clockOff.toUri(Intent.URI_INTENT_SCHEME)), "text/plain");
+            PendingIntent pendingClockOff = PendingIntent.getService(this, 0, clockOff, 0);
+            views.setOnClickPendingIntent(R.id.clock_out, pendingClockOff);
+        }
+
+        private void setSetDeadlineListener(Action action, RemoteViews views) {
+            setButtonUp(R.id.set_deadline, views);
+            Intent setDeadline = new Intent(UpdateService.ACTION_SET_DEADLINE);
+            setDeadline.putExtra("deadlineCardId", action.getCard().getId());
+            setDeadline.setDataAndType(Uri.parse(setDeadline.toUri(Intent.URI_INTENT_SCHEME)), "text/plain");
+            PendingIntent pendingSetDeadline = PendingIntent.getService(this, 0, setDeadline, 0);
+            views.setOnClickPendingIntent(R.id.set_deadline, pendingSetDeadline);
         }
     }
 }

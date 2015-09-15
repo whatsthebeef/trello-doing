@@ -4,6 +4,8 @@ public class List {
 
     public final static String DOING_LIST = "Doing";
 
+    public final static String TODO_LIST = "Todo";
+
     public final static String CLOCKED_OFF_LIST = "Clocked Off";
 
     private String name;
@@ -32,6 +34,13 @@ public class List {
         return false;
     }
 
+    public boolean isTodoList() {
+        if(TODO_LIST.equals(name)) {
+            return true;
+        }
+        return false;
+    }
+
     public String getId() {
         return id;
     }
@@ -39,4 +48,5 @@ public class List {
     public void setId(String id) {
         this.id = id;
     }
+
 }

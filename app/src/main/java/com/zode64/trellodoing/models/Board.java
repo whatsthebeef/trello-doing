@@ -28,6 +28,15 @@ public class Board {
         return "https://trello.com/b/" + shortLink;
     }
 
+    public List getTodolist() {
+        for (List list : getLists()) {
+            if(list.isTodoList()) {
+                return list;
+            }
+        }
+        return null;
+    }
+
     public List doingList() {
         for (List list : getLists()) {
             if(list.isDoingList()) {
@@ -44,6 +53,13 @@ public class Board {
             }
         }
         return null;
+    }
+
+    public boolean isPersonalBoard() {
+        if(name == "Personal") {
+            return true;
+        }
+        return false;
     }
 
     public String getShortLink() {

@@ -19,8 +19,10 @@
     <!-- Doing widget-->
     <string name="widget_name">Trello Doing</string>
     <string name="list_name">Doing</string>
-    <string name="no_card">There is no card</string>
+    <string name="no_card">Not doing anything</string>
     <string name="clock_out">Clock Out</string>
-    <string name="last_checked">Last checked</string>
+    <string name="keep_doing">Keep Doing</string>
+    <string name="set_deadline">Set Deadline</string>
+    <string name="last_updated">Last updated</string>
     <string name="refresh">Refresh</string>
 </resources>

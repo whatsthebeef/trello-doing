@@ -36,4 +36,12 @@ public class Action {
         }
         return false;
     }
+
+    public boolean isPersonalAction() {
+        return getBoard().isPersonalBoard();
+    }
+
+    public boolean isWorkAction() {
+        return !isPersonalAction();
+    }
 }

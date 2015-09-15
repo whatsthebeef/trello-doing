@@ -5,6 +5,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <uses-sdk
+        android:minSdkVersion="18"
+        android:targetSdkVersion="18" />
+
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
@@ -36,10 +40,13 @@
             <intent-filter>
                 <data android:mimeType="text/plain" android:scheme="intent" />
                 <action android:name="com.zode64.trellodoing.intent.action.CLOCK_OFF" />
+                <action android:name="com.zode64.trellodoing.intent.action.SET_DEADLINE" />
             </intent-filter>
             <intent-filter>
                 <action android:name="com.zode64.trellodoing.intent.action.REFRESH" />
                 <action android:name="com.zode64.trellodoing.intent.action.AUTO_UPDATE" />
+                <action android:name="com.zode64.trellodoing.intent.action.STOP_ALARM" />
+                <action android:name="com.zode64.trellodoing.intent.action.KEEP_DOING" />
             </intent-filter>
         </service>
 

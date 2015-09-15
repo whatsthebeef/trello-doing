@@ -65,7 +65,8 @@ public class TrelloManager {
 
     public Member member() {
         try {
-            return get("/members/me?actions=updateCard:idList&action_fields=data&board_lists=all&fields=initials&boards=open&board_fields=lists,name",
+            return get("/members/me?actions=updateCard:idList&action_fields=data&board_lists=all"
+                            + "&fields=initials&boards=open&board_fields=lists,name",
                     Member.class);
         } catch (IOException e) {
             e.printStackTrace();
