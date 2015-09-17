@@ -5,10 +5,7 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import com.zode64.trellodoing.models.Action;
-import com.zode64.trellodoing.models.Board;
-import com.zode64.trellodoing.models.Card;
 import com.zode64.trellodoing.models.Member;
 
 import java.io.BufferedInputStream;
@@ -16,12 +13,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
-import java.util.List;
-import java.util.Scanner;
 
 public class TrelloManager {
 
@@ -44,39 +37,12 @@ public class TrelloManager {
                 + "&name=Trello+Doing&expiration=never&response_type=token&scope=read,write";
     }
 
-    public List<Board> boards() {
-        try {
-            return get("/members/me/boards?filter=open&lists=open&fields=name,shortUrl", new TypeToken<List<Board>>() {}.getType());
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public List<Action> actions() {
-        try {
-            return get("/members/me/actions?filter=updateCard:idList&memberCreator=false&fields=data",
-                            new TypeToken<List<Action>>() {}.getType());
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 
     public Member member() {
         try {
             return get("/members/me?actions=updateCard:idList&action_fields=data&board_lists=all"
                             + "&fields=initials&boards=open&board_fields=lists,name",
                     Member.class);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public List<Card> doingListCards(String listId) {
-        try {
-            return get("/lists/" + listId + "/cards", new TypeToken<List<Card>>() {}.getType());
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -124,42 +90,13 @@ public class TrelloManager {
         HttpURLConnection urlConnection = null;
         try {
             to = new URL(constructTrelloURL(path));
+            Log.i(TAG, to.toString());
             urlConnection = (HttpURLConnection) to.openConnection();
             InputStream stream = new BufferedInputStream(urlConnection.getInputStream());
-            Gson gson = new GsonBuilder().create();
+            Gson gson = new GsonBuilder().registerTypeAdapter(Action.class, new ActionDeserializer() ).create();
             T member = gson.fromJson(new InputStreamReader(stream), type);
             stream.close();
             return member;
-        }
-        catch (IOException e) {
-            Log.e(TAG, "IOException from GET request");
-            e.printStackTrace();
-            throw new IOException("Problem with URL : " + to + " or server");
-        }
-        finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
-        }
-    }
-
-    /**
-     * Must be called in AyncTask or from a service
-     * @param path
-     * @return
-     */
-    private List get(String path, Type type) throws IOException {
-        Log.v(TAG, path + " - " + type.toString());
-        URL to = null;
-        HttpURLConnection urlConnection = null;
-        try {
-            to = new URL(constructTrelloURL(path));
-            urlConnection = (HttpURLConnection) to.openConnection();
-            InputStream stream = new BufferedInputStream(urlConnection.getInputStream());
-            Gson gson = new GsonBuilder().create();
-            List boards = gson.fromJson(new InputStreamReader(stream), type);
-            stream.close();
-            return boards;
         }
         catch (IOException e) {
             Log.e(TAG, "IOException from GET request");

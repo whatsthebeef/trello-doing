@@ -34,7 +34,7 @@ public class Board {
                 return list;
             }
         }
-        return null;
+        throw new RuntimeException( "No 'Todolist' list in " + name );
     }
 
     public List doingList() {
@@ -43,7 +43,16 @@ public class Board {
                 return list;
             }
         }
-        return null;
+        throw new RuntimeException( "No 'Doing' list in " + name );
+    }
+
+    public List doneList() {
+        for (List list : getLists()) {
+            if(list.isDoneList()) {
+                return list;
+            }
+        }
+        throw new RuntimeException( "No 'Done' list in " + name );
     }
 
     public List clockedOffList() {
@@ -52,11 +61,11 @@ public class Board {
                 return list;
             }
         }
-        return null;
+        throw new RuntimeException( "No 'Clocked Off' list in " + name );
     }
 
     public boolean isPersonalBoard() {
-        if(name == "Personal") {
+        if("Personal".equals(name)) {
             return true;
         }
         return false;

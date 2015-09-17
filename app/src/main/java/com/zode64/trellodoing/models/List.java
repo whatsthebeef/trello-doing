@@ -8,6 +8,8 @@ public class List {
 
     public final static String CLOCKED_OFF_LIST = "Clocked Off";
 
+    public final static String DONE_LIST = "Done";
+
     private String name;
 
     private String id;
@@ -36,6 +38,13 @@ public class List {
 
     public boolean isTodoList() {
         if(TODO_LIST.equals(name)) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isDoneList() {
+        if(DONE_LIST.equals(name)) {
             return true;
         }
         return false;

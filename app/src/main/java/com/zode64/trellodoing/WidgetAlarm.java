@@ -55,8 +55,8 @@ public class WidgetAlarm {
     public Calendar deadlineAlarm() {
         stopDeadlineAlarm();
         Calendar alarm = Calendar.getInstance();
-        // alarm.add(Calendar.SECOND, 5);
-        alarm.add(Calendar.HOUR, MANUAL_DELAY_HOURS);
+        alarm.add(Calendar.SECOND, 5);
+        // alarm.add(Calendar.HOUR, MANUAL_DELAY_HOURS);
         setAlarmWithCalendar(alarm, DoingWidget.UpdateService.ACTION_AUTO_UPDATE, DEADLINE_ALARM_ID, AlarmManager.RTC_WAKEUP);
         return alarm;
     }
