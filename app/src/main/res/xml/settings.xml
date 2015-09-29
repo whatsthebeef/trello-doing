@@ -1,0 +1,38 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Preference android:key="get_app_key"
+                android:persistent="false"
+                android:summary="@string/get_app_key_summary"
+                android:title="@string/get_app_key"/>
+    <EditTextPreference android:key="app_key"
+                        android:persistent="true"
+                        android:summary="@string/app_key_summary"
+                        android:title="@string/insert_app_key"/>
+    <Preference android:key="get_token"
+                android:persistent="false"
+                android:summary="@string/get_token_summary"
+                android:title="@string/get_token"/>
+    <EditTextPreference android:key="token"
+                        android:persistent="true"
+                        android:summary="@string/token_summary"
+                        android:title="@string/insert_token"/>
+    <EditTextPreference android:key="delay"
+                        android:persistent="true"
+                        android:defaultValue="2"
+                        android:inputType="number"
+                        android:summary="@string/delay_summary"
+                        android:title="@string/delay"/>
+    <EditTextPreference android:key="startHour"
+                        android:persistent="true"
+                        android:defaultValue="8"
+                        android:inputType="number"
+                        android:summary="@string/start_hour_summary"
+                        android:title="@string/start_hour"/>
+    <EditTextPreference android:key="end_hour"
+                        android:persistent="true"
+                        android:defaultValue="18"
+                        android:inputType="number"
+                        android:summary="@string/end_hour_summary"
+                        android:title="@string/end_hour"/>
+
+</PreferenceScreen>

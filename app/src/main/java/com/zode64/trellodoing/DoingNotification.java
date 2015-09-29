@@ -44,10 +44,10 @@ public class DoingNotification {
         Calendar now = Calendar.getInstance();
         removeStandard();
         if(between(CLOCK_ON_START_HOUR, CLOCK_ON_END_HOUR, now) && !isDoing) {
-            generate("Clock on!", CLOCK_ON_ID, lastBoard);
+            generate("Clock on!", CLOCK_ON_ID, lastBoard, true);
         }
         else if(between(CLOCK_OFF_START_HOUR, CLOCK_OFF_END_HOUR, now) && isDoing) {
-            generate("Clock off!", CLOCK_OFF_ID, lastBoard);
+            generate("Clock off!", CLOCK_OFF_ID, lastBoard, true);
         }
     }
 
@@ -83,19 +83,16 @@ public class DoingNotification {
 
     private void generate(String content, int id, String lastBoard, boolean warning) {
 
-        long[] vibratePattern = {0, 500, 0, 1000, 0};
+        long[] vibratePattern = {0, 500, 0, 1000, 0, 500};
         Notification.Builder builder =
                 new Notification.Builder(mContext)
-                        .setSmallIcon(android.R.drawable.stat_notify_error)
-                        .setContentTitle("Trello Doing Reminder")
-                        .setLights(Color.argb(0, 0, 255, 255), 100, 500)
-                        .setVibrate(vibratePattern)
-                        .setContentText(content);
-
-        if(warning) {
-            builder.setLights(Color.argb(0, 255, 255, 0), 100, 500)
-                    .setDefaults(Notification.DEFAULT_SOUND);
-        }
+                        .setSmallIcon( android.R.drawable.stat_notify_error )
+                        .setContentTitle( "Trello Doing Reminder" )
+                        .setLights( Color.argb( 0, 0, 255, 255 ), 100, 500 )
+//                        .setDefaults( Notification.DEFAULT_SOUND )
+                        .setSound( Uri.parse( "android.resource://" + mContext.getPackageName() + "/" + R.raw.sotp ) )
+                        .setVibrate( vibratePattern )
+                        .setContentText( content );
 
         if(lastBoard != null) {
             Intent getBoard = new Intent(Intent.ACTION_VIEW, Uri.parse(lastBoard));

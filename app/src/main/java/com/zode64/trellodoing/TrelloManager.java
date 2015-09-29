@@ -3,10 +3,16 @@ package com.zode64.trellodoing;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.google.api.client.json.Json;
+import com.google.gdata.client.uploader.ResumableHttpFileUploader;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.zode64.trellodoing.models.Action;
+import com.zode64.trellodoing.models.Card;
 import com.zode64.trellodoing.models.Member;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -24,129 +30,185 @@ public class TrelloManager {
 
     private SharedPreferences mPreferences;
 
-    public TrelloManager(SharedPreferences preferences) {
+    public TrelloManager( SharedPreferences preferences ) {
         mPreferences = preferences;
     }
 
     public String appKeyUrl() {
-        return TRELLO_URL + "/appKey/generate";
+        return TRELLO_URL + appKeyPath();
+    }
+
+    public String appKeyPath() {
+        return "/appKey/generate";
     }
 
     public String tokenUrl() {
-        return TRELLO_URL + "/authorize?key=" + mPreferences.getString("app_key", "")
+        return TRELLO_URL + tokenPath();
+    }
+
+    public String tokenPath() {
+        return "/authorize?key=" + mPreferences.getString( "app_key", "" )
                 + "&name=Trello+Doing&expiration=never&response_type=token&scope=read,write";
     }
 
-
     public Member member() {
         try {
-            return get("/members/me?actions=updateCard:idList&action_fields=data&board_lists=all"
-                            + "&fields=initials&boards=open&board_fields=lists,name",
-                    Member.class);
-        } catch (IOException e) {
+            return get( "/members/me?actions=updateCard:idList&action_fields=data&board_lists=all"
+                            + "&fields=initials&boards=open&board_fields=lists,name&actions_limit=200",
+                    Member.class );
+        } catch ( IOException e ) {
             e.printStackTrace();
             return null;
         }
     }
 
+
     public boolean clockOff() {
-        String cardId = mPreferences.getString("cardId", null);
-        String clockedOffListId = mPreferences.getString("clockedOffListId", null);
-        if(cardId == null || clockedOffListId == null) {
-            throw new RuntimeException("Unexpected preference state : no cardId or clockedOffListId");
+        String cardId = mPreferences.getString( "cardId", null );
+        String clockedOffListId = mPreferences.getString( "clockedOffListId", null );
+        if ( cardId == null || clockedOffListId == null ) {
+            throw new RuntimeException( "Unexpected preference state : no cardId or clockedOffListId" );
+        }
+        return moveCard( cardId, clockedOffListId ) != null;
+    }
+
+    public Card moveCard(String cardId, String toListId) {
+        try {
+            return put( "/cards/" + cardId + "/idList", "&value=" + toListId, Card.class );
+        } catch ( IOException e ) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public boolean newPersonalCard(String todoListId, String doingListId) {
+        String personalCardName = mPreferences.getString( "personalCardName", null );
+        if ( personalCardName == null) {
+            throw new RuntimeException( "Unexpected preference state : no personalCardName" );
         }
         try {
-            put("/cards/" + cardId + "/idList", clockedOffListId);
-            return true;
-        } catch (IOException e) {
+            Card card = post( "/cards", "&name=" + personalCardName + "&idList=" + todoListId, Card.class );
+            moveCard( card.getId(), doingListId );
+        } catch ( IOException e ) {
             e.printStackTrace();
             return false;
         }
+        return true;
     }
 
-    private String constructTrelloPutURL(String baseURL) {
+    private String constructTrelloPutURL( String baseURL ) {
         return TRELLO_URL + baseURL;
     }
 
-    private String constructTrelloURL(String baseURL) {
-        if (baseURL.contains("?")) {
-            return TRELLO_URL + baseURL + "&key=" + mPreferences.getString("app_key", "")
-                    + "&token=" + mPreferences.getString("token", "");
+    private String constructTrelloURL( String baseURL ) {
+        if ( baseURL.contains( "?" ) ) {
+            return TRELLO_URL + baseURL + "&key=" + mPreferences.getString( "app_key", "" )
+                    + "&token=" + mPreferences.getString( "token", "" );
 
         } else {
-            return TRELLO_URL + baseURL + "?key=" + mPreferences.getString("app_key", "")
-                    + "&token=" + mPreferences.getString("token", "");
+            return TRELLO_URL + baseURL + "?key=" + mPreferences.getString( "app_key", "" )
+                    + "&token=" + mPreferences.getString( "token", "" );
+        }
+    }
+
+    public boolean get( String url ) {
+        URL to = null;
+        HttpURLConnection urlConnection = null;
+        try {
+            to = new URL( url );
+            Log.i( TAG, to.toString() );
+            urlConnection = ( HttpURLConnection ) to.openConnection();
+            return true;
+        } catch ( IOException e ) {
+            e.printStackTrace();
+            Log.w( TAG, "IOException from GET request" );
+            Log.w( TAG, "Problem with URL : " + to + " or server" );
+            return false;
+        } finally {
+            if ( urlConnection != null ) {
+                urlConnection.disconnect();
+            }
         }
     }
 
     /**
      * Must be called in AyncTask or from a service
+     *
      * @param path
      * @return
      */
-    private <T> T get(String path, Class<T> type) throws IOException {
-        Log.v(TAG, path + " - " + type.toString());
+    private <T> T get( String path, Class<T> type ) throws IOException {
+        Log.v( TAG, path + " - " + type.toString() );
         URL to = null;
         HttpURLConnection urlConnection = null;
         try {
-            to = new URL(constructTrelloURL(path));
-            Log.i(TAG, to.toString());
-            urlConnection = (HttpURLConnection) to.openConnection();
-            InputStream stream = new BufferedInputStream(urlConnection.getInputStream());
-            Gson gson = new GsonBuilder().registerTypeAdapter(Action.class, new ActionDeserializer() ).create();
-            T member = gson.fromJson(new InputStreamReader(stream), type);
+            to = new URL( constructTrelloURL( path ) );
+            Log.i( TAG, to.toString() );
+            urlConnection = ( HttpURLConnection ) to.openConnection();
+            InputStream stream = new BufferedInputStream( urlConnection.getInputStream() );
+            Gson gson = new GsonBuilder().registerTypeAdapter( Action.class, new ActionDeserializer() ).create();
+            T member = gson.fromJson( new InputStreamReader( stream ), type );
             stream.close();
             return member;
-        }
-        catch (IOException e) {
-            Log.e(TAG, "IOException from GET request");
+        } catch ( IOException e ) {
+            Log.e( TAG, "IOException from GET request" );
             e.printStackTrace();
-            throw new IOException("Problem with URL : " + to + " or server");
-        }
-        finally {
-            if (urlConnection != null) {
+            throw new IOException( "Problem with URL : " + to + " or server" );
+        } finally {
+            if ( urlConnection != null ) {
                 urlConnection.disconnect();
             }
         }
+    }
+
+    private <T> T put( String path, String value, Class<T> type ) throws IOException {
+        return push( path, value, "PUT", type );
+    }
+
+    private <T> T post( String path, String value, Class<T> type) throws IOException {
+        return push( path, value, "POST", type );
     }
 
     /**
      * Must be called in AyncTask or from a service
+     *
      * @param path
      * @return
      */
-    private void put(String path, String value) throws IOException {
-        Log.v(TAG, path + " - " + value);
+    private <T> T push( String path, String value, String method, Class<T> type ) throws IOException {
+        Log.v( TAG, path + " - " + value );
         URL to = null;
         HttpURLConnection urlConnection = null;
         try {
-            to = new URL(constructTrelloPutURL(path));
-            urlConnection = (HttpURLConnection) to.openConnection();
-            urlConnection.setDoOutput(true);
-            urlConnection.setRequestMethod("PUT");
-            OutputStreamWriter out = new OutputStreamWriter(urlConnection.getOutputStream());
-            out.write("value="+value);
-            out.write("&token="+mPreferences.getString("token", ""));
-            out.write("&key="+mPreferences.getString("app_key", ""));
+            to = new URL( constructTrelloPutURL( path ));
+            urlConnection = ( HttpURLConnection ) to.openConnection();
+            urlConnection.setDoOutput( true );
+            urlConnection.setRequestMethod( method );
+            OutputStreamWriter out = new OutputStreamWriter( urlConnection.getOutputStream() );
+            out.write("token=" + mPreferences.getString( "token", "" ) );
+            out.write("&key=" + mPreferences.getString( "app_key", "" ) );
+            out.write( value );
             out.close();
-            InputStream response = urlConnection.getInputStream();
-            Log.v(TAG, "Output from PUT request : " + convertStreamToString(response));
-            response.close();
-        }
-        catch (IOException e) {
-            Log.e(TAG, "IOException from PUT request");
+            InputStream stream = urlConnection.getInputStream();
+            Gson gson = new GsonBuilder().create();
+            T model = gson.fromJson( new InputStreamReader( stream ), type );
+            stream.close();
+            Log.v( TAG, "Output from " + method + " request : " + model.toString() );
+            return model;
+        } catch ( IOException e ) {
+            Log.e( TAG, "IOException from " + method + " request" );
             e.printStackTrace();
-            throw new IOException("Problem with URL : " + to + " or server");
-        }
-        finally {
-            if (urlConnection != null) {
+            throw new IOException( "Problem with URL : " + to + " or server" );
+        } finally {
+            if ( urlConnection != null ) {
                 urlConnection.disconnect();
             }
         }
     }
 
-    private String convertStreamToString(InputStream is) {
-        java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
+    private String convertStreamToString( InputStream is ) {
+        java.util.Scanner s = new java.util.Scanner( is ).useDelimiter( "\\A" );
         return s.hasNext() ? s.next() : "";
     }
+
 }

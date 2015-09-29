@@ -28,7 +28,7 @@ public class Board {
         return "https://trello.com/b/" + shortLink;
     }
 
-    public List getTodolist() {
+    public List todolist() {
         for (List list : getLists()) {
             if(list.isTodoList()) {
                 return list;

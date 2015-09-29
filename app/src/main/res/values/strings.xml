@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Trello Doing</string>
+    <string name="app_name">Doing</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello World</string>
 
@@ -17,7 +17,7 @@
     <string name="boards_here">Boards should be here</string>
 
     <!-- Doing widget-->
-    <string name="widget_name">Trello Doing</string>
+    <string name="widget_name">Doing</string>
     <string name="list_name">Doing</string>
     <string name="no_card">Not doing anything</string>
     <string name="clock_out">Clock Out</string>
@@ -26,4 +26,30 @@
     <string name="last_updated">Last updated</string>
     <string name="refresh">Refresh</string>
     <string name="done">Done / Next</string>
+
+    <string name="get_app_key">Get App Key</string>
+    <string name="insert_app_key">Enter the App Key</string>
+    <string name="get_token">Get Token</string>
+    <string name="insert_token">Enter Token</string>
+    <string name="get_app_key_summary">User must be logged into to trello in the default browser
+    </string>
+    <string name="app_key_summary">Copy the App Key and paste it here</string>
+    <string name="get_token_summary">App key must be present.</string>
+    <string name="token_summary">Copy the token and paste it here</string>
+    <string name="delay_summary">Time to wait before reaching deadline or trying to refresh</string>
+    <string name="delay">Delay</string>
+    <string name="start_hour_summary">What hour does the day start</string>
+    <string name="start_hour">Start hour</string>
+    <string name="end_hour_summary">What time does the day end</string>
+    <string name="end_hour">End hour</string>
+    <string name="add_personal_card">Add card</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="separator">|</string>
+    <string name="settings">Settings</string>
+    <string name="loading">Loading...</string>
+    <string name="wait_while_loading">Wait while loading...</string>
+    <string name="offline">Offline</string>
+    <string name="personal">Personal</string>
+    <string name="work">Work</string>
+
 </resources>

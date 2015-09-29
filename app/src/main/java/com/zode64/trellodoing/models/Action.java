@@ -18,8 +18,28 @@ public class Action {
     }
 
     public enum Status {
-        WORK,
-        PERSONAL
+        BOTH(0),
+        WORK(1),
+        PERSONAL(2),
+        NONE(3);
+
+        private int mInt;
+        private Status(int aInt){
+            mInt = aInt;
+        }
+
+        public int getInt() {
+            return mInt;
+        }
+
+        public static Status getStatus(int status) {
+            for ( Status s : values() ) {
+                if(s.getInt() == status) {
+                    return s;
+                }
+            }
+            return NONE;
+        }
     }
 
     public enum Type {
@@ -46,7 +66,6 @@ public class Action {
     }
 
     public boolean isStoppedDoingAction() {
-        Log.i( TAG, cardName + " has stopped doing : " + (type == Type.WAS_DOING));
         return type == Type.WAS_DOING;
     }
 

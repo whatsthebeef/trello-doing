@@ -41,6 +41,24 @@ public class Member {
         return null;
     }
 
+    public List getPersonalDoingList() {
+        for ( Board board : getBoards() ) {
+            if ( board.isPersonalBoard() ) {
+                return board.doingList();
+            }
+        }
+        return null;
+    }
+
+    public List getPersonalTodoList() {
+        for ( Board board : getBoards() ) {
+            if ( board.isPersonalBoard() ) {
+                return board.todolist();
+            }
+        }
+        return null;
+    }
+
     public List getDoneList( String boardId ) {
         for ( Board board : getBoards() ) {
             if ( boardId.equals( board.getId() ) ) {
@@ -59,11 +77,9 @@ public class Member {
         for ( Action action : actions ) {
             if ( action.isStoppedDoingAction() ) {
                 shifts.put( action.getCardId(), true );
-                Log.i( TAG, "Added shift : " + action.getCardName() + " with id " + action.getCardId());
             } else if ( action.isDoingAction() ) {
                 if ( shifts.containsKey( action.getCardId() ) ) {
                     shifts.remove( action.getCardId() );
-                    Log.i( TAG, "Removed shift : " + action.getCardName() );
                 } else {
                     if ( action.isWorkAction() ) {
                         doingActions.get( Action.Status.WORK ).add( action );

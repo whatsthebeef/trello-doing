@@ -44,12 +44,37 @@
         android:textColor="@color/white"
         android:textSize="10dip"></TextView>
 
+    <TextView
+        android:id="@+id/separator"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:paddingLeft="5dp"
+        android:gravity="center_vertical"
+        android:layout_alignParentBottom="true"
+        android:text="@string/separator"
+        android:layout_toRightOf="@id/refresh"
+        android:textColor="@color/white"
+        android:textSize="10dip"></TextView>
+
+    <TextView
+        android:id="@+id/settings"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:paddingLeft="5dp"
+        android:gravity="center_vertical"
+        android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@id/separator"
+        android:text="@string/settings"
+        android:textColor="@color/white"
+        android:textSize="10dip"></TextView>
+
     <RelativeLayout
         android:id="@+id/list"
         android:layout_below="@id/widget_name"
         android:layout_above="@id/last_checked"
         android:orientation="vertical"
         android:paddingTop="5dp"
+        android:paddingBottom="10dp"
         android:background="@drawable/layout_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -69,33 +94,41 @@
             android:id="@+id/buttons"
             android:orientation="horizontal"
             android:layout_below="@id/card_name"
-            android:weightSum="3"
+            android:weightSum="4"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <TextView
+            <ImageView
+                android:id="@+id/add_personal_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:src="@drawable/add139"
+                style="@style/doing_button"></ImageView>
+
+            <ImageView
                 android:id="@+id/keep_doing"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/keep_doing"
-                style="@style/doing_button"></TextView>
+                android:src="@drawable/redo"
+                style="@style/doing_button"></ImageView>
 
-            <TextView
+            <ImageView
                 android:id="@+id/set_deadline"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/set_deadline"
-                style="@style/doing_button"></TextView>
+                android:src="@drawable/sand15"
+                style="@style/doing_button"></ImageView>
 
-            <TextView
+            <ImageView
                 android:id="@+id/clock_out"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
+                android:src="@drawable/check51"
                 android:layout_weight="1"
-                android:text="@string/clock_out"
-                style="@style/doing_button"></TextView>
+                style="@style/doing_button"></ImageView>
 
         </LinearLayout>
 

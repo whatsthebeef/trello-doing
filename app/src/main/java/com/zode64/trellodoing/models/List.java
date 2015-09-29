@@ -14,6 +14,8 @@ public class List {
 
     private String id;
 
+    private boolean closed;
+
     public String getName() {
         return name;
     }
@@ -23,7 +25,7 @@ public class List {
     }
 
     public boolean isDoingList(){
-        if(DOING_LIST.equals(name)) {
+        if(DOING_LIST.equals(name) && !closed) {
            return true;
         }
         return false;
@@ -58,4 +60,11 @@ public class List {
         this.id = id;
     }
 
+    public boolean isClosed() {
+        return closed;
+    }
+
+    public void setClosed( boolean closed ) {
+        this.closed = closed;
+    }
 }
