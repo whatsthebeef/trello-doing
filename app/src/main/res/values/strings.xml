@@ -21,9 +21,9 @@
     <string name="list_name">Doing</string>
     <string name="no_card">Not doing anything</string>
     <string name="clock_out">Clock Out</string>
-    <string name="keep_doing">Keep Doing</string>
+    <string name="keep_doing">Keep doing</string>
     <string name="set_deadline">Set Deadline</string>
-    <string name="last_updated">Last updated</string>
+    <string name="last_updated">Last updated </string>
     <string name="refresh">Refresh</string>
     <string name="done">Done / Next</string>
 
@@ -51,5 +51,7 @@
     <string name="offline">Offline</string>
     <string name="personal">Personal</string>
     <string name="work">Work</string>
+    <string name="today">Today</string>
+    <string name="card_action">Card action</string>
 
 </resources>

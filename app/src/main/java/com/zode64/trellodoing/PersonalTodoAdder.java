@@ -3,12 +3,16 @@ package com.zode64.trellodoing;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+
+import com.zode64.trellodoing.db.CardDAO;
+import com.zode64.trellodoing.models.Card;
 
 /**
  * Created by john on 9/22/15.
@@ -18,7 +22,8 @@ public class PersonalTodoAdder extends Activity {
     private Button mSubmit;
     private Button mCancel;
     private EditText mEditText;
-    private DoingPreferences preferences;
+    private CardDAO cardDAO;
+    private TrelloManager trelloManager;
 
     @Override
     protected void onCreate( Bundle savedInstanceState ) {
@@ -26,14 +31,15 @@ public class PersonalTodoAdder extends Activity {
         requestWindowFeature( Window.FEATURE_NO_TITLE );
         setContentView( R.layout.new_card );
 
-        preferences = new DoingPreferences( this );
+        cardDAO = new CardDAO( getApplication() );
 
         mSubmit = ( Button ) findViewById( R.id.submit_new_card );
         mCancel = ( Button ) findViewById( R.id.cancel_new_card );
         mEditText = ( EditText ) findViewById( R.id.new_card_name );
 
-        if ( preferences.hasPersonalCardName() ) {
-            mEditText.setText( preferences.getPersonalCardName() );
+        Card personalCard = cardDAO.getPersonalCard();
+        if ( personalCard != null ) {
+            mEditText.setText( personalCard.getName() );
         } else {
             mSubmit.setEnabled( false );
         }
@@ -65,7 +71,11 @@ public class PersonalTodoAdder extends Activity {
             public void onClick( View v ) {
                 String text = mEditText.getText().toString();
                 if ( text != null && !text.equals( "" ) ) {
-                    preferences.handleSetAddPersonalCard( mEditText.getText().toString() );
+
+                    trelloManager = new TrelloManager( PreferenceManager.getDefaultSharedPreferences( getApplication() ) );
+                    if ( !trelloManager.newPersonalCard( text ) ) {
+                        cardDAO.createPersonalCard( text );
+                    }
                     startService( new Intent( getApplication(), DoingWidget.UpdateService.class ) );
                     finish();
                 }

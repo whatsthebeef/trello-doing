@@ -131,7 +131,7 @@ public class SettingsFragment extends PreferenceFragment {
         @Override
         protected void onPostExecute(Boolean result) {
             mProgress.dismiss();
-            if(result && !isDetached()) {
+            if(result && !isDetached() ) {
                 mToken.setEnabled( true );
                 mGetToken.setEnabled( true );
                 Intent refresh = new Intent( DoingWidget.UpdateService.ACTION_REFRESH );

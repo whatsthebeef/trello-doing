@@ -3,16 +3,10 @@ package com.zode64.trellodoing;
 import android.content.SharedPreferences;
 import android.util.Log;
 
-import com.google.api.client.json.Json;
-import com.google.gdata.client.uploader.ResumableHttpFileUploader;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.zode64.trellodoing.models.Action;
 import com.zode64.trellodoing.models.Card;
 import com.zode64.trellodoing.models.Member;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -53,7 +47,7 @@ public class TrelloManager {
 
     public Member member() {
         try {
-            return get( "/members/me?actions=updateCard:idList&action_fields=data&board_lists=all"
+            return get( "/members/me?actions=updateCard:idList&action_fields=data,date&board_lists=all"
                             + "&fields=initials&boards=open&board_fields=lists,name&actions_limit=200",
                     Member.class );
         } catch ( IOException e ) {
@@ -62,17 +56,11 @@ public class TrelloManager {
         }
     }
 
-
-    public boolean clockOff() {
-        String cardId = mPreferences.getString( "cardId", null );
-        String clockedOffListId = mPreferences.getString( "clockedOffListId", null );
-        if ( cardId == null || clockedOffListId == null ) {
-            throw new RuntimeException( "Unexpected preference state : no cardId or clockedOffListId" );
-        }
-        return moveCard( cardId, clockedOffListId ) != null;
+    public boolean clockOff( Card card ) {
+        return moveCard( card.getId(), card.getClockedOffList() ) != null;
     }
 
-    public Card moveCard(String cardId, String toListId) {
+    public Card moveCard( String cardId, String toListId ) {
         try {
             return put( "/cards/" + cardId + "/idList", "&value=" + toListId, Card.class );
         } catch ( IOException e ) {
@@ -81,19 +69,19 @@ public class TrelloManager {
         }
     }
 
-    public boolean newPersonalCard(String todoListId, String doingListId) {
-        String personalCardName = mPreferences.getString( "personalCardName", null );
-        if ( personalCardName == null) {
-            throw new RuntimeException( "Unexpected preference state : no personalCardName" );
+    public boolean newPersonalCard( String name ) {
+        Member member = member();
+        if ( member != null ) {
+            try {
+                post( "/cards", "&name=" + name + "&idList=" + member.getPersonalTodayListId(), Card.class );
+            } catch ( IOException e ) {
+                e.printStackTrace();
+                return false;
+            }
+            return true;
         }
-        try {
-            Card card = post( "/cards", "&name=" + personalCardName + "&idList=" + todoListId, Card.class );
-            moveCard( card.getId(), doingListId );
-        } catch ( IOException e ) {
-            e.printStackTrace();
-            return false;
-        }
-        return true;
+        return false;
+
     }
 
     private String constructTrelloPutURL( String baseURL ) {
@@ -146,7 +134,7 @@ public class TrelloManager {
             Log.i( TAG, to.toString() );
             urlConnection = ( HttpURLConnection ) to.openConnection();
             InputStream stream = new BufferedInputStream( urlConnection.getInputStream() );
-            Gson gson = new GsonBuilder().registerTypeAdapter( Action.class, new ActionDeserializer() ).create();
+            Gson gson = new GsonBuilder().registerTypeAdapter( Member.class, new MemberDeserializer() ).create();
             T member = gson.fromJson( new InputStreamReader( stream ), type );
             stream.close();
             return member;
@@ -165,7 +153,7 @@ public class TrelloManager {
         return push( path, value, "PUT", type );
     }
 
-    private <T> T post( String path, String value, Class<T> type) throws IOException {
+    private <T> T post( String path, String value, Class<T> type ) throws IOException {
         return push( path, value, "POST", type );
     }
 
@@ -180,13 +168,13 @@ public class TrelloManager {
         URL to = null;
         HttpURLConnection urlConnection = null;
         try {
-            to = new URL( constructTrelloPutURL( path ));
+            to = new URL( constructTrelloPutURL( path ) );
             urlConnection = ( HttpURLConnection ) to.openConnection();
             urlConnection.setDoOutput( true );
             urlConnection.setRequestMethod( method );
             OutputStreamWriter out = new OutputStreamWriter( urlConnection.getOutputStream() );
-            out.write("token=" + mPreferences.getString( "token", "" ) );
-            out.write("&key=" + mPreferences.getString( "app_key", "" ) );
+            out.write( "token=" + mPreferences.getString( "token", "" ) );
+            out.write( "&key=" + mPreferences.getString( "app_key", "" ) );
             out.write( value );
             out.close();
             InputStream stream = urlConnection.getInputStream();

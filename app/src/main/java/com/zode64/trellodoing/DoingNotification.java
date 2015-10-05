@@ -67,6 +67,7 @@ public class DoingNotification {
     public void removeAll() {
         removeDeadline();
         removeStandard();
+        removeMultipleDoings();
     }
 
     public void multiDoings(String lastBoard) {

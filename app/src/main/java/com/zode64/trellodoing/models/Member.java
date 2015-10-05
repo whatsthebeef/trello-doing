@@ -1,10 +1,6 @@
 package com.zode64.trellodoing.models;
 
-import android.util.Log;
-
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by john on 2/3/15.
@@ -13,83 +9,50 @@ public class Member {
 
     private static final String TAG = Member.class.getName();
 
-    private java.util.List<Action> actions;
-    private java.util.List<Board> boards;
+    private ArrayList<Card> personalDoingCards = new ArrayList<>();
+    private ArrayList<Card> personalTodayCards = new ArrayList<>();
+    private ArrayList<Card> workDoingCards = new ArrayList<>();
+    private ArrayList<Card> workTodayCards = new ArrayList<>();
+    private String personalTodayListId = null;
 
-    public java.util.List<Action> getActions() {
-        return actions;
+    public String getPersonalTodayListId() {
+        return personalTodayListId;
     }
 
-    public void setActions( java.util.List<Action> actions ) {
-        this.actions = actions;
+    public void setPersonalTodayListId( String personalTodayListId ) {
+        this.personalTodayListId = personalTodayListId;
     }
 
-    public java.util.List<Board> getBoards() {
-        return boards;
+    public ArrayList<Card> getPersonalDoingCards() {
+        return personalDoingCards;
     }
 
-    public void setBoards( java.util.List<Board> boards ) {
-        this.boards = boards;
+    public void addPersonalDoingCard( Card personalDoingCard ) {
+        personalDoingCards.add( personalDoingCard );
     }
 
-    public List getClockedOffList( String boardId ) {
-        for ( Board board : getBoards() ) {
-            if ( boardId.equals( board.getId() ) ) {
-                return board.clockedOffList();
-            }
-        }
-        return null;
+    public ArrayList<Card> getPersonalTodayCards() {
+        return personalTodayCards;
     }
 
-    public List getPersonalDoingList() {
-        for ( Board board : getBoards() ) {
-            if ( board.isPersonalBoard() ) {
-                return board.doingList();
-            }
-        }
-        return null;
+    public void addPersonalTodayCard( Card personalTodayCard ) {
+        personalTodayCards.add( personalTodayCard );
     }
 
-    public List getPersonalTodoList() {
-        for ( Board board : getBoards() ) {
-            if ( board.isPersonalBoard() ) {
-                return board.todolist();
-            }
-        }
-        return null;
+    public ArrayList<Card> getWorkDoingCards() {
+        return workDoingCards;
     }
 
-    public List getDoneList( String boardId ) {
-        for ( Board board : getBoards() ) {
-            if ( boardId.equals( board.getId() ) ) {
-                return board.doneList();
-            }
-        }
-        return null;
+    public void addWorkDoingCard( Card workDoingCard ) {
+        workDoingCards.add( workDoingCard );
     }
 
-    public Map<Action.Status, java.util.List<Action>> findDoingActions() {
-        Map<String, Boolean> shifts = new HashMap<String, Boolean>();
-        // Cycles from most recent to least recent
-        Map<Action.Status, java.util.List<Action>> doingActions = new HashMap<>();
-        doingActions.put( Action.Status.WORK, new ArrayList<Action>() );
-        doingActions.put( Action.Status.PERSONAL, new ArrayList<Action>() );
-        for ( Action action : actions ) {
-            if ( action.isStoppedDoingAction() ) {
-                shifts.put( action.getCardId(), true );
-            } else if ( action.isDoingAction() ) {
-                if ( shifts.containsKey( action.getCardId() ) ) {
-                    shifts.remove( action.getCardId() );
-                } else {
-                    if ( action.isWorkAction() ) {
-                        doingActions.get( Action.Status.WORK ).add( action );
-                    } else {
-                        doingActions.get( Action.Status.PERSONAL ).add( action );
-                    }
-                }
-            }
-        }
-        return doingActions;
+    public ArrayList<Card> getWorkTodayCards() {
+        return workTodayCards;
+    }
+
+    public void addWorkTodayCards( Card workTodayCard ) {
+        workTodayCards.add( workTodayCard );
     }
 
 }
