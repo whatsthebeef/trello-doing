@@ -1,6 +1,8 @@
 package com.zode64.trellodoing.models;
 
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Card {
 
@@ -21,20 +23,14 @@ public class Card {
     private String boardName;
     private String boardId;
     private String id;
-    private String clockedOffList;
-    private String doingList;
-    private String doneList;
-    private String todayList;
 
     private ListType inListType;
 
     private long deadline;
 
-    private int isClockedOff;
-    private int isClockedOn;
-    private int isToday;
-    private int isDone;
     private int isPendingPush;
+
+    private Map<ListType, String> listIds = new HashMap<>();
 
     public String getBoardShortUrl() {
         return "https://trello.com/b/" + boardShortLink;
@@ -88,20 +84,12 @@ public class Card {
         this.boardId = boardId;
     }
 
-    public String getClockedOffList() {
-        return clockedOffList;
+    public boolean isClockedOff() {
+        return inListType == ListType.CLOCKED_OFF;
     }
 
-    public void setClockedOffList( String clockedOffList ) {
-        this.clockedOffList = clockedOffList;
-    }
-
-    public int getIsClockedOff() {
-        return isClockedOff;
-    }
-
-    public void setIsClockedOff( int isClockedOff ) {
-        this.isClockedOff = isClockedOff;
+    public void setClockedOff() {
+        inListType = ListType.CLOCKED_OFF;
     }
 
     public long getDeadline() {
@@ -140,61 +128,30 @@ public class Card {
         }
     }
 
-    public String getInListTypeOrdinalStr() {
-        return String.valueOf( inListType.ordinal() );
-    }
-
     public void setInListType( int inListType ) {
         this.inListType = ListType.values()[ inListType ];
     }
 
-    public String getDoingList() {
-        return doingList;
+    public void setListId( ListType listType, String listId ) {
+        listIds.put( listType, listId );
     }
 
-    public void setDoingList( String doingList ) {
-        this.doingList = doingList;
+    public String getListId( ListType listType ) {
+        return listIds.get( listType );
     }
 
-    public int getIsClockedOn() {
-        return isClockedOn;
+    public String getCurrentListId() {
+        return listIds.get( inListType );
     }
 
-    public void setIsClockedOn( int isClockedOn ) {
-        this.isClockedOn = isClockedOn;
+    public boolean isToday() {
+        return inListType == ListType.TODAY;
     }
 
-    public String getDoneList() {
-        return doneList;
+    public void setToday() {
+        inListType = ListType.TODAY;
     }
 
-    public void setDoneList( String doneList ) {
-        this.doneList = doneList;
-    }
-
-    public int getIsDone() {
-        return isDone;
-    }
-
-    public void setIsDone( int isDone ) {
-        this.isDone = isDone;
-    }
-
-    public String getTodayList() {
-        return todayList;
-    }
-
-    public void setTodayList( String todayList ) {
-        this.todayList = todayList;
-    }
-
-    public int getIsToday() {
-        return isToday;
-    }
-
-    public void setIsToday( int isToday ) {
-        this.isToday = isToday;
-    }
 
 }
 

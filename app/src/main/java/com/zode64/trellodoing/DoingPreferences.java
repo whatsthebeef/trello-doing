@@ -17,7 +17,6 @@ public class DoingPreferences {
 
     private static final String LAST_DOING_BOARD = "lastDoingBoard";
     private static final String KEEP_DOING_ALARM = "keepDoingAlarm";
-    private static final String PERSONAL_CARD_NAME = "personalCardName";
     private static final String DELAY = "delay";
     private static final String START_HOUR = "start_hour";
     private static final String END_HOUR = "end_hour";
@@ -54,8 +53,14 @@ public class DoingPreferences {
         return mPreferences.getString( LAST_DOING_BOARD, null );
     }
 
-    public Integer getDelay() {
-        return Integer.parseInt( mPreferences.getString( DELAY, String.valueOf( DEFAULT_DELAY_HOURS ) ) );
+    public Double getDelay() {
+        return Double.parseDouble( mPreferences.getString( DELAY, String.valueOf( DEFAULT_DELAY_HOURS ) ) );
+    }
+
+    public void setDelay(String delay) {
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putString( DELAY, delay );
+        editor.commit();
     }
 
     public Integer getStartHour() {

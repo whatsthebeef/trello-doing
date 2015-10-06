@@ -134,7 +134,7 @@ public class SettingsFragment extends PreferenceFragment {
             if(result && !isDetached() ) {
                 mToken.setEnabled( true );
                 mGetToken.setEnabled( true );
-                Intent refresh = new Intent( DoingWidget.UpdateService.ACTION_REFRESH );
+                Intent refresh = new Intent( DoingWidget.ACTION_REFRESH );
                 if(getActivity() != null) {
                     getActivity().startService( refresh );
                 }

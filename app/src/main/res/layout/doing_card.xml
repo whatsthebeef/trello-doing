@@ -8,8 +8,15 @@
                 android:paddingRight="12dip">
 
     <ImageView
-        android:id="@+id/set_deadline"
+        android:id="@+id/deadline_not_set"
         style="@style/action_icon"
+        android:layout_alignParentRight="true"
+        android:src="@drawable/alarm_clock_grey"/>
+
+    <ImageView
+        android:id="@+id/deadline_set"
+        style="@style/action_icon"
+        android:visibility="gone"
         android:layout_alignParentRight="true"
         android:src="@drawable/alarm_clock_green"/>
 

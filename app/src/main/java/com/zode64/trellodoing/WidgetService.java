@@ -21,8 +21,6 @@ public class WidgetService extends RemoteViewsService {
 
     static class CardsProvider implements RemoteViewsService.RemoteViewsFactory {
 
-        private final static int CARD_PADDING = 30;
-
         private static final String TAG = CardsProvider.class.getName();
 
         private ArrayList<Card> cards;
@@ -36,7 +34,7 @@ public class WidgetService extends RemoteViewsService {
         public CardsProvider( Context context, Intent intent ) {
             this.context = context;
             this.cardDAO = new CardDAO( context );
-            this.listType = Card.ListType.values()[ intent.getIntExtra( DoingWidget.UpdateService.EXTRA_LIST_TYPE_ORDINAL, 0 ) ];
+            this.listType = Card.ListType.values()[ intent.getIntExtra( DoingWidget.EXTRA_LIST_TYPE_ORDINAL, 0 ) ];
         }
 
         @Override
@@ -71,13 +69,20 @@ public class WidgetService extends RemoteViewsService {
         @Override
         public RemoteViews getViewAt( int position ) {
             Log.i( TAG, "Number of cards: " + cards.size() );
-            RemoteViews view = new RemoteViews( context.getPackageName(), R.layout.doing_card );
 
             Card card = cards.get( position );
+            RemoteViews view = new RemoteViews( context.getPackageName(), R.layout.doing_card );
+            if(card.pastDeadline()) {
+                view.setInt( R.layout.doing_card, "setBackgroundResource", R.drawable.layout_list_item_past_deadline );
+            }
+            if(card.hasDeadline()) {
+                view.setViewVisibility( R.id.deadline_set, View.VISIBLE );
+                view.setViewVisibility( R.id.deadline_not_set, View.GONE );
+            }
             view.setTextViewText( R.id.card_name, card.getName() );
-            Intent fillInIntent = new Intent( DoingWidget.UpdateService.ACTION_LIST_ITEM_CLICKED );
-            fillInIntent.putExtra( DoingWidget.UpdateService.EXTRA_CARD_ID, card.getId() );
-            fillInIntent.putExtra( DoingWidget.UpdateService.EXTRA_LIST_TYPE_ORDINAL, card.getInListTypeOrdinal() );
+            Intent fillInIntent = new Intent( DoingWidget.ACTION_LIST_ITEM_CLICKED );
+            fillInIntent.putExtra( DoingWidget.EXTRA_CARD_ID, card.getId() );
+            fillInIntent.putExtra( DoingWidget.EXTRA_LIST_TYPE_ORDINAL, card.getInListTypeOrdinal() );
             view.setOnClickFillInIntent( R.id.doing_card, fillInIntent );
 
             return view;

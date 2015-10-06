@@ -6,6 +6,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.zode64.trellodoing.models.Card;
+import com.zode64.trellodoing.models.Card.ListType;
 import com.zode64.trellodoing.models.Member;
 
 import java.io.BufferedInputStream;
@@ -57,27 +58,28 @@ public class TrelloManager {
     }
 
     public boolean clockOff( Card card ) {
-        return moveCard( card.getId(), card.getClockedOffList() ) != null;
+        return moveCard( card.getId(), card.getListId( ListType.CLOCKED_OFF ) );
     }
 
     public boolean clockOn( Card card ) {
-        return moveCard( card.getId(), card.getDoingList() ) != null;
+        return moveCard( card.getId(), card.getListId( ListType.DOING ) );
     }
 
     public boolean done( Card card ) {
-        return moveCard( card.getId(), card.getDoneList() ) != null;
+        return moveCard( card.getId(), card.getListId( ListType.DONE ) );
     }
 
     public boolean today( Card card ) {
-        return moveCard( card.getId(), card.getTodayList() ) != null;
+        return moveCard( card.getId(), card.getListId( ListType.TODAY ) );
     }
 
-    public Card moveCard( String cardId, String toListId ) {
+    public boolean moveCard( String cardId, String toListId ) {
         try {
-            return put( "/cards/" + cardId + "/idList", "&value=" + toListId, Card.class );
+            put( "/cards/" + cardId + "/idList", "&value=" + toListId, Card.class );
+            return true;
         } catch ( IOException e ) {
             e.printStackTrace();
-            return null;
+            return false;
         }
     }
 

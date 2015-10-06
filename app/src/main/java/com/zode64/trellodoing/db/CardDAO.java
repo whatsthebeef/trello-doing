@@ -9,9 +9,14 @@ import android.util.Log;
 
 import com.zode64.trellodoing.models.Card;
 
-import static com.zode64.trellodoing.models.Card.*;
-
 import java.util.ArrayList;
+
+import static com.zode64.trellodoing.models.Card.ListType.CLOCKED_OFF;
+import static com.zode64.trellodoing.models.Card.ListType.DOING;
+import static com.zode64.trellodoing.models.Card.ListType.DONE;
+import static com.zode64.trellodoing.models.Card.ListType.TODAY;
+import static com.zode64.trellodoing.models.Card.TRUE;
+
 
 public class CardDAO {
 
@@ -28,20 +33,16 @@ public class CardDAO {
     public final static String BOARD_NAME = "boardName";
     public final static String BOARD_ID = "boardId";
     public final static String CLOCKED_OFF_LIST = "clockedOffList";
-    public final static String IS_CLOCKED_OFF = "isClockedOff";
     public final static String IS_PENDING_PUSH = "isPendingPush";
     public final static String DEADLINE = "deadline";
     public final static String IN_LIST_TYPE = "inListType";
     public final static String DOING_LIST = "doingList";
-    public final static String IS_CLOCKED_ON = "isClockedOn";
     public final static String DONE_LIST = "doneList";
-    public final static String IS_DONE = "isDone";
     public final static String TODAY_LIST = "todayList";
-    public final static String IS_TODAY = "isToday";
 
     private String[] cols = new String[]{ ID, NAME, BOARD_SHORTLINK, BOARD_NAME, BOARD_ID,
-            CLOCKED_OFF_LIST, IS_CLOCKED_OFF, IS_PENDING_PUSH, DEADLINE, IN_LIST_TYPE, DOING_LIST, IS_CLOCKED_ON,
-            DONE_LIST, IS_DONE, TODAY_LIST, IS_TODAY  };
+            IS_PENDING_PUSH, DEADLINE, IN_LIST_TYPE, CLOCKED_OFF_LIST, DOING_LIST,
+            DONE_LIST, TODAY_LIST };
 
     /**
      * @param context
@@ -57,17 +58,13 @@ public class CardDAO {
             BOARD_SHORTLINK + " TEXT, " +
             BOARD_NAME + " TEXT, " +
             BOARD_ID + " TEXT, " +
-            CLOCKED_OFF_LIST + " TEXT, " +
-            IS_CLOCKED_OFF + " INTEGER NOT NULL, " +
             IS_PENDING_PUSH + " INTEGER NOT NULL, " +
             DEADLINE + " REAL, " +
             IN_LIST_TYPE + " INTEGER NOT NULL, " +
+            CLOCKED_OFF_LIST + " TEXT, " +
             DOING_LIST + " TEXT, " +
-            IS_CLOCKED_ON + " INTEGER NOT NULL, " +
             DONE_LIST + " TEXT, " +
-            IS_DONE + " INTEGER NOT NULL, " +
-            TODAY_LIST + " TEXT, " +
-            IS_TODAY + " INTEGER NOT NULL" +
+            TODAY_LIST + " TEXT" +
             ");";
 
     public static final String DELETE_TABLE = "DROP TABLE " + TABLE_NAME + " IF EXIST";
@@ -80,17 +77,13 @@ public class CardDAO {
         values.put( BOARD_SHORTLINK, card.getBoardShortLink() );
         values.put( BOARD_NAME, card.getBoardName() );
         values.put( BOARD_ID, card.getBoardId() );
-        values.put( CLOCKED_OFF_LIST, card.getClockedOffList() );
-        values.put( IS_CLOCKED_OFF, card.getIsClockedOff() );
         values.put( IS_PENDING_PUSH, card.getDeadline() );
         values.put( DEADLINE, card.getDeadline() );
         values.put( IN_LIST_TYPE, card.getInListTypeOrdinal() );
-        values.put( DOING_LIST, card.getDoingList() );
-        values.put( IS_CLOCKED_ON, card.getIsClockedOn() );
-        values.put( DONE_LIST, card.getDoneList() );
-        values.put( IS_DONE, card.getIsDone() );
-        values.put( TODAY_LIST, card.getTodayList() );
-        values.put( IS_TODAY, card.getIsToday() );
+        values.put( CLOCKED_OFF_LIST, card.getListId( CLOCKED_OFF ) );
+        values.put( DOING_LIST, card.getListId( DOING ) );
+        values.put( DONE_LIST, card.getListId( DONE ) );
+        values.put( TODAY_LIST, card.getListId( TODAY ) );
         database.insert( TABLE_NAME, null, values );
     }
 
@@ -131,43 +124,31 @@ public class CardDAO {
         database.update( TABLE_NAME, values, ID + "=?", new String[]{ id } );
     }
 
-    public void setIsClockedOff( String id ) {
+    public void setClockedOff( String id ) {
         ContentValues values = new ContentValues();
-        values.put( IS_CLOCKED_OFF, TRUE );
-        values.put( IS_DONE, FALSE );
-        values.put( IS_TODAY, FALSE );
-        values.put( IS_CLOCKED_ON, FALSE );
+        values.put( IN_LIST_TYPE, CLOCKED_OFF.ordinal() );
         values.put( IS_PENDING_PUSH, TRUE );
         database.update( TABLE_NAME, values, ID + "=?", new String[]{ id } );
     }
 
-    public void setIsClockedOn( String id ) {
+    public void setClockedOn( String id ) {
         ContentValues values = new ContentValues();
-        values.put( IS_CLOCKED_ON, TRUE );
-        values.put( IS_DONE, FALSE );
-        values.put( IS_TODAY, FALSE );
-        values.put( IS_CLOCKED_OFF, FALSE );
+        values.put( IN_LIST_TYPE, DOING.ordinal() );
         values.put( IS_PENDING_PUSH, TRUE );
         database.update( TABLE_NAME, values, ID + "=?", new String[]{ id } );
     }
 
-    public void setIsDone( String id ) {
+    public void setDone( String id ) {
         ContentValues values = new ContentValues();
-        values.put( IS_DONE, TRUE );
-        values.put( IS_CLOCKED_ON, FALSE );
-        values.put( IS_TODAY, FALSE );
-        values.put( IS_CLOCKED_OFF, FALSE );
         values.put( IS_PENDING_PUSH, TRUE );
+        values.put( IN_LIST_TYPE, DONE.ordinal() );
         values.put( DEADLINE, 0 );
         database.update( TABLE_NAME, values, ID + "=?", new String[]{ id } );
     }
 
-    public void setIsToday( String id ) {
+    public void setToday( String id ) {
         ContentValues values = new ContentValues();
-        values.put( IS_TODAY, TRUE );
-        values.put( IS_CLOCKED_ON, FALSE );
-        values.put( IS_DONE, FALSE );
-        values.put( IS_CLOCKED_OFF, FALSE );
+        values.put( IN_LIST_TYPE, TODAY.ordinal() );
         values.put( IS_PENDING_PUSH, TRUE );
         database.update( TABLE_NAME, values, ID + "=?", new String[]{ id } );
     }
@@ -207,17 +188,13 @@ public class CardDAO {
                 card.setBoardShortLink( cursor.getString( 2 ) );
                 card.setBoardName( cursor.getString( 3 ) );
                 card.setBoardId( cursor.getString( 4 ) );
-                card.setClockedOffList( cursor.getString( 5 ) );
-                card.setIsClockedOff( cursor.getInt( 6 ) );
-                card.setIsPendingPush( cursor.getInt( 7 ) );
-                card.setDeadline( cursor.getLong( 8 ) );
-                card.setInListType( cursor.getInt( 9 ) );
-                card.setDoingList( cursor.getString( 10 ) );
-                card.setIsClockedOn( cursor.getInt( 11 ) );
-                card.setDoneList( cursor.getString( 12 ) );
-                card.setIsDone( cursor.getInt( 13 ) );
-                card.setTodayList( cursor.getString( 14 ) );
-                card.setIsToday( cursor.getInt( 15 ) );
+                card.setIsPendingPush( cursor.getInt( 5 ) );
+                card.setDeadline( cursor.getLong( 6 ) );
+                card.setInListType( cursor.getInt( 7 ) );
+                card.setListId( CLOCKED_OFF, cursor.getString( 8 ) );
+                card.setListId( DOING, cursor.getString( 9 ) );
+                card.setListId( DONE, cursor.getString( 10 ) );
+                card.setListId( TODAY, cursor.getString( 11 ) );
                 cards.add( card );
             }
             cursor.close();

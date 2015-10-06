@@ -26,48 +26,32 @@ public class Board {
         this.id = id;
     }
 
-    public List getClockedOffList() {
-        return clockedOffList;
-    }
-
     public String getClockedOffListId() {
-        return clockedOffList.getId();
+        return clockedOffList != null ? clockedOffList.getId() : null;
     }
 
     public void setClockedOffList( List clockedOffList ) {
         this.clockedOffList = clockedOffList;
     }
 
-    public List getTodayList() {
-        return todayList;
-    }
-
     public String getTodayListId() {
-        return todayList.getId();
+        return todayList != null ? todayList.getId() : null;
     }
 
     public void setTodayList( List todoList ) {
         this.todayList = todoList;
     }
 
-    public List getDoingList() {
-        return doingList;
-    }
-
     public String getDoingListId() {
-        return doingList.getId();
+        return doingList != null ? doingList.getId() : null;
     }
 
     public void setDoingList( List doingList ) {
         this.doingList = doingList;
     }
 
-    public List getDoneList() {
-        return doneList;
-    }
-
     public String getDoneListId() {
-        return doneList.getId();
+        return doneList != null ? doneList.getId() : null;
     }
 
     public void setDoneList( List doneList ) {

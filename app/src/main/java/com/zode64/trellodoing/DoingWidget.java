@@ -29,6 +29,18 @@ import java.util.Map;
 
 public class DoingWidget extends AppWidgetProvider {
 
+    public final static String ACTION_REFRESH = "com.zode64.trellodoing.intent.action.REFRESH";
+    public final static String ACTION_AUTO_UPDATE = "com.zode64.trellodoing.intent.action.AUTO_UPDATE";
+    public final static String ACTION_STOP_ALARM = "com.zode64.trellodoing.intent.action.STOP_ALARM";
+    public final static String ACTION_KEEP_DOING = "com.zode64.trellodoing.intent.action.KEEP_DOING";
+    public final static String ACTION_NETWORK_CHANGE = "com.zode64.trellodoing.intent.action.NETWORK_CHANGE";
+    public final static String ACTION_ADD_PERSONAL_CARD = "com.zode64.trellodoing.intent.action.ADD_PERSONAL_CARD";
+    public final static String ACTION_LIST_ITEM_CLICKED = "com.zode64.trellodoing.intent.action.LIST_ITEM_CLICKED";
+
+    public static final String EXTRA_CARD_ID = "com.zode64.trellodoing.cardsproivder.EXTRA_CARD_ID";
+    public static final String EXTRA_LIST_TYPE_ORDINAL = "com.zode64.trellodoing.cardsproivder.EXTRA_LIST_TYPE_ORDINAL";
+    public static final String EXTRA_DELAY = "com.zode64.trellodoing.cardsproivder.EXTRA_DELAY";
+
     private final static String TAG = DoingWidget.class.getName();
 
     @Override
@@ -73,26 +85,15 @@ public class DoingWidget extends AppWidgetProvider {
             if ( netInfo != null && netInfo.isConnectedOrConnecting() ) {
                 // When the network returns any checks will begin as normal even if 'Keep Doing' alarm is set.
                 Log.d( TAG, "Connected to network" );
-                context.startService( new Intent( UpdateService.ACTION_NETWORK_CHANGE, null, context, UpdateService.class ) );
+                context.startService( new Intent( ACTION_NETWORK_CHANGE, null, context, UpdateService.class ) );
             } else {
                 Log.d( TAG, "No network, stop checking for now" );
-                context.startService( new Intent( UpdateService.ACTION_STOP_ALARM, null, context, UpdateService.class ) );
+                context.startService( new Intent( ACTION_STOP_ALARM, null, context, UpdateService.class ) );
             }
         }
     }
 
     public static class UpdateService extends IntentService {
-
-        public final static String ACTION_REFRESH = "com.zode64.trellodoing.intent.action.REFRESH";
-        public final static String ACTION_AUTO_UPDATE = "com.zode64.trellodoing.intent.action.AUTO_UPDATE";
-        public final static String ACTION_STOP_ALARM = "com.zode64.trellodoing.intent.action.STOP_ALARM";
-        public final static String ACTION_KEEP_DOING = "com.zode64.trellodoing.intent.action.KEEP_DOING";
-        public final static String ACTION_NETWORK_CHANGE = "com.zode64.trellodoing.intent.action.NETWORK_CHANGE";
-        public final static String ACTION_ADD_PERSONAL_CARD = "com.zode64.trellodoing.intent.action.ADD_PERSONAL_CARD";
-        public final static String ACTION_LIST_ITEM_CLICKED = "com.zode64.trellodoing.intent.action.LIST_ITEM_CLICKED";
-
-        public static final String EXTRA_CARD_ID = "com.zode64.trellodoing.cardsproivder.EXTRA_CARD_ID";
-        public static final String EXTRA_LIST_TYPE_ORDINAL = "com.zode64.trellodoing.cardsproivder.EXTRA_LIST_TYPE_ORDINAL";
 
         public UpdateService() {
             super( "Trello service" );
@@ -127,8 +128,10 @@ public class DoingWidget extends AppWidgetProvider {
                 return;
             }
             if ( ACTION_KEEP_DOING.equals( intent.getAction() ) ) {
+                /*
                 Calendar alarm = appWidgetAlarm.delayAlarm();
                 preferences.handleSetKeepDoingCall( alarm );
+                */
                 Log.d( TAG, "Setting keep doing" );
                 return;
             }
@@ -153,17 +156,13 @@ public class DoingWidget extends AppWidgetProvider {
             Map<String, Long> deadlines = new HashMap<>();
             ArrayList<Card> cachedCards = cardDAO.all();
             for ( Card card : cachedCards ) {
-                if ( isOnline && card.isPendingPush()) {
+                if ( isOnline && card.isPendingPush() ) {
                     if ( card.getId().equals( "temp" ) ) {
-                        if ( trelloManager.newPersonalCard( card.getName() ) ) {
-                            cardDAO.delete( card.getId() );
-                        } else {
+                        if ( !trelloManager.newPersonalCard( card.getName() ) ) {
                             isOnline = false;
                         }
-                    } else if ( card.getIsClockedOff() == 1 ) {
-                        if ( trelloManager.clockOff( card ) ) {
-                            cardDAO.delete( card.getId() );
-                        } else {
+                    } else {
+                        if ( !trelloManager.moveCard( card.getId(), card.getCurrentListId() ) ) {
                             isOnline = false;
                         }
                     }
@@ -173,7 +172,7 @@ public class DoingWidget extends AppWidgetProvider {
                 }
             }
 
-            if(isOnline) {
+            if ( isOnline ) {
                 Member member = trelloManager.member();
                 if ( member != null ) {
                     cardDAO.deleteAll();
@@ -202,6 +201,7 @@ public class DoingWidget extends AppWidgetProvider {
             setListAdapter( views, R.id.clocked_off_cards_list, manager, ids, ListType.CLOCKED_OFF );
 
             manager.updateAppWidget( thisWidget, views );
+            cardDAO.closeDB();
             //setting an empty view in case of no data
             Log.d( TAG, "Widget updated" );
         }
@@ -215,14 +215,14 @@ public class DoingWidget extends AppWidgetProvider {
         }
 
         private void setRefreshClickListener( RemoteViews views ) {
-            Intent refresh = new Intent( UpdateService.ACTION_REFRESH );
+            Intent refresh = new Intent( ACTION_REFRESH );
             PendingIntent pendingRefresh = PendingIntent.getService( this, 0, refresh, 0 );
             views.setOnClickPendingIntent( R.id.refresh, pendingRefresh );
         }
 
         private void setKeepDoingClickListener( RemoteViews views ) {
-            Intent keepDoing = new Intent( UpdateService.ACTION_KEEP_DOING );
-            PendingIntent pendingKeepDoing = PendingIntent.getService( this, 0, keepDoing, 0 );
+            Intent keepDoing = new Intent( this, KeepDoingActivity.class );
+            PendingIntent pendingKeepDoing = PendingIntent.getActivity( this, 0, keepDoing, 0 );
             views.setOnClickPendingIntent( R.id.keep_doing, pendingKeepDoing );
         }
 
@@ -242,7 +242,7 @@ public class DoingWidget extends AppWidgetProvider {
         }
 
         private void setAddPersonalCardListener( RemoteViews views ) {
-            Intent addPersonalCard = new Intent( UpdateService.ACTION_ADD_PERSONAL_CARD );
+            Intent addPersonalCard = new Intent( ACTION_ADD_PERSONAL_CARD );
             PendingIntent pendingAddPersonalCard = PendingIntent.getService( this, 0, addPersonalCard, 0 );
             views.setOnClickPendingIntent( R.id.add_personal_card, pendingAddPersonalCard );
         }

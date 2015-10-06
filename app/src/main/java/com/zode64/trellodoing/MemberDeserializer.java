@@ -158,10 +158,10 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                     case NAME:
                         String boardName = boardAttribute.getValue().getAsString();
                         card.setBoardName( boardName );
-                        card.setClockedOffList( boardReg.get( boardName ).getClockedOffListId() );
-                        card.setDoingList( boardReg.get( boardName ).getDoingListId() );
-                        card.setDoneList( boardReg.get( boardName ).getDoneListId() );
-                        card.setTodayList( boardReg.get( boardName ).getDoneListId() );
+                        card.setListId( Card.ListType.DOING, boardReg.get( boardName ).getDoingListId() );
+                        card.setListId( Card.ListType.TODAY, boardReg.get( boardName ).getTodayListId() );
+                        card.setListId( Card.ListType.CLOCKED_OFF, boardReg.get( boardName ).getClockedOffListId() );
+                        card.setListId( Card.ListType.DONE, boardReg.get( boardName ).getDoneListId() );
                         switch ( listAfter ) {
                             case DOING_LIST:
                                 card.setInListType( DOING );

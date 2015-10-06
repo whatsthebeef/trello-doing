@@ -3,6 +3,7 @@ package com.zode64.trellodoing;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
@@ -14,7 +15,9 @@ import com.zode64.trellodoing.db.CardDAO;
 import com.zode64.trellodoing.models.Card;
 import com.zode64.trellodoing.models.Card.ListType;
 
-public class CardActionActivity extends Activity {
+import java.util.Calendar;
+
+public class CardActionActivity extends Activity implements ConfigureDelayFragment.DelayChangeListener {
 
     private TextView cardText;
 
@@ -27,8 +30,10 @@ public class CardActionActivity extends Activity {
 
     private TrelloManager trello;
     private CardDAO cardDAO;
+    private Card card;
 
     private ProgressDialog mProgress;
+    private WidgetAlarm alarm;
 
     @Override
     protected void onCreate( Bundle savedInstanceState ) {
@@ -46,7 +51,7 @@ public class CardActionActivity extends Activity {
         today = ( ImageButton ) findViewById( R.id.today );
 
         ListType listType = ListType.values()[
-                getIntent().getIntExtra( DoingWidget.UpdateService.EXTRA_LIST_TYPE_ORDINAL, 0 ) ];
+                getIntent().getIntExtra( DoingWidget.EXTRA_LIST_TYPE_ORDINAL, 0 ) ];
         if ( listType == ListType.DOING ) {
             clockOff.setVisibility( View.VISIBLE );
             done.setVisibility( View.VISIBLE );
@@ -60,13 +65,22 @@ public class CardActionActivity extends Activity {
 
         cardDAO = new CardDAO( getApplication() );
 
-        final String cardId = getIntent().getStringExtra( DoingWidget.UpdateService.EXTRA_CARD_ID );
-        final Card card = cardDAO.find( cardId );
+        final String cardId = getIntent().getStringExtra( DoingWidget.EXTRA_CARD_ID );
+        card = cardDAO.find( cardId );
 
         final DoingPreferences preferences = new DoingPreferences( this );
+        alarm = new WidgetAlarm( this, preferences );
         trello = new TrelloManager( preferences.getSharedPreferences() );
 
         cardText.setText( card.getName() );
+
+        cardText.setOnClickListener( new View.OnClickListener() {
+            @Override
+            public void onClick( View v ) {
+                Intent getBoard = new Intent( Intent.ACTION_VIEW, Uri.parse( card.getBoardShortUrl() ) );
+                startActivity( getBoard );
+            }
+        } );
 
         clockOff.setOnClickListener( new View.OnClickListener() {
             @Override
@@ -92,9 +106,8 @@ public class CardActionActivity extends Activity {
         setDeadline.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                cardDAO.setDeadline( cardId, preferences.getDelay() );
-                startService( new Intent( getApplication(), DoingWidget.UpdateService.class ) );
-                finish();
+                getFragmentManager().beginTransaction().replace( R.id.card_actions,
+                        new ConfigureDelayFragment() ).commit();
             }
         } );
 
@@ -123,6 +136,18 @@ public class CardActionActivity extends Activity {
         super.onStart();
     }
 
+    @Override
+    public void onChange(Double delay, String cardId) {
+        Calendar deadline = alarm.deadlineAlarm( delay );
+        cardDAO.setDeadline( cardId, deadline.getTimeInMillis() );
+        startService( new Intent( getApplication(), DoingWidget.UpdateService.class ) );
+        finish();
+    }
+
+    public Card getCard() {
+        return card;
+    }
+
     private class ClockOffTask extends AsyncTask<Card, Void, String> {
 
         @Override
@@ -138,7 +163,7 @@ public class CardActionActivity extends Activity {
         protected void onPostExecute( String cardId ) {
             mProgress.dismiss();
             if ( cardId != null ) {
-                cardDAO.setIsClockedOff( cardId );
+                cardDAO.setClockedOff( cardId );
             }
             startService( new Intent( getApplication(), DoingWidget.UpdateService.class ) );
             finish();
@@ -165,7 +190,7 @@ public class CardActionActivity extends Activity {
         protected void onPostExecute( String cardId ) {
             mProgress.dismiss();
             if ( cardId != null ) {
-                cardDAO.setIsClockedOn( cardId );
+                cardDAO.setClockedOn( cardId );
             }
             startService( new Intent( getApplication(), DoingWidget.UpdateService.class ) );
             finish();
@@ -192,7 +217,7 @@ public class CardActionActivity extends Activity {
         protected void onPostExecute( String cardId ) {
             mProgress.dismiss();
             if ( cardId != null ) {
-                cardDAO.setIsDone( cardId );
+                cardDAO.setDone( cardId );
             }
             startService( new Intent( getApplication(), DoingWidget.UpdateService.class ) );
             finish();
@@ -219,7 +244,7 @@ public class CardActionActivity extends Activity {
         protected void onPostExecute( String cardId ) {
             mProgress.dismiss();
             if ( cardId != null ) {
-                cardDAO.setIsToday( cardId );
+                cardDAO.setToday( cardId );
             }
             startService( new Intent( getApplication(), DoingWidget.UpdateService.class ) );
             finish();
