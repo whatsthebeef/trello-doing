@@ -4,7 +4,11 @@ import java.util.Calendar;
 
 public class Card {
 
+    public final static int TRUE = 1;
+    public final static int FALSE = 0;
+
     public enum ListType {
+        UNKNOWN,
         TODO,
         TODAY,
         DOING,
@@ -18,10 +22,18 @@ public class Card {
     private String boardId;
     private String id;
     private String clockedOffList;
+    private String doingList;
+    private String doneList;
+    private String todayList;
+
     private ListType inListType;
 
     private long deadline;
+
     private int isClockedOff;
+    private int isClockedOn;
+    private int isToday;
+    private int isDone;
     private int isPendingPush;
 
     public String getBoardShortUrl() {
@@ -104,6 +116,10 @@ public class Card {
         return isPendingPush;
     }
 
+    public boolean isPendingPush() {
+        return isPendingPush == 1;
+    }
+
     public void setIsPendingPush( int isPendingPush ) {
         this.isPendingPush = isPendingPush;
     }
@@ -117,11 +133,68 @@ public class Card {
     }
 
     public int getInListTypeOrdinal() {
-        return inListType.ordinal();
+        if ( inListType != null ) {
+            return inListType.ordinal();
+        } else {
+            return 0;
+        }
+    }
+
+    public String getInListTypeOrdinalStr() {
+        return String.valueOf( inListType.ordinal() );
     }
 
     public void setInListType( int inListType ) {
-        this.inListType = ListType.values()[inListType];
+        this.inListType = ListType.values()[ inListType ];
     }
+
+    public String getDoingList() {
+        return doingList;
+    }
+
+    public void setDoingList( String doingList ) {
+        this.doingList = doingList;
+    }
+
+    public int getIsClockedOn() {
+        return isClockedOn;
+    }
+
+    public void setIsClockedOn( int isClockedOn ) {
+        this.isClockedOn = isClockedOn;
+    }
+
+    public String getDoneList() {
+        return doneList;
+    }
+
+    public void setDoneList( String doneList ) {
+        this.doneList = doneList;
+    }
+
+    public int getIsDone() {
+        return isDone;
+    }
+
+    public void setIsDone( int isDone ) {
+        this.isDone = isDone;
+    }
+
+    public String getTodayList() {
+        return todayList;
+    }
+
+    public void setTodayList( String todayList ) {
+        this.todayList = todayList;
+    }
+
+    public int getIsToday() {
+        return isToday;
+    }
+
+    public void setIsToday( int isToday ) {
+        this.isToday = isToday;
+    }
+
 }
 

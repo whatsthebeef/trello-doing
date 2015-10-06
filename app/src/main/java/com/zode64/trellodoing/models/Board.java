@@ -7,6 +7,8 @@ public class Board {
 
     private List todayList;
     private List clockedOffList;
+    private List doingList;
+    private List doneList;
 
     public String getName() {
         return name;
@@ -48,4 +50,27 @@ public class Board {
         this.todayList = todoList;
     }
 
+    public List getDoingList() {
+        return doingList;
+    }
+
+    public String getDoingListId() {
+        return doingList.getId();
+    }
+
+    public void setDoingList( List doingList ) {
+        this.doingList = doingList;
+    }
+
+    public List getDoneList() {
+        return doneList;
+    }
+
+    public String getDoneListId() {
+        return doneList.getId();
+    }
+
+    public void setDoneList( List doneList ) {
+        this.doneList = doneList;
+    }
 }

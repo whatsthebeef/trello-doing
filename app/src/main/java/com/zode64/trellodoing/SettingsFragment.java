@@ -135,7 +135,9 @@ public class SettingsFragment extends PreferenceFragment {
                 mToken.setEnabled( true );
                 mGetToken.setEnabled( true );
                 Intent refresh = new Intent( DoingWidget.UpdateService.ACTION_REFRESH );
-                getActivity().startService( refresh );
+                if(getActivity() != null) {
+                    getActivity().startService( refresh );
+                }
             }
             else {
                 mToken.setText( "" );

@@ -19,12 +19,31 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/card_name"
         android:orientation="horizontal"
-        android:weightSum="3">
+        android:weightSum="4">
 
         <ImageButton
             android:id="@+id/clock_out"
+            android:visibility="invisible"
             style="@style/action_button"
             android:src="@drawable/clock_off"/>
+
+        <ImageButton
+            android:visibility="invisible"
+            android:id="@+id/clock_on"
+            style="@style/action_button"
+            android:src="@drawable/clock_on"/>
+
+        <ImageButton
+            android:id="@+id/done"
+            android:visibility="invisible"
+            style="@style/action_button"
+            android:src="@drawable/done"/>
+
+        <ImageButton
+            android:id="@+id/today"
+            android:visibility="invisible"
+            style="@style/action_button"
+            android:src="@drawable/today"/>
 
         <ImageButton
             android:id="@+id/set_deadline"

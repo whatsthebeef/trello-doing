@@ -16,6 +16,7 @@ import android.widget.RemoteViews;
 
 import com.zode64.trellodoing.db.CardDAO;
 import com.zode64.trellodoing.models.Card;
+import com.zode64.trellodoing.models.Card.ListType;
 import com.zode64.trellodoing.models.Member;
 
 import java.text.DateFormat;
@@ -23,6 +24,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class DoingWidget extends AppWidgetProvider {
 
@@ -80,17 +83,16 @@ public class DoingWidget extends AppWidgetProvider {
 
     public static class UpdateService extends IntentService {
 
-        public final static String ACTION_CLOCK_OFF = "com.zode64.trellodoing.intent.action.CLOCK_OFF";
         public final static String ACTION_REFRESH = "com.zode64.trellodoing.intent.action.REFRESH";
         public final static String ACTION_AUTO_UPDATE = "com.zode64.trellodoing.intent.action.AUTO_UPDATE";
         public final static String ACTION_STOP_ALARM = "com.zode64.trellodoing.intent.action.STOP_ALARM";
         public final static String ACTION_KEEP_DOING = "com.zode64.trellodoing.intent.action.KEEP_DOING";
-        public final static String ACTION_SET_DEADLINE = "com.zode64.trellodoing.intent.action.SET_DEADLINE";
         public final static String ACTION_NETWORK_CHANGE = "com.zode64.trellodoing.intent.action.NETWORK_CHANGE";
         public final static String ACTION_ADD_PERSONAL_CARD = "com.zode64.trellodoing.intent.action.ADD_PERSONAL_CARD";
         public final static String ACTION_LIST_ITEM_CLICKED = "com.zode64.trellodoing.intent.action.LIST_ITEM_CLICKED";
 
         public static final String EXTRA_CARD_ID = "com.zode64.trellodoing.cardsproivder.EXTRA_CARD_ID";
+        public static final String EXTRA_LIST_TYPE_ORDINAL = "com.zode64.trellodoing.cardsproivder.EXTRA_LIST_TYPE_ORDINAL";
 
         public UpdateService() {
             super( "Trello service" );
@@ -146,63 +148,58 @@ public class DoingWidget extends AppWidgetProvider {
             setAddPersonalCardListener( views );
             setCardListListener( views );
 
-            ArrayList<Card> cardsPendingPush = cardDAO.wherePendingPush();
-            for ( Card card : cardsPendingPush ) {
-                if ( card.getId().equals( "temp" ) ) {
-                    if ( trelloManager.newPersonalCard( card.getName() ) ) {
-                        cardDAO.delete( card.getId() );
+            boolean isOnline = true;
+
+            Map<String, Long> deadlines = new HashMap<>();
+            ArrayList<Card> cachedCards = cardDAO.all();
+            for ( Card card : cachedCards ) {
+                if ( isOnline && card.isPendingPush()) {
+                    if ( card.getId().equals( "temp" ) ) {
+                        if ( trelloManager.newPersonalCard( card.getName() ) ) {
+                            cardDAO.delete( card.getId() );
+                        } else {
+                            isOnline = false;
+                        }
+                    } else if ( card.getIsClockedOff() == 1 ) {
+                        if ( trelloManager.clockOff( card ) ) {
+                            cardDAO.delete( card.getId() );
+                        } else {
+                            isOnline = false;
+                        }
                     }
-                } else if ( card.getIsClockedOff() == 1 ) {
-                    if ( trelloManager.clockOff( card ) ) {
-                        cardDAO.delete( card.getId() );
-                    }
+                }
+                if ( card.hasDeadline() ) {
+                    deadlines.put( card.getId(), card.getDeadline() );
                 }
             }
 
-            Member member = trelloManager.member();
-            if ( member != null ) {
-                cardDAO.deleteAll();
-                ArrayList<Card> cards = new ArrayList<>();
-                if ( !cards.isEmpty() ) {
+            if(isOnline) {
+                Member member = trelloManager.member();
+                if ( member != null ) {
+                    cardDAO.deleteAll();
+                    ArrayList<Card> cards = member.getCards();
                     for ( Card card : cards ) {
+                        Long deadline = deadlines.get( card.getId() );
+                        if ( deadline != null ) {
+                            card.setDeadline( deadline );
+                        }
                         cardDAO.create( card );
-                        deadlineCheck( card, notifications );
-                        notifications.standard( true, card.getBoardShortUrl() );
-                        Log.d( TAG, "Personal card id: " + card.getId() );
+                        Log.d( TAG, "Card id: " + card.getId() );
                     }
-                }
-                if ( cards.size() > 0 ) {
-                    preferences.saveBoard( doingCards.get( 0 ).getBoardShortUrl() );
-                    if ( doingCards.size() > 1 ) {
-                        notifications.multiDoings( doingCards.get( 1 ).getBoardShortUrl() );
-                    }
+                    setLastChecked( views );
                 } else {
-                    notifications.standard( false, preferences.getLastDoingBoard() );
-                    preferences.handleKeepDoingCardComplete();
-                    appWidgetAlarm.stopDeadlineAlarm();
+                    views.setTextViewText( R.id.last_checked, getString( R.string.offline ) );
                 }
-                setLastChecked( views );
             } else {
-                // TODO this is an issue because it presents personal card in place of the last working card
-                Card personalCard = cardDAO.getPersonalCard();
-                if ( personalCard != null ) {
-                    deadlineCheck( personalCard, notifications );
-                }
-                setLastCheckedOffline( views );
+                views.setTextViewText( R.id.last_checked, getString( R.string.offline ) );
             }
 
             AppWidgetManager manager = AppWidgetManager.getInstance( this );
             int[] ids = manager.getAppWidgetIds( thisWidget );
 
-            Intent doingAdapterIntent = new Intent( this, WidgetService.class );
-            doingAdapterIntent.setData( Uri.parse( doingAdapterIntent.toUri( Intent.URI_INTENT_SCHEME ) ) );
-            views.setRemoteAdapter( R.id.doing_cards_list, doingAdapterIntent );
-            manager.notifyAppWidgetViewDataChanged( ids, R.id.doing_cards_list );
-
-            Intent todayAdapterIntent = new Intent( this, WidgetService.class );
-            todayAdapterIntent.setData( Uri.parse( todayAdapterIntent.toUri( Intent.URI_INTENT_SCHEME ) ) );
-            views.setRemoteAdapter( R.id.today_cards_list, todayAdapterIntent );
-            manager.notifyAppWidgetViewDataChanged( ids, R.id.today_cards_list );
+            setListAdapter( views, R.id.doing_cards_list, manager, ids, ListType.DOING );
+            setListAdapter( views, R.id.today_cards_list, manager, ids, ListType.TODAY );
+            setListAdapter( views, R.id.clocked_off_cards_list, manager, ids, ListType.CLOCKED_OFF );
 
             manager.updateAppWidget( thisWidget, views );
             //setting an empty view in case of no data
@@ -215,10 +212,6 @@ public class DoingWidget extends AppWidgetProvider {
             Date today = Calendar.getInstance().getTime();
             String reportDate = df.format( today );
             views.setTextViewText( R.id.last_checked, reportDate );
-        }
-
-        private void setLastCheckedOffline( RemoteViews views ) {
-            views.setTextViewText( R.id.last_checked, getString( R.string.offline ) );
         }
 
         private void setRefreshClickListener( RemoteViews views ) {
@@ -244,6 +237,8 @@ public class DoingWidget extends AppWidgetProvider {
             PendingIntent itemClickPendingIntent = PendingIntent.getActivity( this, 0, itemClickIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT );
             views.setPendingIntentTemplate( R.id.doing_cards_list, itemClickPendingIntent );
+            views.setPendingIntentTemplate( R.id.today_cards_list, itemClickPendingIntent );
+            views.setPendingIntentTemplate( R.id.clocked_off_cards_list, itemClickPendingIntent );
         }
 
         private void setAddPersonalCardListener( RemoteViews views ) {
@@ -252,11 +247,13 @@ public class DoingWidget extends AppWidgetProvider {
             views.setOnClickPendingIntent( R.id.add_personal_card, pendingAddPersonalCard );
         }
 
-        private void deadlineCheck( Card card, DoingNotification notifications ) {
-            if ( card.pastDeadline() ) {
-                Log.d( TAG, "Card not complete after deadline" );
-                notifications.deadline( card.getBoardShortUrl() );
-            }
+        private void setListAdapter( RemoteViews views, int resourceId, AppWidgetManager manager, int ids[],
+                                     ListType listType ) {
+            Intent intent = new Intent( this, WidgetService.class );
+            intent.putExtra( EXTRA_LIST_TYPE_ORDINAL, listType.ordinal() );
+            intent.setData( Uri.parse( intent.toUri( Intent.URI_INTENT_SCHEME ) ) );
+            views.setRemoteAdapter( resourceId, intent );
+            manager.notifyAppWidgetViewDataChanged( ids, resourceId );
         }
     }
 }

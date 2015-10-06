@@ -14,7 +14,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import static com.zode64.trellodoing.models.Card.ListType.*;
+import static com.zode64.trellodoing.models.Card.ListType.CLOCKED_OFF;
+import static com.zode64.trellodoing.models.Card.ListType.DOING;
+import static com.zode64.trellodoing.models.Card.ListType.TODAY;
 
 public class MemberDeserializer implements JsonDeserializer<Member> {
 
@@ -33,6 +35,7 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
     private static final String PERSONAL_BOARD_NAME = "Personal";
 
     private static final String DOING_LIST = "Doing";
+    private static final String DONE_LIST = "Done";
     private static final String TODAY_LIST = "Today";
     private static final String CLOCKED_OFF_LIST = "Clocked Off";
     private static final String TODO_LIST = "Todo";
@@ -57,9 +60,9 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                         break;
                     case LISTS:
                         Iterator<JsonElement> listsItr = boardAttr.getValue().getAsJsonArray().iterator();
-                        List list = new List();
                         while ( listsItr.hasNext() ) {
                             Iterator<Map.Entry<String, JsonElement>> listAttrs = listsItr.next().getAsJsonObject().entrySet().iterator();
+                            List list = new List();
                             while ( listAttrs.hasNext() ) {
                                 Map.Entry<String, JsonElement> listAttr = listAttrs.next();
                                 switch ( listAttr.getKey() ) {
@@ -67,12 +70,26 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                                         list.setId( listAttr.getValue().getAsString() );
                                         break;
                                     case NAME:
-                                        if ( listAttr.getValue().getAsString().equals( CLOCKED_OFF_LIST ) ) {
-                                            board.setClockedOffList( list );
-                                        } else if ( listAttr.getValue().getAsString().equals( TODAY_LIST ) ) {
-                                            board.setTodayList( list );
+                                        String listName = listAttr.getValue().getAsString();
+                                        switch ( listName ) {
+                                            case CLOCKED_OFF_LIST:
+                                                board.setClockedOffList( list );
+                                                break;
+                                            case TODAY_LIST:
+                                                board.setTodayList( list );
+                                                break;
+                                            case DOING_LIST:
+                                                board.setDoingList( list );
+                                                break;
+                                            case DONE_LIST:
+                                                board.setDoneList( list );
+                                                break;
+                                            default:
+                                                // ignore
                                         }
                                         break;
+                                    default:
+                                        // ignore
                                 }
                             }
                         }
@@ -127,7 +144,7 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
             if ( !cardReg.containsKey( card.getId() ) ) {
                 cardReg.put( card.getId(), card );
             } else {
-                break;
+                continue;
             }
 
             String listAfter = listAfterEntry.getValue().getAsJsonObject().get( NAME ).getAsString();
@@ -142,22 +159,24 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                         String boardName = boardAttribute.getValue().getAsString();
                         card.setBoardName( boardName );
                         card.setClockedOffList( boardReg.get( boardName ).getClockedOffListId() );
-                        if ( PERSONAL_BOARD_NAME.equals( boardName ) ) {
-                            if ( isDoingList( listAfter ) ) {
-                                member.addPersonalDoingCard( card );
+                        card.setDoingList( boardReg.get( boardName ).getDoingListId() );
+                        card.setDoneList( boardReg.get( boardName ).getDoneListId() );
+                        card.setTodayList( boardReg.get( boardName ).getDoneListId() );
+                        switch ( listAfter ) {
+                            case DOING_LIST:
                                 card.setInListType( DOING );
-                            } else if ( isTodayList( listAfter ) ) {
-                                member.addPersonalTodayCard( card );
+                                member.addCard( card );
+                                break;
+                            case CLOCKED_OFF_LIST:
+                                card.setInListType( CLOCKED_OFF );
+                                member.addCard( card );
+                                break;
+                            case TODAY_LIST:
                                 card.setInListType( TODAY );
-                            }
-                        } else {
-                            if ( isDoingList( listAfter ) ) {
-                                member.addWorkDoingCard( card );
-                                card.setInListType( DOING );
-                            } else if ( isTodayList( listAfter ) ) {
-                                member.addPersonalTodayCard( card );
-                                card.setInListType( TODAY );
-                            }
+                                member.addCard( card );
+                                break;
+                            default:
+                                // ignore
                         }
                         break;
                     case ID:
@@ -170,19 +189,4 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
         }
         return member;
     }
-
-    private boolean isDoingList( String list ) {
-        if ( DOING_LIST.equals( list ) ) {
-            return true;
-        }
-        return false;
-    }
-
-    private boolean isTodayList( String list ) {
-        if ( TODAY_LIST.equals( list ) ) {
-            return true;
-        }
-        return false;
-    }
-
 }

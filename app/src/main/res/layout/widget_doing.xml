@@ -61,53 +61,78 @@
 
     </RelativeLayout>
 
-    <LinearLayout
+    <RelativeLayout
+        android:id="@+id/doing"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/doing_list_title"
+            style="@style/list_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_name"></TextView>
+
+        <!-- ListView to be shown on widget -->
+        <ListView
+            android:id="@+id/doing_cards_list"
+            style="@style/list_view"
+            android:layout_height="58dip"
+            android:layout_below="@id/doing_list_title"/>
+
+    </RelativeLayout>
+
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/menu"
-        android:orientation="vertical">
+        android:layout_below="@id/doing">
 
-        <RelativeLayout
-            android:id="@+id/doing"
+        <LinearLayout
+            android:orientation="vertical"
+            android:weightSum="2"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent">
 
-            <TextView
-                android:id="@+id/doing_list_title"
-                style="@style/list_title"
+            <RelativeLayout
+                android:id="@+id/today"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/widget_name"></TextView>
-
-            <!-- ListView to be shown on widget -->
-            <ListView
-                android:id="@+id/doing_cards_list"
-                android:layout_height="60dip"
-                style="@style/list_view"
-                android:layout_below="@id/doing_list_title" />
-
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:id="@+id/today"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_below="@id/doing">
-
-            <TextView
-                android:id="@+id/today_list_title"
-                style="@style/list_title"
-                android:text="@string/today"></TextView>
-
-            <!-- ListView to be shown on widget -->
-            <ListView
-                android:id="@+id/today_cards_list"
-                style="@style/list_view"
                 android:layout_height="match_parent"
-                android:layout_below="@id/today_list_title" />
+                android:layout_weight="1">
 
-        </RelativeLayout>
+                <TextView
+                    android:id="@+id/today_list_title"
+                    style="@style/list_title"
+                    android:text="@string/today"></TextView>
 
-    </LinearLayout>
+                <ListView
+                    android:id="@+id/today_cards_list"
+                    style="@style/list_view"
+                    android:layout_height="match_parent"
+                    android:layout_below="@id/today_list_title"/>
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/clocked_off"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/clocked_off_list_title"
+                    style="@style/list_title"
+                    android:text="@string/clocked_off"></TextView>
+
+                <ListView
+                    android:id="@+id/clocked_off_cards_list"
+                    style="@style/list_view"
+                    android:layout_height="match_parent"
+                    android:layout_below="@id/clocked_off_list_title"/>
+
+            </RelativeLayout>
+        </LinearLayout>
+    </RelativeLayout>
 
 </RelativeLayout>

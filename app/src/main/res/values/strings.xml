@@ -53,5 +53,6 @@
     <string name="work">Work</string>
     <string name="today">Today</string>
     <string name="card_action">Card action</string>
+    <string name="clocked_off">Clocked Off</string>
 
 </resources>

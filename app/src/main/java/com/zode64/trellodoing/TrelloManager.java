@@ -60,6 +60,18 @@ public class TrelloManager {
         return moveCard( card.getId(), card.getClockedOffList() ) != null;
     }
 
+    public boolean clockOn( Card card ) {
+        return moveCard( card.getId(), card.getDoingList() ) != null;
+    }
+
+    public boolean done( Card card ) {
+        return moveCard( card.getId(), card.getDoneList() ) != null;
+    }
+
+    public boolean today( Card card ) {
+        return moveCard( card.getId(), card.getTodayList() ) != null;
+    }
+
     public Card moveCard( String cardId, String toListId ) {
         try {
             return put( "/cards/" + cardId + "/idList", "&value=" + toListId, Card.class );
