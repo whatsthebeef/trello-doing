@@ -1,50 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:orientation="vertical">
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/layout_list_item"
+                android:padding="8dip">
 
     <TextView
+        android:id="@+id/configure_delay_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/add_personal_card"/>
+        android:paddingBottom="10dip"
+        android:text="@string/add_personal_card"
+        android:textColor="@color/black"/>
 
-    <LinearLayout
-        android:id="@+id/text_field"
+    <EditText
+        android:id="@+id/new_card_name"
+        android:layout_below="@id/configure_delay_title"
+        android:inputType="textCapSentences"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="4">
-
-        <EditText
-            android:id="@+id/new_card_name"
-            android:inputType="textCapSentences"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-    </LinearLayout>
+        android:layout_height="wrap_content" />
 
     <LinearLayout
         android:id="@+id/buttons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/text_field"
+        android:layout_below="@id/new_card_name"
         android:orientation="horizontal"
         android:weightSum="2">
 
-        <Button
+        <ImageButton
             android:id="@+id/submit_new_card"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/submit_button"/>
+            style="@style/action_button"
+            android:src="@drawable/done"/>
 
-        <Button
+        <ImageButton
             android:id="@+id/cancel_new_card"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/cancel_button"/>
+            style="@style/action_button"
+            android:src="@drawable/cancel"/>
 
     </LinearLayout>
 

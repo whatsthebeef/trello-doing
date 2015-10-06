@@ -16,7 +16,7 @@
 
     <EditText
         android:id="@+id/delay_input"
-        android:inputType="number"
+        android:inputType="numberDecimal"
         android:layout_below="@id/configure_delay_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />

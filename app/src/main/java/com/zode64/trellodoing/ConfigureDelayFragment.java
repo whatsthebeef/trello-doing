@@ -2,6 +2,8 @@ package com.zode64.trellodoing;
 
 import android.app.Fragment;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,7 +29,12 @@ public class ConfigureDelayFragment extends Fragment {
 
         final DoingPreferences preferences = new DoingPreferences( getActivity() );
 
-        delayInput.setText( preferences.getDelay().toString() );
+        String existingDelay = preferences.getDelay().toString();
+        if ( existingDelay != null && !"".equals( existingDelay ) ) {
+            delayInput.setText( existingDelay );
+        } else {
+            done.setEnabled( false );
+        }
 
         done.setOnClickListener( new View.OnClickListener() {
             @Override
@@ -46,6 +53,27 @@ public class ConfigureDelayFragment extends Fragment {
                 getActivity().onBackPressed();
             }
         } );
+
+        delayInput.addTextChangedListener( new TextWatcher() {
+                                               @Override
+                                               public void beforeTextChanged( CharSequence s, int start, int count, int after ) {
+                                               }
+
+                                               @Override
+                                               public void onTextChanged( CharSequence s, int start, int before, int count ) {
+                                               }
+
+                                               @Override
+                                               public void afterTextChanged( Editable s ) {
+                                                   if ( s.length() > 0 ) {
+                                                       done.setEnabled( true );
+                                                   } else {
+                                                       done.setEnabled( false );
+                                                   }
+
+                                               }
+                                           }
+        );
 
         return view;
     }

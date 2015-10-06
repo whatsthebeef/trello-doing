@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 
 import com.zode64.trellodoing.db.CardDAO;
 import com.zode64.trellodoing.models.Card;
@@ -19,8 +20,8 @@ import com.zode64.trellodoing.models.Card;
  */
 public class PersonalTodoAdder extends Activity {
 
-    private Button mSubmit;
-    private Button mCancel;
+    private ImageButton mSubmit;
+    private ImageButton mCancel;
     private EditText mEditText;
     private CardDAO cardDAO;
     private TrelloManager trelloManager;
@@ -33,8 +34,8 @@ public class PersonalTodoAdder extends Activity {
 
         cardDAO = new CardDAO( getApplication() );
 
-        mSubmit = ( Button ) findViewById( R.id.submit_new_card );
-        mCancel = ( Button ) findViewById( R.id.cancel_new_card );
+        mSubmit = ( ImageButton ) findViewById( R.id.submit_new_card );
+        mCancel = ( ImageButton ) findViewById( R.id.cancel_new_card );
         mEditText = ( EditText ) findViewById( R.id.new_card_name );
 
         Card personalCard = cardDAO.getPersonalCard();
