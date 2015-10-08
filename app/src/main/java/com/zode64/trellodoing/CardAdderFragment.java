@@ -34,7 +34,6 @@ public class CardAdderFragment extends Fragment {
 
     private TrelloManager trelloManager;
 
-    @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
         View view = inflater.inflate( R.layout.new_card, container, false );
 
@@ -97,7 +96,7 @@ public class CardAdderFragment extends Fragment {
     }
 
     @Override
-    public void onDestroy() {
+    public void onDestroyView() {
         cardDAO.closeDB();
         super.onDestroy();
     }
@@ -111,7 +110,7 @@ public class CardAdderFragment extends Fragment {
         @Override
         protected Void doInBackground( Card... card ) {
             if ( !trelloManager.newCard( card[ 0 ], board ) ) {
-                cardDAO.create( card[ 0 ] );
+                dao.create( card[ 0 ] );
             }
             return null;
         }

@@ -25,8 +25,8 @@
 
         <TextView
             android:id="@+id/refresh"
-            android:paddingLeft="0dip"
             style="@style/menu_item"
+            android:paddingLeft="0dip"
             android:text="@string/refresh"></TextView>
 
         <TextView
@@ -97,56 +97,45 @@
 
     </RelativeLayout>
 
+
     <RelativeLayout
+        android:id="@+id/clocked_off"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@id/menu"
-        android:layout_below="@id/doing">
+        android:layout_height="wrap_content"
+        android:layout_above="@id/menu">
 
-        <LinearLayout
-            android:orientation="vertical"
-            android:weightSum="2"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+        <TextView
+            android:id="@+id/clocked_off_list_title"
+            style="@style/list_title"
+            android:text="@string/clocked_off"></TextView>
 
-            <RelativeLayout
-                android:id="@+id/today"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1">
+        <ListView
+            android:id="@+id/clocked_off_cards_list"
+            style="@style/list_view"
+            android:layout_height="58dip"
+            android:layout_below="@id/clocked_off_list_title"/>
 
-                <TextView
-                    android:id="@+id/today_list_title"
-                    style="@style/list_title"
-                    android:text="@string/today"></TextView>
-
-                <ListView
-                    android:id="@+id/today_cards_list"
-                    style="@style/list_view"
-                    android:layout_height="match_parent"
-                    android:layout_below="@id/today_list_title"/>
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/clocked_off"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1">
-
-                <TextView
-                    android:id="@+id/clocked_off_list_title"
-                    style="@style/list_title"
-                    android:text="@string/clocked_off"></TextView>
-
-                <ListView
-                    android:id="@+id/clocked_off_cards_list"
-                    style="@style/list_view"
-                    android:layout_height="match_parent"
-                    android:layout_below="@id/clocked_off_list_title"/>
-
-            </RelativeLayout>
-        </LinearLayout>
     </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/today"
+        android:layout_width="match_parent"
+        android:layout_below="@id/doing"
+        android:layout_above="@id/clocked_off"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/today_list_title"
+            style="@style/list_title"
+            android:text="@string/today"></TextView>
+
+        <ListView
+            android:id="@+id/today_cards_list"
+            style="@style/list_view"
+            android:layout_height="match_parent"
+            android:layout_below="@id/today_list_title"/>
+
+    </RelativeLayout>
+
 
 </RelativeLayout>

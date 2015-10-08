@@ -176,7 +176,7 @@ public class CardActionFragment extends Fragment implements ConfigureDelayFragme
         @Override
         protected Void doInBackground( Card... card ) {
             if ( !trello.clockOff( card[ 0 ] ) ) {
-                cardDAO.setClockedOff( card[ 0 ].getId() );
+                dao.setClockedOff( card[ 0 ].getId() );
             }
             return null;
         }
@@ -190,7 +190,7 @@ public class CardActionFragment extends Fragment implements ConfigureDelayFragme
         @Override
         protected Void doInBackground( Card... card ) {
             if ( !trello.clockOn( card[ 0 ] ) ) {
-                cardDAO.setClockedOn( card[ 0 ].getId() );
+                dao.setClockedOn( card[ 0 ].getId() );
             }
             return null;
         }
@@ -205,7 +205,7 @@ public class CardActionFragment extends Fragment implements ConfigureDelayFragme
         @Override
         protected Void doInBackground( Card... card ) {
             if ( !trello.done( card[ 0 ] ) ) {
-                cardDAO.setDone( card[ 0 ].getId() );
+                dao.setDone( card[ 0 ].getId() );
             }
             return null;
         }
@@ -220,9 +220,10 @@ public class CardActionFragment extends Fragment implements ConfigureDelayFragme
         @Override
         protected Void doInBackground( Card... card ) {
             if ( !trello.today( card[ 0 ] ) ) {
-                cardDAO.setToday( card[ 0 ].getId() );
+                dao.setToday( card[ 0 ].getId() );
             }
             return null;
         }
+
     }
 }

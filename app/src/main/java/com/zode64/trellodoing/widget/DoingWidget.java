@@ -232,7 +232,7 @@ public class DoingWidget extends AppWidgetProvider {
                     } else {
                         // Clock off, clock on, done, etc...
                         if ( !trelloManager.moveCard( card.getId(), card.getCurrentListId() ) ) {
-                            isOnline = false;
+                            // isOnline = false;
                         }
                     }
                 }
