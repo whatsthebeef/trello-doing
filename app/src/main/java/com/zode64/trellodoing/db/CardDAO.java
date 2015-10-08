@@ -153,11 +153,15 @@ public class CardDAO {
         database.update( TABLE_NAME, values, ID + "=?", new String[]{ id } );
     }
 
-    public void createPersonalCard( String name ) {
+    public void resetDeadline( String id ) {
+        ContentValues values = new ContentValues();
+        values.put( DEADLINE, -1 );
+        database.update( TABLE_NAME, values, ID + "=?", new String[]{ id } );
+    }
+
+    public void createPersonalCard( Card card ) {
         delete( "temp" );
-        Card card = new Card();
         card.setId( "temp" );
-        card.setName( name );
         card.setIsPendingPush( 1 );
         create( card );
     }

@@ -5,21 +5,22 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
-import static com.zode64.trellodoing.WidgetAlarm.DEFAULT_DELAY_HOURS;
-import static com.zode64.trellodoing.WidgetAlarm.DEFAULT_END_HOUR;
-import static com.zode64.trellodoing.WidgetAlarm.DEFAULT_START_HOUR;
-
-/**
- * Created by john on 2/21/15.
- */
 public class DoingPreferences {
 
     private static final String LAST_DOING_BOARD = "lastDoingBoard";
     private static final String KEEP_DOING_ALARM = "keepDoingAlarm";
-    private static final String DELAY = "delay";
     private static final String START_HOUR = "start_hour";
     private static final String END_HOUR = "end_hour";
+    private static final String TODAY_OR_BOARDS = "todayOrBoards";
+
+    private static final String TODAY = "today";
+    private static final String BOARDS = "boards";
+
+    public static final int DEFAULT_START_HOUR = 8;
+    public static final int DEFAULT_END_HOUR = 18;
 
     private SharedPreferences mPreferences;
 
@@ -33,34 +34,28 @@ public class DoingPreferences {
         editor.commit();
     }
 
-    public void handleSetKeepDoingCall( Calendar alarm ) {
+    public void setKeepDoing( Calendar alarm ) {
         SharedPreferences.Editor editor = mPreferences.edit();
         editor.putLong( KEEP_DOING_ALARM, alarm.getTimeInMillis() );
         editor.commit();
     }
 
-    public void handleKeepDoingCardComplete() {
+    public Long getKeepDoing() {
+        return mPreferences.getLong( KEEP_DOING_ALARM, 0 );
+    }
+
+    public void resetKeepDoing() {
         SharedPreferences.Editor editor = mPreferences.edit();
-        editor.remove( KEEP_DOING_ALARM );
+        editor.putLong( KEEP_DOING_ALARM, -1 );
         editor.commit();
     }
 
-    public boolean hasKeepDoing() {
-        return mPreferences.getLong( KEEP_DOING_ALARM, 0 ) != 0;
+    public boolean keepDoing() {
+        return getKeepDoing() > Calendar.getInstance().getTimeInMillis();
     }
 
     public String getLastDoingBoard() {
         return mPreferences.getString( LAST_DOING_BOARD, null );
-    }
-
-    public Double getDelay() {
-        return Double.parseDouble( mPreferences.getString( DELAY, String.valueOf( DEFAULT_DELAY_HOURS ) ) );
-    }
-
-    public void setDelay(String delay) {
-        SharedPreferences.Editor editor = mPreferences.edit();
-        editor.putString( DELAY, delay );
-        editor.commit();
     }
 
     public Integer getStartHour() {
@@ -69,6 +64,22 @@ public class DoingPreferences {
 
     public Integer getEndHour() {
         return Integer.parseInt( mPreferences.getString( END_HOUR, String.valueOf( DEFAULT_END_HOUR ) ) );
+    }
+
+    public void setBoards() {
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putString( TODAY_OR_BOARDS, BOARDS );
+        editor.commit();
+    }
+
+    public void setToday() {
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putString( TODAY_OR_BOARDS, TODAY );
+        editor.commit();
+    }
+
+    public boolean isBoards() {
+        return BOARDS.equals(mPreferences.getString( TODAY_OR_BOARDS, TODAY ) );
     }
 
     public SharedPreferences getSharedPreferences() {

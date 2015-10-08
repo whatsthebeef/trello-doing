@@ -1,49 +1,56 @@
 package com.zode64.trellodoing;
 
 import android.app.Activity;
-import android.content.Intent;
+import android.app.Fragment;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
-import android.widget.Button;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
 
+import com.zode64.trellodoing.db.BoardDAO;
 import com.zode64.trellodoing.db.CardDAO;
+import com.zode64.trellodoing.models.Board;
 import com.zode64.trellodoing.models.Card;
+import com.zode64.trellodoing.widget.DoingWidget;
 
 /**
  * Created by john on 9/22/15.
  */
-public class PersonalTodoAdder extends Activity {
+public class CardAdderFragment extends Fragment {
 
     private ImageButton mSubmit;
     private ImageButton mCancel;
     private EditText mEditText;
+
     private CardDAO cardDAO;
+    private BoardDAO boardDAO;
+
+    private Board board;
+
     private TrelloManager trelloManager;
 
     @Override
-    protected void onCreate( Bundle savedInstanceState ) {
-        super.onCreate( savedInstanceState );
-        requestWindowFeature( Window.FEATURE_NO_TITLE );
-        setContentView( R.layout.new_card );
+    public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
+        View view = inflater.inflate( R.layout.new_card, container, false );
 
-        cardDAO = new CardDAO( getApplication() );
+        cardDAO = new CardDAO( getActivity() );
+        boardDAO = new BoardDAO( getActivity() );
 
-        mSubmit = ( ImageButton ) findViewById( R.id.submit_new_card );
-        mCancel = ( ImageButton ) findViewById( R.id.cancel_new_card );
-        mEditText = ( EditText ) findViewById( R.id.new_card_name );
+        mSubmit = ( ImageButton ) view.findViewById( R.id.submit_new_card );
+        mCancel = ( ImageButton ) view.findViewById( R.id.cancel_new_card );
+        mEditText = ( EditText ) view.findViewById( R.id.new_card_name );
 
-        Card personalCard = cardDAO.getPersonalCard();
-        if ( personalCard != null ) {
-            mEditText.setText( personalCard.getName() );
-        } else {
-            mSubmit.setEnabled( false );
-        }
+        String boardId = getActivity().getIntent().getStringExtra( DoingWidget.EXTRA_BOARD_ID );
+        board = boardDAO.find( boardId );
+
+        trelloManager = new TrelloManager( PreferenceManager.getDefaultSharedPreferences( getActivity() ) );
+
+        mSubmit.setEnabled( false );
 
         mEditText.addTextChangedListener( new TextWatcher() {
                                               @Override
@@ -72,13 +79,10 @@ public class PersonalTodoAdder extends Activity {
             public void onClick( View v ) {
                 String text = mEditText.getText().toString();
                 if ( text != null && !text.equals( "" ) ) {
-
-                    trelloManager = new TrelloManager( PreferenceManager.getDefaultSharedPreferences( getApplication() ) );
-                    if ( !trelloManager.newPersonalCard( text ) ) {
-                        cardDAO.createPersonalCard( text );
-                    }
-                    startService( new Intent( getApplication(), DoingWidget.UpdateService.class ) );
-                    finish();
+                    Card card = new Card();
+                    card.setName( text );
+                    card.setBoardId( board.getId() );
+                    new AddCardTask( getActivity() ).execute( card );
                 }
             }
         } );
@@ -86,8 +90,30 @@ public class PersonalTodoAdder extends Activity {
         mCancel.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                finish();
+                getActivity().finish();
             }
         } );
+        return view;
+    }
+
+    @Override
+    public void onDestroy() {
+        cardDAO.closeDB();
+        super.onDestroy();
+    }
+
+    private class AddCardTask extends TrelloTask {
+
+        public AddCardTask( Activity activity ) {
+            super( activity );
+        }
+
+        @Override
+        protected Void doInBackground( Card... card ) {
+            if ( !trelloManager.newCard( card[ 0 ], board ) ) {
+                cardDAO.create( card[ 0 ] );
+            }
+            return null;
+        }
     }
 }

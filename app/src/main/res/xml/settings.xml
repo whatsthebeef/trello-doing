@@ -16,12 +16,6 @@
                         android:persistent="true"
                         android:summary="@string/token_summary"
                         android:title="@string/insert_token"/>
-    <EditTextPreference android:key="delay"
-                        android:persistent="true"
-                        android:defaultValue="2"
-                        android:inputType="number"
-                        android:summary="@string/delay_summary"
-                        android:title="@string/delay"/>
     <EditTextPreference android:key="startHour"
                         android:persistent="true"
                         android:defaultValue="8"

@@ -29,10 +29,7 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
     private static final String LISTS = "lists";
     private static final String DATA = "data";
     private static final String LIST_AFTER = "listAfter";
-    private static final String LIST_BEFORE = "listBefore";
     private static final String ID = "id";
-
-    private static final String PERSONAL_BOARD_NAME = "Personal";
 
     private static final String DOING_LIST = "Doing";
     private static final String DONE_LIST = "Done";
@@ -54,6 +51,9 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                 switch ( boardAttr.getKey() ) {
                     case NAME:
                         board.setName( boardAttr.getValue().getAsString() );
+                        break;
+                    case SHORT_LINK:
+                        board.setShortLink( boardAttr.getValue().getAsString() );
                         break;
                     case ID:
                         board.setId( boardAttr.getValue().getAsString() );
@@ -84,6 +84,9 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                                             case DONE_LIST:
                                                 board.setDoneList( list );
                                                 break;
+                                            case TODO_LIST:
+                                                board.setTodoList( list );
+                                                break;
                                             default:
                                                 // ignore
                                         }
@@ -98,10 +101,8 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                         // ignore
                 }
             }
+            member.addBoard( board );
             boardReg.put( board.getName(), board );
-            if ( PERSONAL_BOARD_NAME.equals( board.getName() ) ) {
-                member.setPersonalTodayListId( board.getId() );
-            }
         }
 
         Map<String, Card> cardReg = new HashMap<>();
@@ -158,10 +159,13 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                     case NAME:
                         String boardName = boardAttribute.getValue().getAsString();
                         card.setBoardName( boardName );
-                        card.setListId( Card.ListType.DOING, boardReg.get( boardName ).getDoingListId() );
-                        card.setListId( Card.ListType.TODAY, boardReg.get( boardName ).getTodayListId() );
-                        card.setListId( Card.ListType.CLOCKED_OFF, boardReg.get( boardName ).getClockedOffListId() );
-                        card.setListId( Card.ListType.DONE, boardReg.get( boardName ).getDoneListId() );
+                        Board board = boardReg.get( boardName );
+                        if(board != null) {
+                            card.setListId( Card.ListType.DOING, board.getDoingListId() );
+                            card.setListId( Card.ListType.TODAY, board.getTodayListId() );
+                            card.setListId( Card.ListType.CLOCKED_OFF, board.getClockedOffListId() );
+                            card.setListId( Card.ListType.DONE, board.getDoneListId() );
+                        }
                         switch ( listAfter ) {
                             case DOING_LIST:
                                 card.setInListType( DOING );

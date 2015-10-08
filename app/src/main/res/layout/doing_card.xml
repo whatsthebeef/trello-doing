@@ -1,35 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout android:id="@+id/doing_card"
-                xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent"
-                android:layout_height="58dip"
-                android:background="@drawable/layout_list_item"
-                android:orientation="horizontal"
-                android:paddingRight="12dip">
+                style="@style/list_item"
+                xmlns:android="http://schemas.android.com/apk/res/android">
 
     <ImageView
         android:id="@+id/deadline_not_set"
         style="@style/action_icon"
-        android:layout_alignParentRight="true"
         android:src="@drawable/alarm_clock_grey"/>
 
     <ImageView
         android:id="@+id/deadline_set"
         style="@style/action_icon"
-        android:visibility="gone"
-        android:layout_alignParentRight="true"
-        android:src="@drawable/alarm_clock_green"/>
+        android:src="@drawable/alarm_clock_green"
+        android:visibility="gone"/>
 
     <TextView
         android:id="@+id/card_name"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:ellipsize="middle"
-        android:gravity="center_vertical"
-        android:maxLines="2"
-        android:paddingLeft="12dip"
-        android:paddingRight="28dip"
-        android:textColor="@color/black"
-        android:textSize="12dip"></TextView>
+        style="@style/list_item_text"/>
 
 </RelativeLayout>

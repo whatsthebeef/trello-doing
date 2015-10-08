@@ -42,7 +42,7 @@
     <string name="start_hour">Start hour</string>
     <string name="end_hour_summary">What time does the day end</string>
     <string name="end_hour">End hour</string>
-    <string name="add_personal_card">Add card</string>
+    <string name="add_personal_card">Add personal card</string>
     <string name="cancel_button">Cancel</string>
     <string name="separator">|</string>
     <string name="settings">Settings</string>
@@ -51,10 +51,16 @@
     <string name="offline">Offline</string>
     <string name="personal">Personal</string>
     <string name="work">Work</string>
-    <string name="today">Today</string>
+    <string name="today">Today/Boards</string>
     <string name="card_action">Card action</string>
     <string name="clocked_off">Clocked Off</string>
     <string name="enter_delay">Enter delay</string>
-    <string name="set_delay_text">Set delay</string>
+    <string name="set_delay_text">Set new delay</string>
+    <string name="deadline_set_for">Deadline set for</string>
+    <string name="start_doing_something">Start doing something!!!</string>
+    <string name="existing_delay">Existing delay</string>
+    <string name="loading_text">Loading...</string>
+    <string name="today_boards">Today/Boards</string>
+    <string name="get_cards_from">Board:</string>
 
 </resources>

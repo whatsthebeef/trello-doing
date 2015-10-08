@@ -16,6 +16,12 @@ public class List {
 
     private boolean closed;
 
+    public List(){}
+
+    public List(String id){
+        this.id = id;
+    }
+
     public String getName() {
         return name;
     }

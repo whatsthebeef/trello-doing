@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:id="@+id/doing_card"
+                style="@style/list_item"
+                android:background="@color/grey"
+                xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <TextView
+        android:id="@+id/loading_text"
+        android:text="@string/loading_text"
+        android:textColor="@color/black"
+        style="@style/list_item_text"/>
+
+</RelativeLayout>

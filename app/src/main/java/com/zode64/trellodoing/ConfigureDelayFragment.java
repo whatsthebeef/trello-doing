@@ -9,41 +9,61 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
+
+import com.zode64.trellodoing.models.Card;
+
+import java.util.Calendar;
 
 public class ConfigureDelayFragment extends Fragment {
 
     private ImageButton done;
     private ImageButton cancel;
+    private ImageButton delete;
 
     private EditText delayInput;
+
+    private TextView existingDelayView;
 
     @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
 
         View view = inflater.inflate( R.layout.configure_delay_action, container, false );
+
         done = ( ImageButton ) view.findViewById( R.id.done );
         cancel = ( ImageButton ) view.findViewById( R.id.cancel );
+        delete = ( ImageButton ) view.findViewById( R.id.delete );
         delayInput = ( EditText ) view.findViewById( R.id.delay_input );
+        existingDelayView = ( TextView ) view.findViewById( R.id.existing_delay_text );
 
-        final String cardId = getActivity().getIntent().getStringExtra( DoingWidget.EXTRA_CARD_ID );
-
-        final DoingPreferences preferences = new DoingPreferences( getActivity() );
-
-        String existingDelay = preferences.getDelay().toString();
-        if ( existingDelay != null && !"".equals( existingDelay ) ) {
-            delayInput.setText( existingDelay );
-        } else {
-            done.setEnabled( false );
+        long delay = ( ( DelayChangeListener ) getActivity() ).getExisting();
+        if ( delay > 0 ) {
+            delayInput.setVisibility( View.GONE );
+            done.setVisibility( View.GONE );
+            delete.setVisibility( View.VISIBLE );
+            existingDelayView.setText( getResources().getString( R.string.existing_delay ) + " " + TimeUtils.format( delay ) );
+            existingDelayView.setVisibility( View.VISIBLE );
         }
+
+        done.setEnabled( false );
 
         done.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                if ( delayInput.getText() != null && !"".equals( delayInput.getText() ) ) {
-                    String delay = delayInput.getText().toString();
-                    preferences.setDelay( delay );
-                    ( ( DelayChangeListener ) getActivity() ).onChange( Double.parseDouble( delay ), cardId );
-                }
+                String delay = delayInput.getText().toString();
+                ( ( DelayChangeListener ) getActivity() ).onChange( Double.parseDouble( delay ) );
+                getActivity().onBackPressed();
+            }
+        } );
+
+        delete.setOnClickListener( new View.OnClickListener() {
+            @Override
+            public void onClick( View v ) {
+                ( ( DelayChangeListener ) getActivity() ).reset();
+                delayInput.setVisibility( View.VISIBLE );
+                done.setVisibility( View.VISIBLE );
+                delete.setVisibility( View.GONE );
+                existingDelayView.setVisibility( View.GONE );
             }
         } );
 
@@ -79,7 +99,9 @@ public class ConfigureDelayFragment extends Fragment {
     }
 
     interface DelayChangeListener {
-        void onChange( Double delay, String cardId );
+        void onChange( Double delay );
+        void reset();
+        long getExisting();
     }
 }
 

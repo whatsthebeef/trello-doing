@@ -22,12 +22,13 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".PersonalTodoAdder"
+        <activity android:name=".AdderActivity"
                   android:excludeFromRecents="true"
                   android:launchMode="singleInstance"
                   android:theme="@android:style/Theme.Dialog">
         </activity>
-        <activity android:name=".CardActionActivity"
+        <activity android:name=".ActionActivity"
+                  android:exported="true"
                   android:theme="@android:style/Theme.Dialog">
         </activity>
         <activity android:name=".KeepDoingActivity"
@@ -36,7 +37,7 @@
 
         <!-- Broadcast Receiver that will process AppWidget updates -->
         <receiver
-            android:name=".DoingWidget"
+            android:name=".widget.DoingWidget"
             android:label="@string/widget_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
@@ -47,7 +48,7 @@
         </receiver>
 
         <!-- Service to perform web API queries -->
-        <service android:name=".DoingWidget$UpdateService">
+        <service android:name=".widget.DoingWidget$UpdateService">
             <intent-filter>
                 <data android:mimeType="text/plain" android:scheme="intent"/>
                 <action android:name="com.zode64.trellodoing.intent.action.CLOCK_OFF"/>
@@ -55,22 +56,30 @@
             </intent-filter>
             <intent-filter>
                 <action android:name="com.zode64.trellodoing.intent.action.REFRESH"/>
-                <action android:name="com.zode64.trellodoing.intent.action.AUTO_UPDATE"/>
+                <action android:name="com.zode64.trellodoing.intent.action.DEADLINE_ALARM"/>
+                <action android:name="com.zode64.trellodoing.intent.action.STANDARD_ALARM"/>
+                <action android:name="com.zode64.trellodoing.intent.action.SET_ALARM"/>
                 <action android:name="com.zode64.trellodoing.intent.action.STOP_ALARM"/>
-                <action android:name="com.zode64.trellodoing.intent.action.CLOCK_OFF_PERSONAL"/>
                 <action android:name="com.zode64.trellodoing.intent.action.ADD_PERSONAL_CARD"/>
-                <action android:name="com.zode64.trellodoing.intent.action.KEEP_DOING"/>
-                <action android:name="com.zode64.trellodoing.intent.action.WORK_DOING"/>
+                <action android:name="com.zode64.trellodoing.intent.action.TODAY_BOARDS_SWITCH"/>
+                <action android:name="com.zode64.trellodoing.intent.action.NETWORK_CHANGE"/>
             </intent-filter>
         </service>
 
-        <receiver android:name=".DoingWidget$NetworkChangeReceiver">
+        <receiver android:name=".widget.DoingWidget$NetworkChangeReceiver">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
             </intent-filter>
         </receiver>
+
         <service
-            android:name=".WidgetService"
+            android:name=".widget.DoingWidgetService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"/>
+        <service
+            android:name=".widget.TodayWidgetService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"/>
+        <service
+            android:name=".widget.ClockedOffWidgetService"
             android:permission="android.permission.BIND_REMOTEVIEWS"/>
 
     </application>

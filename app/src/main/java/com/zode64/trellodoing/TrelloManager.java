@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.zode64.trellodoing.models.Board;
 import com.zode64.trellodoing.models.Card;
 import com.zode64.trellodoing.models.Card.ListType;
 import com.zode64.trellodoing.models.Member;
@@ -48,8 +49,8 @@ public class TrelloManager {
 
     public Member member() {
         try {
-            return get( "/members/me?actions=updateCard:idList&action_fields=data,date&board_lists=all"
-                            + "&fields=initials&boards=open&board_fields=lists,name&actions_limit=200",
+            return get( "/members/me?actions=updateCard:idList&action_fields=data,date&board_lists=open"
+                            + "&fields=initials&boards=starred&board_fields=lists,name,shortLink&actions_limit=200",
                     Member.class );
         } catch ( IOException e ) {
             e.printStackTrace();
@@ -83,11 +84,20 @@ public class TrelloManager {
         }
     }
 
-    public boolean newPersonalCard( String name ) {
+    public boolean newCard( Card card, Board board ) {
+        // TODO if lists are present the user should be informed
+        if ( board.getTodayListId() == null ) {
+            throw new RuntimeException( "No Today list for board" );
+        }
+        if ( board.getTodoListId() == null ) {
+            throw new RuntimeException( "No Todo list for board" );
+        }
         Member member = member();
         if ( member != null ) {
             try {
-                post( "/cards", "&name=" + name + "&idList=" + member.getPersonalTodayListId(), Card.class );
+                Card persistedCard = post( "/cards", "&name=" + card.getName() + "&idList="
+                        + board.getTodoListId(), Card.class );
+                moveCard( persistedCard.getId(), board.getTodayListId() );
             } catch ( IOException e ) {
                 e.printStackTrace();
                 return false;
@@ -95,7 +105,6 @@ public class TrelloManager {
             return true;
         }
         return false;
-
     }
 
     private String constructTrelloPutURL( String baseURL ) {
@@ -181,6 +190,7 @@ public class TrelloManager {
         Log.v( TAG, path + " - " + value );
         URL to = null;
         HttpURLConnection urlConnection = null;
+        Log.i( TAG, "Post to " + path + " with value " + value );
         try {
             to = new URL( constructTrelloPutURL( path ) );
             urlConnection = ( HttpURLConnection ) to.openConnection();

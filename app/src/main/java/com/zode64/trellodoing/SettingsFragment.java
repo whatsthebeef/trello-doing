@@ -1,16 +1,16 @@
 package com.zode64.trellodoing;
 
-import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
-import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+
+import com.zode64.trellodoing.widget.DoingWidget;
 
 /**
  * Created by john on 9/18/15.

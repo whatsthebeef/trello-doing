@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Window;
 
+import com.zode64.trellodoing.widget.DoingWidget;
+
 import java.util.Calendar;
 
 public class KeepDoingActivity extends Activity implements ConfigureDelayFragment.DelayChangeListener {
@@ -24,10 +26,21 @@ public class KeepDoingActivity extends Activity implements ConfigureDelayFragmen
     }
 
     @Override
-    public void onChange( Double delay, String cardId ) {
+    public void onChange( Double delay ) {
         Calendar until = alarm.delayAlarm( delay );
-        preferences.handleSetKeepDoingCall( until );
-        startService( new Intent( getApplication(), DoingWidget.UpdateService.class ) );
-        finish();
+        preferences.setKeepDoing( until );
+        startService( new Intent( DoingWidget.ACTION_SET_ALARM ) );
+    }
+
+    @Override
+    public void reset() {
+        preferences.resetKeepDoing();
+        startService( new Intent( DoingWidget.ACTION_SET_ALARM ) );
+    }
+
+    @Override
+    public long getExisting() {
+        long keepDoing = preferences.getKeepDoing();
+        return keepDoing > Calendar.getInstance().getTimeInMillis() ? keepDoing : -1;
     }
 }

@@ -9,6 +9,7 @@ public class Card {
     public final static int TRUE = 1;
     public final static int FALSE = 0;
 
+
     public enum ListType {
         UNKNOWN,
         TODO,
@@ -16,6 +17,12 @@ public class Card {
         DOING,
         CLOCKED_OFF,
         DONE
+    }
+
+    public enum DummyType {
+        NOT,
+        START_DOING,
+        STOP_DOING
     }
 
     private String name;
@@ -30,6 +37,8 @@ public class Card {
 
     private int isPendingPush;
 
+    private DummyType dummyType = DummyType.NOT;
+
     private Map<ListType, String> listIds = new HashMap<>();
 
     public String getBoardShortUrl() {
@@ -41,7 +50,7 @@ public class Card {
     }
 
     public boolean pastDeadline() {
-        return deadline > Calendar.getInstance().getTimeInMillis();
+        return deadline < Calendar.getInstance().getTimeInMillis() && hasDeadline();
     }
 
     public String getName() {
@@ -84,12 +93,8 @@ public class Card {
         this.boardId = boardId;
     }
 
-    public boolean isClockedOff() {
-        return inListType == ListType.CLOCKED_OFF;
-    }
-
-    public void setClockedOff() {
-        inListType = ListType.CLOCKED_OFF;
+    public boolean isClockedOn() {
+        return inListType == ListType.DOING;
     }
 
     public long getDeadline() {
@@ -100,10 +105,6 @@ public class Card {
         this.deadline = deadline;
     }
 
-    public int getIsPendingPush() {
-        return isPendingPush;
-    }
-
     public boolean isPendingPush() {
         return isPendingPush == 1;
     }
@@ -112,20 +113,16 @@ public class Card {
         this.isPendingPush = isPendingPush;
     }
 
-    public ListType getInListType() {
-        return inListType;
-    }
-
     public void setInListType( ListType inListType ) {
         this.inListType = inListType;
     }
 
     public int getInListTypeOrdinal() {
-        if ( inListType != null ) {
-            return inListType.ordinal();
-        } else {
-            return 0;
-        }
+        return inListType.ordinal();
+    }
+
+    public ListType getInListType() {
+        return inListType;
     }
 
     public void setInListType( int inListType ) {
@@ -144,14 +141,17 @@ public class Card {
         return listIds.get( inListType );
     }
 
-    public boolean isToday() {
-        return inListType == ListType.TODAY;
+    public void resetDeadline() {
+        setDeadline( -1 );
     }
 
-    public void setToday() {
-        inListType = ListType.TODAY;
+    public DummyType getDummyType() {
+        return dummyType;
     }
 
+    public void setDummyType( DummyType dummyType ) {
+        this.dummyType = dummyType;
+    }
 
 }
 

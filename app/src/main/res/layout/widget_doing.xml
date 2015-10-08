@@ -15,14 +15,17 @@
                     android:layout_height="40dp"
                     android:layout_alignParentBottom="true">
 
+        <!--
         <TextView
             android:id="@+id/last_checked"
             style="@style/menu_item"
             android:layout_alignParentRight="true"
             android:text="@string/last_updated"></TextView>
+            -->
 
         <TextView
             android:id="@+id/refresh"
+            android:paddingLeft="0dip"
             style="@style/menu_item"
             android:text="@string/refresh"></TextView>
 
@@ -58,6 +61,17 @@
             style="@style/menu_item"
             android:layout_toRightOf="@id/separator_3"
             android:text="@string/keep_doing"></TextView>
+
+        <TextView
+            android:id="@+id/separator_4"
+            style="@style/menu_separator"
+            android:layout_toRightOf="@id/keep_doing"></TextView>
+
+        <TextView
+            android:id="@+id/today_boards"
+            style="@style/menu_item"
+            android:layout_toRightOf="@id/separator_4"
+            android:text="@string/today_boards"></TextView>
 
     </RelativeLayout>
 

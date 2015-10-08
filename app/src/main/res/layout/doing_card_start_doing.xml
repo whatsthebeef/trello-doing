@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:id="@+id/doing_card"
+                style="@style/list_item"
+                android:background="@drawable/layout_list_item_past_deadline"
+                xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <TextView
+        android:id="@+id/card_name"
+        android:text="@string/start_doing_something"
+        android:textColor="@color/white"
+        style="@style/list_item_text"/>
+
+</RelativeLayout>

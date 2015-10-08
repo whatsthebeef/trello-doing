@@ -14,10 +14,26 @@
         android:paddingBottom="10dip"
         android:layout_height="wrap_content"/>
 
+    <LinearLayout
+        android:id="@+id/delay"
+        android:layout_below="@id/configure_delay_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:paddingBottom="10dip"
+            android:textSize="12dip"
+            android:id="@+id/existing_delay_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/red"
+            android:visibility="gone"/>
+    </LinearLayout>
+
     <EditText
         android:id="@+id/delay_input"
+        android:paddingTop="10dip"
         android:inputType="numberDecimal"
-        android:layout_below="@id/configure_delay_title"
+        android:layout_below="@id/delay"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
@@ -38,6 +54,12 @@
             android:id="@+id/cancel"
             style="@style/action_button"
             android:src="@drawable/cancel"/>
+
+        <ImageButton
+            android:id="@+id/delete"
+            android:visibility="gone"
+            style="@style/action_button"
+            android:src="@drawable/delete"/>
 
     </LinearLayout>
 

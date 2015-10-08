@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:id="@+id/doing_card"
+                style="@style/list_item"
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:background="@drawable/layout_list_item_past_deadline">
+
+    <ImageView
+        android:id="@+id/deadline_past"
+        style="@style/action_icon"
+        android:src="@drawable/alarm_clock_white"/>
+
+    <TextView
+        android:id="@+id/card_name"
+        style="@style/list_item_text"
+        android:textColor="@color/white">
+    </TextView>
+
+</RelativeLayout>
