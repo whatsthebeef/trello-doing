@@ -41,6 +41,7 @@ public class DoingWidgetService extends RemoteViewsService {
                 return new RemoteViews( context.getPackageName(), R.layout.doing_card_start_doing );
             } else if ( !between( preferences.getStartHour(), preferences.getEndHour(), Calendar.getInstance() ) ) {
                 RemoteViews view = new RemoteViews( context.getPackageName(), R.layout.doing_card_past_deadline );
+                view.setTextViewText( R.id.card_name, card.getBoardName() + ": " + card.getName() );
                 setClickListener( view, card );
                 return view;
             } else {

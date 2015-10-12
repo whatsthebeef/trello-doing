@@ -5,8 +5,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-import com.zode64.trellodoing.models.Board;
-
 /**
  * Created by john on 10/2/15.
  */
@@ -26,6 +24,7 @@ public class DoingDatabaseHelper extends SQLiteOpenHelper {
     public void onCreate( SQLiteDatabase database ) {
         database.execSQL( CardDAO.CREATE_TABLE );
         database.execSQL( BoardDAO.CREATE_TABLE );
+        database.execSQL( ActionDAO.CREATE_TABLE );
     }
 
     @Override
@@ -34,6 +33,7 @@ public class DoingDatabaseHelper extends SQLiteOpenHelper {
                 + newVersion + ", which will destroy all old data" );
         database.execSQL( CardDAO.DELETE_TABLE );
         database.execSQL( BoardDAO.DELETE_TABLE );
+        database.execSQL( ActionDAO.DELETE_TABLE );
         onCreate( database );
     }
 

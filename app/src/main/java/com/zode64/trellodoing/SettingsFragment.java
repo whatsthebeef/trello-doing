@@ -139,9 +139,6 @@ public class SettingsFragment extends PreferenceFragment {
                     getActivity().startService( refresh );
                 }
             }
-            else {
-                mToken.setText( "" );
-            }
         }
 
         @Override

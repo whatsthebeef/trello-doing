@@ -29,6 +29,13 @@ public class TimeUtils {
         return between( hourOne, hourTwo, Calendar.getInstance() );
     }
 
+    public static boolean after( int hour ) {
+        if ( Calendar.getInstance().after( hour( hour ) ) ) {
+            return true;
+        }
+        return false;
+    }
+
     public static String format( Date date ) {
         DateFormat df = new SimpleDateFormat( "HH:mm dd/MM" );
         return df.format( date );

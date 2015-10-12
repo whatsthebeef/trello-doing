@@ -66,7 +66,6 @@ public abstract class ListProvider implements RemoteViewsService.RemoteViewsFact
             view = new RemoteViews( context.getPackageName(), R.layout.doing_card_past_deadline );
         } else {
             view = new RemoteViews( context.getPackageName(), R.layout.doing_card );
-            view.setTextViewText( R.id.card_name, card.getName() );
             if ( card.hasDeadline() ) {
                 view.setViewVisibility( R.id.deadline_set, View.VISIBLE );
                 view.setViewVisibility( R.id.deadline_not_set, View.GONE );
@@ -75,6 +74,7 @@ public abstract class ListProvider implements RemoteViewsService.RemoteViewsFact
                 view.setViewVisibility( R.id.deadline_not_set, View.VISIBLE );
             }
         }
+        view.setTextViewText( R.id.card_name, card.getBoardName() + ": " + card.getName() );
         setClickListener( view, card );
         return view;
     }

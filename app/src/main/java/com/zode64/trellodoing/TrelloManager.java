@@ -5,7 +5,6 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.zode64.trellodoing.models.Board;
 import com.zode64.trellodoing.models.Card;
 import com.zode64.trellodoing.models.Card.ListType;
 import com.zode64.trellodoing.models.Member;
@@ -74,6 +73,10 @@ public class TrelloManager {
         return moveCard( card.getId(), card.getListId( ListType.TODAY ) );
     }
 
+    public boolean todo( Card card ) {
+        return moveCard( card.getId(), card.getListId( ListType.TODO ) );
+    }
+
     public boolean moveCard( String cardId, String toListId ) {
         try {
             put( "/cards/" + cardId + "/idList", "&value=" + toListId, Card.class );
@@ -84,27 +87,43 @@ public class TrelloManager {
         }
     }
 
-    public boolean newCard( Card card, Board board ) {
+    public Card createCard( Card card ) {
         // TODO if lists are present the user should be informed
-        if ( board.getTodayListId() == null ) {
-            throw new RuntimeException( "No Today list for board" );
-        }
-        if ( board.getTodoListId() == null ) {
+        if ( card.getListId( ListType.TODO ) == null ) {
             throw new RuntimeException( "No Todo list for board" );
         }
-        Member member = member();
-        if ( member != null ) {
-            try {
-                Card persistedCard = post( "/cards", "&name=" + card.getName() + "&idList="
-                        + board.getTodoListId(), Card.class );
-                moveCard( persistedCard.getId(), board.getTodayListId() );
-            } catch ( IOException e ) {
-                e.printStackTrace();
-                return false;
+        try {
+            Card persisted = post( "/cards", "&name=" + card.getName() + "&idList="
+                    + card.getListId( ListType.TODO ), Card.class );
+            if ( persisted != null ) {
+                card.setId( persisted.getId() );
+                moveCard( card.getId(), card.getListId( ListType.TODAY ) );
             }
-            return true;
+            return card;
+        } catch ( IOException e ) {
+            e.printStackTrace();
+            return null;
         }
-        return false;
+    }
+
+    public boolean updateCardName( String cardId, String newName ) {
+        try {
+            put( "/cards/" + cardId + "/name", "&value=" + newName, Card.class );
+            return true;
+        } catch ( IOException e ) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean deleteCard( String cardId ) {
+        try {
+            delete( "/cards/" + cardId );
+            return true;
+        } catch ( IOException e ) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     private String constructTrelloPutURL( String baseURL ) {
@@ -180,6 +199,26 @@ public class TrelloManager {
         return push( path, value, "POST", type );
     }
 
+    private void delete( String path ) throws IOException {
+        URL to = null;
+        HttpURLConnection urlConnection = null;
+        Log.i( TAG, "Push to " + path );
+        try {
+            to = new URL( constructTrelloURL( path ) );
+            urlConnection = ( HttpURLConnection ) to.openConnection();
+            urlConnection.setRequestMethod( "DELETE" );
+            urlConnection.getResponseCode();
+        } catch ( IOException e ) {
+            Log.e( TAG, "IOException from DELETE request" );
+            e.printStackTrace();
+            throw new IOException( "Problem with URL : " + to + " or server" );
+        } finally {
+            if ( urlConnection != null ) {
+                urlConnection.disconnect();
+            }
+        }
+    }
+
     /**
      * Must be called in AyncTask or from a service
      *
@@ -190,7 +229,7 @@ public class TrelloManager {
         Log.v( TAG, path + " - " + value );
         URL to = null;
         HttpURLConnection urlConnection = null;
-        Log.i( TAG, "Post to " + path + " with value " + value );
+        Log.i( TAG, "Push to " + path + " with value " + value );
         try {
             to = new URL( constructTrelloPutURL( path ) );
             urlConnection = ( HttpURLConnection ) to.openConnection();

@@ -1,5 +1,6 @@
 package com.zode64.trellodoing;
 
+import android.app.AlarmManager;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.text.Editable;
@@ -34,6 +35,7 @@ public class ConfigureDelayFragment extends Fragment {
         cancel = ( ImageButton ) view.findViewById( R.id.cancel );
         delete = ( ImageButton ) view.findViewById( R.id.delete );
         delayInput = ( EditText ) view.findViewById( R.id.delay_input );
+
         existingDelayView = ( TextView ) view.findViewById( R.id.existing_delay_text );
 
         long delay = ( ( DelayChangeListener ) getActivity() ).getExisting();
@@ -44,7 +46,6 @@ public class ConfigureDelayFragment extends Fragment {
             existingDelayView.setText( getResources().getString( R.string.existing_delay ) + " " + TimeUtils.format( delay ) );
             existingDelayView.setVisibility( View.VISIBLE );
         }
-
         done.setEnabled( false );
 
         done.setOnClickListener( new View.OnClickListener() {

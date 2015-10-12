@@ -6,9 +6,7 @@ import java.util.Map;
 
 public class Card {
 
-    public final static int TRUE = 1;
-    public final static int FALSE = 0;
-
+    public final static String PENDING_CARD_ID = "pending";
 
     public enum ListType {
         UNKNOWN,
@@ -16,7 +14,9 @@ public class Card {
         TODAY,
         DOING,
         CLOCKED_OFF,
-        DONE
+        DONE,
+        NOT_CHARGING,
+        NONE
     }
 
     public enum DummyType {
@@ -26,6 +26,7 @@ public class Card {
     }
 
     private String name;
+    private String shortLink;
     private String boardShortLink;
     private String boardName;
     private String boardId;
@@ -35,11 +36,13 @@ public class Card {
 
     private long deadline;
 
-    private int isPendingPush;
-
     private DummyType dummyType = DummyType.NOT;
 
     private Map<ListType, String> listIds = new HashMap<>();
+
+    public String getShortUrl() {
+        return "https://trello.com/c/" + shortLink;
+    }
 
     public String getBoardShortUrl() {
         return "https://trello.com/b/" + boardShortLink;
@@ -77,6 +80,14 @@ public class Card {
         this.boardShortLink = boardShortLink;
     }
 
+    public String getShortLink() {
+        return shortLink;
+    }
+
+    public void setShortLink( String shortLink ) {
+        this.shortLink = shortLink;
+    }
+
     public String getBoardName() {
         return boardName;
     }
@@ -105,20 +116,12 @@ public class Card {
         this.deadline = deadline;
     }
 
-    public boolean isPendingPush() {
-        return isPendingPush == 1;
-    }
-
-    public void setIsPendingPush( int isPendingPush ) {
-        this.isPendingPush = isPendingPush;
-    }
-
     public void setInListType( ListType inListType ) {
         this.inListType = inListType;
     }
 
     public int getInListTypeOrdinal() {
-        return inListType.ordinal();
+        return inListType != null ? inListType.ordinal() : 0;
     }
 
     public ListType getInListType() {
@@ -152,6 +155,7 @@ public class Card {
     public void setDummyType( DummyType dummyType ) {
         this.dummyType = dummyType;
     }
+
 
 }
 

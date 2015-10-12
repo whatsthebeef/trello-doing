@@ -17,6 +17,7 @@ import java.util.Map;
 import static com.zode64.trellodoing.models.Card.ListType.CLOCKED_OFF;
 import static com.zode64.trellodoing.models.Card.ListType.DOING;
 import static com.zode64.trellodoing.models.Card.ListType.TODAY;
+import static com.zode64.trellodoing.models.Card.ListType.TODO;
 
 public class MemberDeserializer implements JsonDeserializer<Member> {
 
@@ -125,6 +126,9 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                                 case NAME:
                                     card.setName( cardAttr.getValue().getAsString() );
                                     break;
+                                case SHORT_LINK:
+                                    card.setShortLink( cardAttr.getValue().getAsString() );
+                                    break;
                                 case ID:
                                     card.setId( cardAttr.getValue().getAsString() );
                                     break;
@@ -165,6 +169,7 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                             card.setListId( Card.ListType.TODAY, board.getTodayListId() );
                             card.setListId( Card.ListType.CLOCKED_OFF, board.getClockedOffListId() );
                             card.setListId( Card.ListType.DONE, board.getDoneListId() );
+                            card.setListId( Card.ListType.TODO, board.getTodoListId() );
                         }
                         switch ( listAfter ) {
                             case DOING_LIST:

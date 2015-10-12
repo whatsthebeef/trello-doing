@@ -11,6 +11,7 @@ public class Board {
     private List doingList;
     private List doneList;
     private List todoList;
+    private List notChargingList;
 
     public String getName() {
         return name;
@@ -98,5 +99,17 @@ public class Board {
 
     public void setShortLink( String shortLink ) {
         this.shortLink = shortLink;
+    }
+
+    public List getNotChargingList() {
+        return notChargingList;
+    }
+
+    public String getNotChargingListId() {
+        return notChargingList != null ? notChargingList.getId() : null;
+    }
+
+    public void setNotChargingList( List notChargingList ) {
+        this.notChargingList = notChargingList;
     }
 }

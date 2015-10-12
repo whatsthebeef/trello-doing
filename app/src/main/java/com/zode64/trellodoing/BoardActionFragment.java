@@ -21,7 +21,6 @@ public class BoardActionFragment extends Fragment {
 
     private TextView boardName;
 
-    private ImageButton cancel;
     private ImageButton newCard;
     private ImageButton open;
 
@@ -34,7 +33,6 @@ public class BoardActionFragment extends Fragment {
 
         boardName = ( TextView ) view.findViewById( R.id.board_name );
 
-        cancel = ( ImageButton ) view.findViewById( R.id.cancel );
         newCard = ( ImageButton ) view.findViewById( R.id.new_card );
         open = ( ImageButton ) view.findViewById( R.id.open );
 
@@ -61,12 +59,6 @@ public class BoardActionFragment extends Fragment {
             }
         } );
 
-        cancel.setOnClickListener( new View.OnClickListener() {
-            @Override
-            public void onClick( View v ) {
-                getActivity().finish();
-            }
-        } );
         return view;
     }
 

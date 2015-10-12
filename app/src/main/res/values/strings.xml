@@ -62,5 +62,15 @@
     <string name="loading_text">Loading...</string>
     <string name="today_boards">Today/Boards</string>
     <string name="get_cards_from">Board:</string>
+    <string name="no_todo_list">No todo list</string>
+    <string name="no_today_list">No today list</string>
+    <string name="no_doing_list">No doing list</string>
+    <string name="no_done_list">No done list</string>
+    <string name="no_clocked_off_list">No clocked off list</string>
+    <string name="token_missing">Authentication token missing. Go to settings and add it there.
+    </string>
+    <string name="add_card">Add new card to</string>
+    <string name="confirm">Confirm</string>
+    <string name="delete">delete</string>
 
 </resources>

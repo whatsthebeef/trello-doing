@@ -7,16 +7,15 @@
                 android:padding="8dip">
 
     <TextView
-        android:id="@+id/configure_delay_title"
+        android:id="@+id/instruction"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingBottom="10dip"
-        android:text="@string/add_personal_card"
         android:textColor="@color/black"/>
 
     <EditText
         android:id="@+id/new_card_name"
-        android:layout_below="@id/configure_delay_title"
+        android:layout_below="@id/instruction"
         android:inputType="textCapSentences"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
