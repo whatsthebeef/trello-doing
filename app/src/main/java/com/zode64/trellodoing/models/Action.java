@@ -1,6 +1,6 @@
 package com.zode64.trellodoing.models;
 
-import com.zode64.trellodoing.TrelloManager;
+import com.zode64.trellodoing.utils.TrelloManager;
 
 public abstract class Action {
 

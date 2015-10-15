@@ -1,10 +1,12 @@
-package com.zode64.trellodoing;
+package com.zode64.trellodoing.utils;
 
 import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.zode64.trellodoing.models.CardDeserializer;
+import com.zode64.trellodoing.models.MemberDeserializer;
 import com.zode64.trellodoing.models.Card;
 import com.zode64.trellodoing.models.Card.ListType;
 import com.zode64.trellodoing.models.Member;
@@ -21,7 +23,8 @@ public class TrelloManager {
 
     private final static String TAG = TrelloManager.class.getName();
 
-    private final static String TRELLO_URL = "https://trello.com/1";
+    public final static String TRELLO_URL = "https://trello.com";
+    public final static String TRELLO_URL_API = TRELLO_URL + "/1";
 
     private SharedPreferences mPreferences;
 
@@ -30,7 +33,7 @@ public class TrelloManager {
     }
 
     public String appKeyUrl() {
-        return TRELLO_URL + appKeyPath();
+        return TRELLO_URL_API + appKeyPath();
     }
 
     public String appKeyPath() {
@@ -38,7 +41,7 @@ public class TrelloManager {
     }
 
     public String tokenUrl() {
-        return TRELLO_URL + tokenPath();
+        return TRELLO_URL_API + tokenPath();
     }
 
     public String tokenPath() {
@@ -58,28 +61,28 @@ public class TrelloManager {
     }
 
     public boolean clockOff( Card card ) {
-        return moveCard( card.getId(), card.getListId( ListType.CLOCKED_OFF ) );
+        return moveCard( card.getServerId(), card.getListId( ListType.CLOCKED_OFF ) );
     }
 
     public boolean clockOn( Card card ) {
-        return moveCard( card.getId(), card.getListId( ListType.DOING ) );
+        return moveCard( card.getServerId(), card.getListId( ListType.DOING ) );
     }
 
     public boolean done( Card card ) {
-        return moveCard( card.getId(), card.getListId( ListType.DONE ) );
+        return moveCard( card.getServerId(), card.getListId( ListType.DONE ) );
     }
 
     public boolean today( Card card ) {
-        return moveCard( card.getId(), card.getListId( ListType.TODAY ) );
+        return moveCard( card.getServerId(), card.getListId( ListType.TODAY ) );
     }
 
     public boolean todo( Card card ) {
-        return moveCard( card.getId(), card.getListId( ListType.TODO ) );
+        return moveCard( card.getServerId(), card.getListId( ListType.TODO ) );
     }
 
     public boolean moveCard( String cardId, String toListId ) {
         try {
-            put( "/cards/" + cardId + "/idList", "&value=" + toListId, Card.class );
+            put( "/cards/" + cardId + "/idList", "&value=" + toListId );
             return true;
         } catch ( IOException e ) {
             e.printStackTrace();
@@ -88,17 +91,10 @@ public class TrelloManager {
     }
 
     public Card createCard( Card card ) {
-        // TODO if lists are present the user should be informed
-        if ( card.getListId( ListType.TODO ) == null ) {
-            throw new RuntimeException( "No Todo list for board" );
-        }
         try {
             Card persisted = post( "/cards", "&name=" + card.getName() + "&idList="
-                    + card.getListId( ListType.TODO ), Card.class );
-            if ( persisted != null ) {
-                card.setId( persisted.getId() );
-                moveCard( card.getId(), card.getListId( ListType.TODAY ) );
-            }
+                    + card.getListId( ListType.TODO ) );
+            card.setServerId( persisted.getServerId() );
             return card;
         } catch ( IOException e ) {
             e.printStackTrace();
@@ -108,7 +104,7 @@ public class TrelloManager {
 
     public boolean updateCardName( String cardId, String newName ) {
         try {
-            put( "/cards/" + cardId + "/name", "&value=" + newName, Card.class );
+            put( "/cards/" + cardId + "/name", "&value=" + newName );
             return true;
         } catch ( IOException e ) {
             e.printStackTrace();
@@ -127,16 +123,16 @@ public class TrelloManager {
     }
 
     private String constructTrelloPutURL( String baseURL ) {
-        return TRELLO_URL + baseURL;
+        return TRELLO_URL_API + baseURL;
     }
 
     private String constructTrelloURL( String baseURL ) {
         if ( baseURL.contains( "?" ) ) {
-            return TRELLO_URL + baseURL + "&key=" + mPreferences.getString( "app_key", "" )
+            return TRELLO_URL_API + baseURL + "&key=" + mPreferences.getString( "app_key", "" )
                     + "&token=" + mPreferences.getString( "token", "" );
 
         } else {
-            return TRELLO_URL + baseURL + "?key=" + mPreferences.getString( "app_key", "" )
+            return TRELLO_URL_API + baseURL + "?key=" + mPreferences.getString( "app_key", "" )
                     + "&token=" + mPreferences.getString( "token", "" );
         }
     }
@@ -191,12 +187,12 @@ public class TrelloManager {
         }
     }
 
-    private <T> T put( String path, String value, Class<T> type ) throws IOException {
-        return push( path, value, "PUT", type );
+    private Card put( String path, String value ) throws IOException {
+        return push( path, value, "PUT" );
     }
 
-    private <T> T post( String path, String value, Class<T> type ) throws IOException {
-        return push( path, value, "POST", type );
+    private Card post( String path, String value ) throws IOException {
+        return push( path, value, "POST" );
     }
 
     private void delete( String path ) throws IOException {
@@ -225,7 +221,7 @@ public class TrelloManager {
      * @param path
      * @return
      */
-    private <T> T push( String path, String value, String method, Class<T> type ) throws IOException {
+    private Card push( String path, String value, String method ) throws IOException {
         Log.v( TAG, path + " - " + value );
         URL to = null;
         HttpURLConnection urlConnection = null;
@@ -241,8 +237,8 @@ public class TrelloManager {
             out.write( value );
             out.close();
             InputStream stream = urlConnection.getInputStream();
-            Gson gson = new GsonBuilder().create();
-            T model = gson.fromJson( new InputStreamReader( stream ), type );
+            Gson gson = new GsonBuilder().registerTypeAdapter( Card.class, new CardDeserializer() ).create();
+            Card model = gson.fromJson( new InputStreamReader( stream ), Card.class );
             stream.close();
             Log.v( TAG, "Output from " + method + " request : " + model.toString() );
             return model;

@@ -1,4 +1,4 @@
-package com.zode64.trellodoing;
+package com.zode64.trellodoing.utils;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -8,9 +8,8 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 
-/**
- * Created by john on 2/12/15.
- */
+import com.zode64.trellodoing.R;
+
 public class DoingNotification {
 
     private static final int CLOCK_ON_ID = 676767;
@@ -28,15 +27,15 @@ public class DoingNotification {
     }
 
     public void clockOn( String lastBoard ) {
-        generate( "Clock on!", CLOCK_ON_ID, lastBoard, false );
+        generate( mContext.getString( R.string.clock_on ), CLOCK_ON_ID, lastBoard, false );
     }
 
     public void clockOff( String lastBoard ) {
-        generate( "Clock off!", CLOCK_OFF_ID, lastBoard, false );
+        generate( mContext.getString( R.string.clock_out ), CLOCK_OFF_ID, lastBoard, false );
     }
 
     public void deadline( String lastBoard ) {
-        generate( "Change what you are doing!", DEADLINE_ID, lastBoard, true );
+        generate( mContext.getString( R.string.change_what_you_are_doing ), DEADLINE_ID, lastBoard, true );
     }
 
     public void removeAll() {
@@ -47,7 +46,7 @@ public class DoingNotification {
     }
 
     public void multiDoings( String lastBoard ) {
-        generate( "You are doing two things at once!", MULTIPLE_DOINGS_ID, lastBoard, true );
+        generate( mContext.getString( R.string.two_things_at_once ), MULTIPLE_DOINGS_ID, lastBoard, true );
     }
 
     private void generate( String content, int id, String lastBoard, boolean warning ) {
@@ -56,7 +55,7 @@ public class DoingNotification {
         Notification.Builder builder =
                 new Notification.Builder( mContext )
                         .setSmallIcon( android.R.drawable.stat_notify_error )
-                        .setContentTitle( "Trello Doing Reminder" )
+                        .setContentTitle( mContext.getString( R.string.doing_reminder ) )
                         .setLights( Color.argb( 0, 0, 255, 255 ), 100, 500 )
                         .setDefaults( Notification.DEFAULT_SOUND )
                                 // .setSound( Uri.parse( "android.resource://" + mContext.getPackageName() + "/" + R.raw.sotp ) )

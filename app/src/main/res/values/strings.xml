@@ -69,8 +69,15 @@
     <string name="no_clocked_off_list">No clocked off list</string>
     <string name="token_missing">Authentication token missing. Go to settings and add it there.
     </string>
-    <string name="add_card">Add new card to</string>
+    <string name="add_card">Add card</string>
     <string name="confirm">Confirm</string>
     <string name="delete">delete</string>
+    <string name="recording_audio">Recording audio...</string>
+    <string name="playing_audio">Playing audio...</string>
+    <string name="select_board">Select board</string>
+    <string name="clock_on">Clock on!!!</string>
+    <string name="change_what_you_are_doing">Change what you are doing!!!</string>
+    <string name="two_things_at_once">You are doing two things at once!!!</string>
+    <string name="doing_reminder">Doing Reminder</string>
 
 </resources>

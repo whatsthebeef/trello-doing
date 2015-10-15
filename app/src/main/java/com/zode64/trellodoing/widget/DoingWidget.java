@@ -16,18 +16,20 @@ import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
-import com.zode64.trellodoing.ActionActivity;
-import com.zode64.trellodoing.AdderActivity;
-import com.zode64.trellodoing.DoingNotification;
+import com.zode64.trellodoing.CardActionActivity;
+import com.zode64.trellodoing.CardAdderActivity;
+import com.zode64.trellodoing.utils.DoingNotification;
 import com.zode64.trellodoing.DoingPreferences;
 import com.zode64.trellodoing.KeepDoingActivity;
 import com.zode64.trellodoing.MainActivity;
 import com.zode64.trellodoing.R;
-import com.zode64.trellodoing.TrelloManager;
-import com.zode64.trellodoing.WidgetAlarm;
+import com.zode64.trellodoing.utils.TimeUtils;
+import com.zode64.trellodoing.utils.TrelloManager;
+import com.zode64.trellodoing.utils.WidgetAlarm;
 import com.zode64.trellodoing.db.ActionDAO;
 import com.zode64.trellodoing.db.BoardDAO;
 import com.zode64.trellodoing.db.CardDAO;
+import com.zode64.trellodoing.db.DeadlineDAO;
 import com.zode64.trellodoing.models.Action;
 import com.zode64.trellodoing.models.Board;
 import com.zode64.trellodoing.models.Card;
@@ -37,7 +39,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 
-import static com.zode64.trellodoing.TimeUtils.between;
+import static com.zode64.trellodoing.utils.TimeUtils.between;
 
 public class DoingWidget extends AppWidgetProvider {
 
@@ -47,7 +49,7 @@ public class DoingWidget extends AppWidgetProvider {
     public final static String ACTION_SET_ALARM = "com.zode64.trellodoing.intent.action.SET_ALARM";
     public final static String ACTION_STOP_ALARM = "com.zode64.trellodoing.intent.action.STOP_ALARM";
     public final static String ACTION_NETWORK_CHANGE = "com.zode64.trellodoing.intent.action.NETWORK_CHANGE";
-    public final static String ACTION_ADD_PERSONAL_CARD = "com.zode64.trellodoing.intent.action.ADD_PERSONAL_CARD";
+    public final static String ACTION_ADD_CARD = "com.zode64.trellodoing.intent.action.ADD_CARD";
     public final static String ACTION_TODAY_BOARDS_SWITCH = "com.zode64.trellodoing.intent.action.TODAY_BOARDS_SWITCH";
 
     public static final String EXTRA_CARD_ID = "com.zode64.trellodoing.cardsproivder.EXTRA_CARD_ID";
@@ -65,7 +67,7 @@ public class DoingWidget extends AppWidgetProvider {
         setSettingsListener( views, context );
         setRefreshClickListener( views, context );
         setKeepDoingClickListener( views, context );
-        setAddPersonalCardListener( views, context );
+        setAddCardListener( views, context );
         setTodayBoardsSwitchListener( views, context );
 
         setListAdapter( views, R.id.doing_cards_list, DoingWidgetService.class, context );
@@ -118,7 +120,7 @@ public class DoingWidget extends AppWidgetProvider {
     }
 
     private void setCardListListener( RemoteViews views, Context context ) {
-        Intent itemClickIntent = new Intent( context, ActionActivity.class );
+        Intent itemClickIntent = new Intent( context, CardActionActivity.class );
         PendingIntent itemClickPendingIntent = PendingIntent.getActivity( context, 0, itemClickIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT );
         views.setPendingIntentTemplate( R.id.doing_cards_list, itemClickPendingIntent );
@@ -126,10 +128,10 @@ public class DoingWidget extends AppWidgetProvider {
         views.setPendingIntentTemplate( R.id.clocked_off_cards_list, itemClickPendingIntent );
     }
 
-    private void setAddPersonalCardListener( RemoteViews views, Context context ) {
-        Intent addPersonalCard = new Intent( ACTION_ADD_PERSONAL_CARD );
+    private void setAddCardListener( RemoteViews views, Context context ) {
+        Intent addPersonalCard = new Intent( ACTION_ADD_CARD );
         PendingIntent pendingAddPersonalCard = PendingIntent.getService( context, 0, addPersonalCard, 0 );
-        views.setOnClickPendingIntent( R.id.add_personal_card, pendingAddPersonalCard );
+        views.setOnClickPendingIntent( R.id.add_card, pendingAddPersonalCard );
     }
 
     private void setTodayBoardsSwitchListener( RemoteViews views, Context context ) {
@@ -199,8 +201,8 @@ public class DoingWidget extends AppWidgetProvider {
                     return;
                 }
             }
-            if ( ACTION_ADD_PERSONAL_CARD.equals( intent.getAction() ) ) {
-                Intent cardAdderIntent = new Intent( this, AdderActivity.class );
+            if ( ACTION_ADD_CARD.equals( intent.getAction() ) ) {
+                Intent cardAdderIntent = new Intent( this, CardAdderActivity.class );
                 BoardDAO boardDAO = new BoardDAO( this );
                 cardAdderIntent.putExtra( EXTRA_BOARD_ID, boardDAO.findPersonalBoard().getId() );
                 cardAdderIntent.addFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
@@ -218,61 +220,57 @@ public class DoingWidget extends AppWidgetProvider {
                 appWidgetAlarm.setAlarm();
             }
 
-            String token = preferences.getSharedPreferences().getString( "token", "" );
-            if ( token.equals( "" ) ) {
+            if ( !preferences.hasToken() ) {
                 mHandler.post( new DisplayTokenMissingToast( this ) );
                 return;
             }
 
             TrelloManager trelloManager = new TrelloManager( preferences.getSharedPreferences() );
             CardDAO cardDAO = new CardDAO( this );
-            ActionDAO actionDAO = new ActionDAO( this, trelloManager, cardDAO );
 
+            boolean isOnline = true;
             // Start with out standing operations in the cache
+            ActionDAO actionDAO = new ActionDAO( this, trelloManager, cardDAO );
             ArrayList<Action> actions = actionDAO.all();
             for ( Action action : actions ) {
                 if ( action.perform() ) {
                     actionDAO.delete( action.getId() );
                 } else {
+                    isOnline = false;
                     break;
                 }
             }
 
             ArrayList<Card> cards = cardDAO.all();
-            // Try update the cache
-            Member member = trelloManager.member();
-            if ( member != null ) {
-                if ( ACTION_REFRESH.equals( intent.getAction() ) ) {
-                    BoardDAO boardDAO = new BoardDAO( this );
-                    boardDAO.deleteAll();
-                    for ( Board board : member.getBoards() ) {
-                        boardDAO.create( board );
+            if ( isOnline ) {
+                // Try update the cache
+                Member member = trelloManager.member();
+                if ( member != null ) {
+                    if ( ACTION_REFRESH.equals( intent.getAction() ) ) {
+                        BoardDAO boardDAO = new BoardDAO( this );
+                        boardDAO.deleteAll();
+                        for ( Board board : member.getBoards() ) {
+                            boardDAO.create( board );
+                        }
+                        boardDAO.closeDB();
                     }
-                    boardDAO.closeDB();
-                }
-                HashMap<String, Long> deadlines = new HashMap<>();
-                for ( Card card : cards ) {
-                    deadlines.put( card.getId(), card.getDeadline() );
-                }
-                // Clear cache
-                cardDAO.deleteAll();
-                cards = member.getCards();
-                for ( Card card : cards ) {
-                    Long deadline = deadlines.get( card.getId() );
-                    if ( deadline != null ) {
-                        // recoup deadlines when constructing new cache
-                        card.setDeadline( deadline );
+                    // Clear cache
+                    cardDAO.deleteAll();
+                    cards = member.getCards();
+                    for ( Card card : cards ) {
+                        cardDAO.create( card );
+                        Log.d( TAG, "Card id: " + card.getId() );
                     }
-                    cardDAO.create( card );
-                    Log.d( TAG, "Card id: " + card.getId() );
                 }
             }
 
             // Check to see if we should create any notifications
+            DeadlineDAO deadlineDAO = new DeadlineDAO( this );
+            HashMap<String, Long> deadlines = deadlineDAO.all();
             DoingNotification notifications = new DoingNotification( this );
             notifications.removeAll();
             int numDoingCards = 0;
-            String doingCardUrl = "https://trello.com";
+            String doingCardUrl = TrelloManager.TRELLO_URL;
             Calendar now = Calendar.getInstance();
             for ( Card card : cards ) {
                 if ( card.isClockedOn() ) {
@@ -281,7 +279,7 @@ public class DoingWidget extends AppWidgetProvider {
                     if ( !between( preferences.getStartHour(), preferences.getEndHour(), now ) ) {
                         notifications.clockOff( doingCardUrl );
                     }
-                    if ( card.pastDeadline() ) {
+                    if ( TimeUtils.pastDeadline( deadlines.get( card.getServerId() ), now.getTimeInMillis() ) ) {
                         notifications.deadline( card.getBoardShortUrl() );
                     }
                 }
@@ -295,8 +293,8 @@ public class DoingWidget extends AppWidgetProvider {
             }
 
             // Clean up
-            cardDAO.closeDB();
             actionDAO.closeDB();
+            cardDAO.closeDB();
 
             AppWidgetManager manager = AppWidgetManager.getInstance( this );
             ComponentName thisWidget = new ComponentName( this, DoingWidget.class );
@@ -326,5 +324,4 @@ public class DoingWidget extends AppWidgetProvider {
             }
         }
     }
-
 }

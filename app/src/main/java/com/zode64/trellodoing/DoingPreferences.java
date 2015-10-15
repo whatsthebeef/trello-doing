@@ -5,8 +5,6 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 
 public class DoingPreferences {
 
@@ -15,10 +13,12 @@ public class DoingPreferences {
     private static final String START_HOUR = "start_hour";
     private static final String END_HOUR = "end_hour";
     private static final String TODAY_OR_BOARDS = "todayOrBoards";
+    private static final String TOKEN = "token";
 
     private static final String TODAY = "today";
     private static final String BOARDS = "boards";
 
+    public static final String LAST_BOARD = "lastBoard";
     public static final int DEFAULT_START_HOUR = 8;
     public static final int DEFAULT_END_HOUR = 18;
 
@@ -54,10 +54,6 @@ public class DoingPreferences {
         return getKeepDoing() > Calendar.getInstance().getTimeInMillis();
     }
 
-    public String getLastDoingBoard() {
-        return mPreferences.getString( LAST_DOING_BOARD, null );
-    }
-
     public Integer getStartHour() {
         return Integer.parseInt( mPreferences.getString( START_HOUR, String.valueOf( DEFAULT_START_HOUR ) ) );
     }
@@ -79,7 +75,20 @@ public class DoingPreferences {
     }
 
     public boolean isBoards() {
-        return BOARDS.equals(mPreferences.getString( TODAY_OR_BOARDS, TODAY ) );
+        return BOARDS.equals( mPreferences.getString( TODAY_OR_BOARDS, TODAY ) );
+    }
+
+    public String getToken() {
+        return mPreferences.getString( TOKEN, null );
+    }
+
+    public boolean hasToken() {
+        String token = mPreferences.getString( TOKEN, null );
+        return token != null && !token.equals( "" );
+    }
+
+    public String getLastBoard() {
+        return mPreferences.getString( LAST_BOARD, null );
     }
 
     public SharedPreferences getSharedPreferences() {

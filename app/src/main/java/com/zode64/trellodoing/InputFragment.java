@@ -8,29 +8,33 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
 
-public class InputFragment extends Fragment {
+public class InputFragment extends DoingFragment {
 
     private ImageButton submit;
     private ImageButton cancel;
 
     private EditText newCardName;
 
+    private TextChangeListener listener;
+
     @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
 
         View view = inflater.inflate( R.layout.input, container, false );
+
+        listener = ( TextChangeListener ) getActivity();
 
         submit = ( ImageButton ) view.findViewById( R.id.submit );
         cancel = ( ImageButton ) view.findViewById( R.id.cancel );
 
         newCardName = ( EditText ) view.findViewById( R.id.new_card_name );
 
-        newCardName.setText( ( ( InputChangeListener ) getActivity() ).getPlaceholder() );
+        newCardName.setText( listener.getCard().getName() );
 
         submit.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                ( ( InputChangeListener ) getActivity() ).onChange( newCardName.getText().toString() );
+                listener.onTextChange( newCardName.getText().toString() );
                 getActivity().onBackPressed();
             }
         } );
@@ -45,9 +49,8 @@ public class InputFragment extends Fragment {
         return view;
     }
 
-    interface InputChangeListener {
-        void onChange( String text );
-        String getPlaceholder();
+    interface TextChangeListener extends CardGetter {
+        void onTextChange( String text );
     }
 }
 

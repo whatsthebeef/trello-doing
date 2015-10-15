@@ -2,7 +2,6 @@ package com.zode64.trellodoing.widget;
 
 import android.content.Context;
 import android.content.Intent;
-import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
@@ -13,8 +12,6 @@ import com.zode64.trellodoing.models.Board;
 import com.zode64.trellodoing.models.Card;
 
 import java.util.ArrayList;
-
-import static com.zode64.trellodoing.TimeUtils.after;
 
 public class TodayWidgetService extends RemoteViewsService {
 
@@ -55,6 +52,7 @@ public class TodayWidgetService extends RemoteViewsService {
                 view.setOnClickFillInIntent( R.id.doing_card, fillInIntent );
                 return view;
             } else {
+                /*
                 Card card = cards.get( position );
                 if ( after( preferences.getEndHour() ) ) {
                     RemoteViews view = new RemoteViews( context.getPackageName(), R.layout.doing_card_past_today );
@@ -69,8 +67,8 @@ public class TodayWidgetService extends RemoteViewsService {
                     }
                     return view;
                 } else {
-                    return super.getViewAt( position );
-                }
+                */
+                return super.getViewAt( position );
             }
         }
 

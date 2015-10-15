@@ -4,6 +4,11 @@
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <uses-feature android:name="android.hardware.camera" />
 
     <uses-sdk
         android:minSdkVersion="18"
@@ -22,18 +27,20 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".AdderActivity"
+        <activity android:name=".CardActionActivity"
                   android:excludeFromRecents="true"
-                  android:launchMode="singleInstance"
-                  android:theme="@android:style/Theme.Dialog">
-        </activity>
-        <activity android:name=".ActionActivity"
                   android:exported="true"
-                  android:theme="@android:style/Theme.Dialog">
+                  android:theme="@android:style/Theme.Holo.Light.Dialog">
+        </activity>
+        <activity android:name=".CardAdderActivity"
+                  android:excludeFromRecents="true"
+                  android:exported="true"
+                  android:theme="@android:style/Theme.Holo.Light.Dialog">
         </activity>
         <activity android:name=".KeepDoingActivity"
+                  android:excludeFromRecents="true"
                   android:exported="true"
-                  android:theme="@android:style/Theme.Dialog">
+                  android:theme="@android:style/Theme.Holo.Light.Dialog">
         </activity>
 
         <!-- Broadcast Receiver that will process AppWidget updates -->
@@ -41,6 +48,7 @@
             android:name=".widget.DoingWidget"
             android:label="@string/widget_name">
             <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
             </intent-filter>
             <meta-data
@@ -61,7 +69,7 @@
                 <action android:name="com.zode64.trellodoing.intent.action.STANDARD_ALARM"/>
                 <action android:name="com.zode64.trellodoing.intent.action.SET_ALARM"/>
                 <action android:name="com.zode64.trellodoing.intent.action.STOP_ALARM"/>
-                <action android:name="com.zode64.trellodoing.intent.action.ADD_PERSONAL_CARD"/>
+                <action android:name="com.zode64.trellodoing.intent.action.ADD_CARD"/>
                 <action android:name="com.zode64.trellodoing.intent.action.TODAY_BOARDS_SWITCH"/>
                 <action android:name="com.zode64.trellodoing.intent.action.NETWORK_CHANGE"/>
             </intent-filter>

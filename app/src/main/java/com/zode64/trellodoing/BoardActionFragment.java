@@ -45,8 +45,7 @@ public class BoardActionFragment extends Fragment {
         newCard.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                getActivity().getFragmentManager().beginTransaction().replace( R.id.board_actions,
-                        new CardAdderFragment() ).commit();
+                startActivity( new Intent( getActivity(), CardAdderActivity.class ) );
             }
         } );
 

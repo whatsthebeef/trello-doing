@@ -1,36 +1,32 @@
 package com.zode64.trellodoing;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.os.Bundle;
+import android.preference.Preference;
 import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.TextView;
 
 import com.zode64.trellodoing.db.BoardDAO;
 import com.zode64.trellodoing.db.CardDAO;
 import com.zode64.trellodoing.models.Board;
 import com.zode64.trellodoing.models.Card;
-import com.zode64.trellodoing.widget.DoingWidget;
+import com.zode64.trellodoing.utils.FileUtils;
+import com.zode64.trellodoing.utils.TrelloManager;
 
 import java.util.Calendar;
 
-/**
- * Created by john on 9/22/15.
- */
-public class CardAdderFragment extends Fragment {
+public class CardAdderActivity extends Activity implements Preference.OnPreferenceChangeListener {
+
+    private final static String TAG = CardAdderActivity.class.getName();
 
     private ImageButton submit;
     private ImageButton cancel;
     private EditText nameInput;
-
-    private TextView instruction;
 
     private CardDAO cardDAO;
     private BoardDAO boardDAO;
@@ -39,25 +35,36 @@ public class CardAdderFragment extends Fragment {
 
     private TrelloManager trelloManager;
 
-    public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
-        View view = inflater.inflate( R.layout.new_card, container, false );
+    private CardAdderActivity activity;
 
-        cardDAO = new CardDAO( getActivity() );
-        boardDAO = new BoardDAO( getActivity() );
+    private DoingPreferences preferences;
 
-        submit = ( ImageButton ) view.findViewById( R.id.submit_new_card );
-        cancel = ( ImageButton ) view.findViewById( R.id.cancel_new_card );
-        nameInput = ( EditText ) view.findViewById( R.id.new_card_name );
+    @Override
+    protected void onCreate( Bundle savedInstanceState ) {
+        super.onCreate( savedInstanceState );
+        requestWindowFeature( Window.FEATURE_NO_TITLE );
+        setContentView( R.layout.add_card );
 
-        instruction = ( TextView ) view.findViewById( R.id.instruction );
+        activity = this;
 
-        String boardId = getActivity().getIntent().getStringExtra( DoingWidget.EXTRA_BOARD_ID );
-        board = boardDAO.find( boardId );
+        cardDAO = new CardDAO( this );
+        boardDAO = new BoardDAO( this );
 
-        trelloManager = new TrelloManager( PreferenceManager.getDefaultSharedPreferences( getActivity() ) );
+        submit = ( ImageButton ) findViewById( R.id.submit_new_card );
+        cancel = ( ImageButton ) findViewById( R.id.cancel_new_card );
+        nameInput = ( EditText ) findViewById( R.id.new_card_name );
 
-        submit.setEnabled( false );
-        instruction.setText( getString( R.string.add_card ) + " " + board.getName() );
+        trelloManager = new TrelloManager( PreferenceManager.getDefaultSharedPreferences( this ) );
+        preferences = new DoingPreferences( this );
+
+        nameInput.setHint( getString( R.string.add_card ) );
+
+        String boardId = preferences.getLastBoard();
+        if ( boardId != null ) {
+            board = boardDAO.find( boardId );
+        }
+
+        updateSubmitState();
 
         nameInput.addTextChangedListener( new TextWatcher() {
                                               @Override
@@ -70,12 +77,7 @@ public class CardAdderFragment extends Fragment {
 
                                               @Override
                                               public void afterTextChanged( Editable s ) {
-                                                  if ( s.length() > 0 ) {
-                                                      submit.setEnabled( true );
-                                                  } else {
-                                                      submit.setEnabled( false );
-                                                  }
-
+                                                  updateSubmitState();
                                               }
                                           }
         );
@@ -88,7 +90,7 @@ public class CardAdderFragment extends Fragment {
                 if ( text != null && !text.equals( "" ) ) {
                     Card card = new Card();
                     card.setName( text );
-                    card.setId( String.valueOf( Calendar.getInstance().getTimeInMillis() ) );
+                    card.setServerId( "" + Calendar.getInstance().getTimeInMillis() );
                     card.setInListType( Card.ListType.TODAY );
                     card.setBoardId( board.getId() );
                     card.setBoardName( board.getName() );
@@ -98,7 +100,7 @@ public class CardAdderFragment extends Fragment {
                     card.setListId( Card.ListType.DOING, board.getDoingListId() );
                     card.setListId( Card.ListType.CLOCKED_OFF, board.getClockedOffListId() );
                     card.setListId( Card.ListType.DONE, board.getDoneListId() );
-                    new AddCardTask( getActivity(), trelloManager ).execute( card );
+                    new AddCardTask( activity, trelloManager ).execute( card );
                 }
             }
         } );
@@ -106,17 +108,32 @@ public class CardAdderFragment extends Fragment {
         cancel.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                getActivity().finish();
+                activity.finish();
             }
         } );
-        return view;
     }
 
     @Override
-    public void onDestroyView() {
+    public void onDestroy() {
         cardDAO.closeDB();
         boardDAO.closeDB();
         super.onDestroy();
+    }
+
+    @Override
+    public boolean onPreferenceChange( Preference preference, Object newValue ) {
+        board = boardDAO.find( ( String ) newValue );
+        updateSubmitState();
+        return true;
+    }
+
+    private void updateSubmitState() {
+        String text = nameInput.getText().toString();
+        if ( board != null && text != null && !text.equals( "" ) ) {
+            submit.setEnabled( true );
+        } else {
+            submit.setEnabled( false );
+        }
     }
 
     private class AddCardTask extends TrelloTask {
@@ -132,6 +149,11 @@ public class CardAdderFragment extends Fragment {
             if ( persistedCard == null ) {
                 getActionDAO().getCardDAO().create( newCard );
                 getActionDAO().createCreate( newCard );
+                getActionDAO().createMove( newCard );
+            } else {
+                if ( !trelloManager.today( newCard ) ) {
+                    getActionDAO().createMove( newCard );
+                }
             }
             return null;
         }

@@ -1,7 +1,6 @@
 package com.zode64.trellodoing.models;
 
-import com.zode64.trellodoing.TrelloManager;
-import com.zode64.trellodoing.db.CardDAO;
+import com.zode64.trellodoing.utils.TrelloManager;
 
 public class UpdateNameAction extends Action {
 
@@ -11,6 +10,6 @@ public class UpdateNameAction extends Action {
 
     @Override
     public boolean perform() {
-        return trello.updateCardName( card.getId(), card.getName() );
+        return trello.updateCardName( card.getServerId(), card.getName() );
     }
 }

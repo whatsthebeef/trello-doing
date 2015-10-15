@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/audio_play"
+                style="@style/dialog_box">
+
+    <TextView
+        android:id="@+id/instruction"
+        style="@style/instruction_text"
+        android:text="@string/playing_audio" />
+
+    <LinearLayout
+        android:id="@+id/buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/instruction"
+        android:orientation="horizontal"
+        android:weightSum="3">
+
+        <ImageButton
+            android:id="@+id/play"
+            style="@style/action_button"
+            android:src="@drawable/play"/>
+
+        <ImageButton
+            android:id="@+id/stop"
+            style="@style/action_button"
+            android:src="@drawable/stop"/>
+
+        <ImageButton
+            android:id="@+id/delete"
+            style="@style/action_button"
+            android:src="@drawable/delete"/>
+
+    </LinearLayout>
+
+</RelativeLayout>

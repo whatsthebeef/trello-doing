@@ -10,6 +10,7 @@ import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 
+import com.zode64.trellodoing.utils.TrelloManager;
 import com.zode64.trellodoing.widget.DoingWidget;
 
 /**

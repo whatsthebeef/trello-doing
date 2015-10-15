@@ -25,12 +25,13 @@ public class Card {
         STOP_DOING
     }
 
+    private Integer id;
     private String name;
     private String shortLink;
     private String boardShortLink;
     private String boardName;
     private String boardId;
-    private String id;
+    private String serverId;
 
     private ListType inListType;
 
@@ -65,11 +66,19 @@ public class Card {
     }
 
     public String getId() {
-        return id;
+        return String.valueOf( id );
     }
 
-    public void setId( String id ) {
+    public void setId( Integer id ) {
         this.id = id;
+    }
+
+    public String getServerId() {
+        return serverId;
+    }
+
+    public void setServerId( String cardId ) {
+        this.serverId = cardId;
     }
 
     public String getBoardShortLink() {

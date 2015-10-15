@@ -11,7 +11,7 @@ import com.zode64.trellodoing.models.Card;
 
 import java.util.Calendar;
 
-import static com.zode64.trellodoing.TimeUtils.between;
+import static com.zode64.trellodoing.utils.TimeUtils.between;
 
 public class DoingWidgetService extends RemoteViewsService {
 

@@ -8,10 +8,14 @@ import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
 import com.zode64.trellodoing.R;
+import com.zode64.trellodoing.utils.TimeUtils;
 import com.zode64.trellodoing.db.CardDAO;
+import com.zode64.trellodoing.db.DeadlineDAO;
 import com.zode64.trellodoing.models.Card;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
 
 public abstract class ListProvider implements RemoteViewsService.RemoteViewsFactory {
 
@@ -23,18 +27,29 @@ public abstract class ListProvider implements RemoteViewsService.RemoteViewsFact
 
     protected CardDAO cardDAO;
 
+    protected DeadlineDAO deadlineDAO;
+
+    protected HashMap<String, Long> deadlines;
+
+    protected long now;
+
     public ListProvider( Context context, Intent intent ) {
         this.context = context;
         this.cardDAO = new CardDAO( context );
+        deadlineDAO = new DeadlineDAO( context );
     }
 
     @Override
     public void onCreate() {
+        deadlines = deadlineDAO.all();
+        now = Calendar.getInstance().getTimeInMillis();
         loadCards();
     }
 
     @Override
     public void onDataSetChanged() {
+        deadlines = deadlineDAO.all();
+        now = Calendar.getInstance().getTimeInMillis();
         loadCards();
     }
 
@@ -62,11 +77,12 @@ public abstract class ListProvider implements RemoteViewsService.RemoteViewsFact
         Card card = cards.get( position );
         Log.i( TAG, "View with card :" + card.getName() );
         RemoteViews view = null;
-        if ( card.pastDeadline() ) {
+        Long deadline = deadlines.get( card.getServerId() );
+        if ( TimeUtils.pastDeadline( deadline, now ) ) {
             view = new RemoteViews( context.getPackageName(), R.layout.doing_card_past_deadline );
         } else {
             view = new RemoteViews( context.getPackageName(), R.layout.doing_card );
-            if ( card.hasDeadline() ) {
+            if ( deadline != null ) {
                 view.setViewVisibility( R.id.deadline_set, View.VISIBLE );
                 view.setViewVisibility( R.id.deadline_not_set, View.GONE );
             } else {

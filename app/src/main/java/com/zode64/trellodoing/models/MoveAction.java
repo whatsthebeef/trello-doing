@@ -1,6 +1,6 @@
 package com.zode64.trellodoing.models;
 
-import com.zode64.trellodoing.TrelloManager;
+import com.zode64.trellodoing.utils.TrelloManager;
 
 public class MoveAction extends Action {
 
@@ -10,6 +10,6 @@ public class MoveAction extends Action {
 
     @Override
     public boolean perform() {
-        return trello.moveCard( card.getId(), card.getCurrentListId() );
+        return trello.moveCard( card.getServerId(), card.getCurrentListId() );
     }
 }

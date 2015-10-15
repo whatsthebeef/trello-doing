@@ -7,7 +7,6 @@ import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
-import com.zode64.trellodoing.models.Action;
 import com.zode64.trellodoing.models.Card;
 
 import java.util.ArrayList;
@@ -29,6 +28,7 @@ public class CardDAO {
 
     public final static String TABLE_NAME = "cards";
     public final static String ID = "id";
+    public final static String SERVER_ID = "serverId";
     public final static String NAME = "name";
     public final static String BOARD_SHORTLINK = "boardShortLink";
     public final static String BOARD_NAME = "boardName";
@@ -41,10 +41,11 @@ public class CardDAO {
     public final static String TODAY_LIST = "todayList";
     public final static String TODO_LIST = "todoList";
     public final static String SHORT_LINK = "shortLink";
+    public final static String MARKED_FOR_DELETE = "markedForDelete";
 
-    private String[] cols = new String[]{ ID, NAME, BOARD_SHORTLINK, BOARD_NAME, BOARD_ID,
+    private String[] cols = new String[]{ ID, SERVER_ID, NAME, BOARD_SHORTLINK, BOARD_NAME, BOARD_ID,
             DEADLINE, IN_LIST_TYPE, CLOCKED_OFF_LIST, DOING_LIST,
-            DONE_LIST, TODAY_LIST, TODO_LIST, SHORT_LINK };
+            DONE_LIST, TODAY_LIST, TODO_LIST, SHORT_LINK, MARKED_FOR_DELETE };
 
     /**
      * @param context
@@ -55,7 +56,8 @@ public class CardDAO {
     }
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ( " +
-            ID + " TEXT PRIMARY KEY, " +
+            ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            SERVER_ID + " TEXT, " +
             NAME + " TEXT NOT NULL, " +
             BOARD_SHORTLINK + " TEXT, " +
             BOARD_NAME + " TEXT, " +
@@ -67,7 +69,8 @@ public class CardDAO {
             DONE_LIST + " TEXT, " +
             TODAY_LIST + " TEXT, " +
             TODO_LIST + " TEXT, " +
-            SHORT_LINK + " TEXT" +
+            SHORT_LINK + " TEXT, " +
+            MARKED_FOR_DELETE + " INTEGER NOT NULL" +
             ");";
 
     public static final String DELETE_TABLE = "DROP TABLE " + TABLE_NAME + " IF EXIST";
@@ -75,7 +78,7 @@ public class CardDAO {
     public void create( Card card ) {
         Log.i( TAG, "Creating card : " + card.getName() );
         ContentValues values = new ContentValues();
-        values.put( ID, card.getId() );
+        values.put( SERVER_ID, card.getServerId() );
         values.put( NAME, card.getName() );
         values.put( BOARD_SHORTLINK, card.getBoardShortLink() );
         values.put( BOARD_NAME, card.getBoardName() );
@@ -88,12 +91,13 @@ public class CardDAO {
         values.put( TODAY_LIST, card.getListId( TODAY ) );
         values.put( TODO_LIST, card.getListId( TODO ) );
         values.put( SHORT_LINK, card.getShortLink() );
-        database.insert( TABLE_NAME, null, values );
+        values.put( MARKED_FOR_DELETE, 0 );
+        card.setId( (int) database.insert( TABLE_NAME, null, values ) );
     }
 
     public ArrayList<Card> all() {
         Log.i( TAG, "Fetching all cards" );
-        Cursor cursor = database.query( true, TABLE_NAME, cols, null, null, null, null, null, null );
+        Cursor cursor = database.query( true, TABLE_NAME, cols, MARKED_FOR_DELETE + "=0", null, null, null, null, null );
         return cursorToCards( cursor );
     }
 
@@ -108,8 +112,14 @@ public class CardDAO {
         return DatabaseUtils.queryNumEntries( database, TABLE_NAME, DEADLINE + ">1", null ) > 0;
     }
 
-    public void delete( String cardId ) {
-        database.delete( TABLE_NAME, ID + "=?", new String[]{ cardId } );
+    public void delete( String id ) {
+        database.delete( TABLE_NAME, ID + "=?", new String[]{ id } );
+    }
+
+    public void markForDelete( String id ) {
+        ContentValues values = new ContentValues();
+        values.put( MARKED_FOR_DELETE, 1 );
+        database.update( TABLE_NAME, values, ID + "=?", new String[]{ id } );
     }
 
     public void deleteAll() {
@@ -128,19 +138,31 @@ public class CardDAO {
         database.update( TABLE_NAME, values, ID + "=?", new String[]{ id } );
     }
 
-    public void updataName( String id, String name ) {
+    public void updateName( String id, String name ) {
         ContentValues values = new ContentValues();
         values.put( NAME, name );
         database.update( TABLE_NAME, values, ID + "=?", new String[]{ id } );
     }
 
-    public Card find( String cardId ) {
-        Cursor cursor = database.query( true, TABLE_NAME, cols, ID + "=?", new String[]{ cardId }, null, null, null, null );
+    public void updateServerId( String id, String serverId ) {
+        ContentValues values = new ContentValues();
+        values.put( SERVER_ID, serverId );
+        database.update( TABLE_NAME, values, ID + "=?", new String[]{ id } );
+    }
+
+    public Card findByServerId( String cardId ) {
+        Cursor cursor = database.query( true, TABLE_NAME, cols, SERVER_ID + "=?", new String[]{ cardId }, null, null, null, null );
         ArrayList<Card> card = cursorToCards( cursor );
         return card.isEmpty() ? null : card.get( 0 );
     }
 
-    public void setClockedOff( String  id ) {
+    public Card findById( String id ) {
+        Cursor cursor = database.query( true, TABLE_NAME, cols, ID + "=?", new String[]{ id }, null, null, null, null );
+        ArrayList<Card> card = cursorToCards( cursor );
+        return card.isEmpty() ? null : card.get( 0 );
+    }
+
+    public void setClockedOff( String id ) {
         ContentValues values = new ContentValues();
         values.put( IN_LIST_TYPE, CLOCKED_OFF.ordinal() );
         database.update( TABLE_NAME, values, ID + "=?", new String[]{ id } );
@@ -180,19 +202,20 @@ public class CardDAO {
         if ( cursor != null ) {
             while ( cursor.moveToNext() ) {
                 Card card = new Card();
-                card.setId( cursor.getString( 0 ) );
-                card.setName( cursor.getString( 1 ) );
-                card.setBoardShortLink( cursor.getString( 2 ) );
-                card.setBoardName( cursor.getString( 3 ) );
-                card.setBoardId( cursor.getString( 4 ) );
-                card.setDeadline( cursor.getLong( 5 ) );
-                card.setInListType( cursor.getInt( 6 ) );
-                card.setListId( CLOCKED_OFF, cursor.getString( 7 ) );
-                card.setListId( DOING, cursor.getString( 8 ) );
-                card.setListId( DONE, cursor.getString( 9 ) );
-                card.setListId( TODAY, cursor.getString( 10 ) );
-                card.setListId( TODO, cursor.getString( 11 ) );
-                card.setShortLink( cursor.getString( 12 ) );
+                card.setId( cursor.getInt( 0 ) );
+                card.setServerId( cursor.getString( 1 ) );
+                card.setName( cursor.getString( 2 ) );
+                card.setBoardShortLink( cursor.getString( 3 ) );
+                card.setBoardName( cursor.getString( 4 ) );
+                card.setBoardId( cursor.getString( 5 ) );
+                card.setDeadline( cursor.getLong( 6 ) );
+                card.setInListType( cursor.getInt( 7 ) );
+                card.setListId( CLOCKED_OFF, cursor.getString( 8 ) );
+                card.setListId( DOING, cursor.getString( 9 ) );
+                card.setListId( DONE, cursor.getString( 10 ) );
+                card.setListId( TODAY, cursor.getString( 11 ) );
+                card.setListId( TODO, cursor.getString( 12 ) );
+                card.setShortLink( cursor.getString( 13 ) );
                 cards.add( card );
             }
             cursor.close();

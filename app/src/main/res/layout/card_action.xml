@@ -12,7 +12,6 @@
         style="@style/instruction_text"
         android:layout_alignParentTop="true"/>
 
-
     <LinearLayout
         android:id="@+id/deadline"
         android:layout_width="match_parent"
@@ -44,10 +43,41 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/buttons"
+        android:id="@+id/edit_buttons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/deadline"
+        android:orientation="horizontal"
+        android:weightSum="3">
+
+        <ImageButton
+            android:id="@+id/set_deadline"
+            style="@style/action_button"
+            android:src="@drawable/set_deadline"/>
+
+        <ImageButton
+            android:id="@+id/record_audio"
+            style="@style/action_button"
+            android:src="@drawable/record"/>
+
+        <ImageButton
+            android:id="@+id/play_audio"
+            style="@style/action_button"
+            android:visibility="gone"
+            android:src="@drawable/play_audio"/>
+
+        <ImageButton
+            android:id="@+id/photo"
+            style="@style/action_button"
+            android:src="@drawable/photo"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/movement_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/edit_buttons"
         android:orientation="horizontal"
         android:weightSum="5">
 
@@ -82,18 +112,6 @@
             android:visibility="gone"/>
 
         <ImageButton
-            android:id="@+id/set_deadline"
-            style="@style/action_button"
-            android:src="@drawable/set_deadline"/>
-
-        <!--
-        <ImageButton
-            android:id="@+id/cancel"
-            style="@style/action_button"
-            android:src="@drawable/cancel"/>
-        -->
-
-        <ImageButton
             android:id="@+id/delete"
             style="@style/action_button"
             android:src="@drawable/delete"/>
@@ -102,6 +120,11 @@
             android:id="@+id/open"
             style="@style/action_button"
             android:src="@drawable/open"/>
+
+        <ImageButton
+            android:id="@+id/cancel"
+            style="@style/action_button"
+            android:src="@drawable/cancel"/>
 
     </LinearLayout>
 

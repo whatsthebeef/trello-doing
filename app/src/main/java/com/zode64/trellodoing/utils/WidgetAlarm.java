@@ -1,4 +1,4 @@
-package com.zode64.trellodoing;
+package com.zode64.trellodoing.utils;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -6,11 +6,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import com.zode64.trellodoing.DoingPreferences;
 import com.zode64.trellodoing.widget.DoingWidget;
 
 import java.util.Calendar;
 
-import static com.zode64.trellodoing.TimeUtils.between;
+import static com.zode64.trellodoing.utils.TimeUtils.between;
 
 public class WidgetAlarm {
 

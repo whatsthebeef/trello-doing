@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-public class ConfirmationFragment extends Fragment {
+public class ConfirmationFragment extends DoingFragment {
 
     private ImageButton confirmed;
     private ImageButton cancel;
@@ -25,7 +25,7 @@ public class ConfirmationFragment extends Fragment {
         cancel = ( ImageButton ) view.findViewById( R.id.cancel );
 
         instruction = ( TextView ) view.findViewById( R.id.instruction );
-        instruction.setText( ( ( ConfirmationListener ) getActivity() ).getInstruction() );
+        instruction.setText( ( ( ConfirmationListener ) getActivity() ).getConfirmationInstruction() );
 
         confirmed.setOnClickListener( new View.OnClickListener() {
             @Override
@@ -47,7 +47,7 @@ public class ConfirmationFragment extends Fragment {
 
     interface ConfirmationListener {
         void onConfirmation();
-        String getInstruction();
+        String getConfirmationInstruction();
     }
 }
 

@@ -1,10 +1,11 @@
-package com.zode64.trellodoing;
+package com.zode64.trellodoing.utils;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 
 /**
  * Created by john on 2/12/15.
@@ -39,6 +40,10 @@ public class TimeUtils {
     public static String format( Date date ) {
         DateFormat df = new SimpleDateFormat( "HH:mm dd/MM" );
         return df.format( date );
+    }
+
+    public static boolean pastDeadline(Long deadline, long now){
+        return deadline != null && deadline < now;
     }
 
     public static String format( long millis ) {

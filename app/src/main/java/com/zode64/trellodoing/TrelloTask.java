@@ -6,8 +6,8 @@ import android.content.Intent;
 import android.os.AsyncTask;
 
 import com.zode64.trellodoing.db.ActionDAO;
-import com.zode64.trellodoing.models.Action;
 import com.zode64.trellodoing.models.Card;
+import com.zode64.trellodoing.utils.TrelloManager;
 import com.zode64.trellodoing.widget.DoingWidget;
 
 public abstract class TrelloTask extends AsyncTask<Card, Void, Void> {

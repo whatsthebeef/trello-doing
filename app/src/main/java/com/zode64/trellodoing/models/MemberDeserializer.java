@@ -1,4 +1,4 @@
-package com.zode64.trellodoing;
+package com.zode64.trellodoing.models;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -130,7 +130,7 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                                     card.setShortLink( cardAttr.getValue().getAsString() );
                                     break;
                                 case ID:
-                                    card.setId( cardAttr.getValue().getAsString() );
+                                    card.setServerId( cardAttr.getValue().getAsString() );
                                     break;
                             }
                         }
@@ -146,8 +146,8 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                 }
             }
 
-            if ( !cardReg.containsKey( card.getId() ) ) {
-                cardReg.put( card.getId(), card );
+            if ( !cardReg.containsKey( card.getServerId() ) ) {
+                cardReg.put( card.getServerId(), card );
             } else {
                 continue;
             }

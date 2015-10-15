@@ -1,7 +1,5 @@
 package com.zode64.trellodoing;
 
-import android.app.AlarmManager;
-import android.app.Fragment;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -12,11 +10,9 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-import com.zode64.trellodoing.models.Card;
+import com.zode64.trellodoing.utils.TimeUtils;
 
-import java.util.Calendar;
-
-public class ConfigureDelayFragment extends Fragment {
+public class ConfigureDelayFragment extends DoingFragment {
 
     private ImageButton done;
     private ImageButton cancel;
@@ -26,10 +22,14 @@ public class ConfigureDelayFragment extends Fragment {
 
     private TextView existingDelayView;
 
+    private DelayChangeListener listener;
+
     @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
 
         View view = inflater.inflate( R.layout.configure_delay_action, container, false );
+
+        listener = ( DelayChangeListener ) getActivity();
 
         done = ( ImageButton ) view.findViewById( R.id.done );
         cancel = ( ImageButton ) view.findViewById( R.id.cancel );
@@ -38,8 +38,9 @@ public class ConfigureDelayFragment extends Fragment {
 
         existingDelayView = ( TextView ) view.findViewById( R.id.existing_delay_text );
 
-        long delay = ( ( DelayChangeListener ) getActivity() ).getExisting();
-        if ( delay > 0 ) {
+        Long delay = listener.getExistingDelay();
+
+        if ( delay != null && delay > 0 ) {
             delayInput.setVisibility( View.GONE );
             done.setVisibility( View.GONE );
             delete.setVisibility( View.VISIBLE );
@@ -52,7 +53,7 @@ public class ConfigureDelayFragment extends Fragment {
             @Override
             public void onClick( View v ) {
                 String delay = delayInput.getText().toString();
-                ( ( DelayChangeListener ) getActivity() ).onChange( Double.parseDouble( delay ) );
+                listener.onDelayChange( Double.parseDouble( delay ) );
                 getActivity().onBackPressed();
             }
         } );
@@ -60,7 +61,7 @@ public class ConfigureDelayFragment extends Fragment {
         delete.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                ( ( DelayChangeListener ) getActivity() ).reset();
+                listener.resetDelay();
                 delayInput.setVisibility( View.VISIBLE );
                 done.setVisibility( View.VISIBLE );
                 delete.setVisibility( View.GONE );
@@ -100,9 +101,11 @@ public class ConfigureDelayFragment extends Fragment {
     }
 
     interface DelayChangeListener {
-        void onChange( Double delay );
-        void reset();
-        long getExisting();
+        void onDelayChange( Double delay );
+
+        Long getExistingDelay();
+
+        void resetDelay();
     }
 }
 

@@ -46,15 +46,15 @@
             android:layout_toRightOf="@id/settings"></TextView>
 
         <TextView
-            android:id="@+id/add_personal_card"
+            android:id="@+id/add_card"
             style="@style/menu_item"
             android:layout_toRightOf="@id/separator_2"
-            android:text="@string/add_personal_card"></TextView>
+            android:text="@string/add_card"></TextView>
 
         <TextView
             android:id="@+id/separator_3"
             style="@style/menu_separator"
-            android:layout_toRightOf="@id/add_personal_card"></TextView>
+            android:layout_toRightOf="@id/add_card"></TextView>
 
         <TextView
             android:id="@+id/keep_doing"
