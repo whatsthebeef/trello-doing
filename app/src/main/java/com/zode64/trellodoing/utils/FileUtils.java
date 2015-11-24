@@ -1,50 +1,52 @@
 package com.zode64.trellodoing.utils;
 
-import android.net.Uri;
 import android.os.Environment;
 
 import java.io.File;
-import java.util.Arrays;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
+import java.util.Collections;
 
 public class FileUtils {
 
-    private final static String AUDIO_DIR = "/doing/audio/";
-    private final static String IMAGE_DIR = "/doing/images/";
+    public final static String AUDIO_DIR = "/doing/audio/";
+    public final static String IMAGE_DIR = "/doing/images/";
 
-    private final static String ROOT_PATH = Environment.getExternalStorageDirectory().getAbsolutePath();
+    public final static String ROOT_PATH = Environment.getExternalStorageDirectory().getAbsolutePath();
 
-    private final static String AUDIO_FILE_EXTENSION = ".mpeg4";
-    private final static String IMAGE_FILE_EXTENSION = ".jpg";
+    public final static String AUDIO_FILE_EXTENSION = ".mpeg4";
+    public final static String IMAGE_FILE_EXTENSION = ".jpg";
 
-    public static String prepareAudioFile( String cardId ) {
+    public static File prepareAudioFile( String cardId ) {
         return prepareFile( AUDIO_DIR, cardId, AUDIO_FILE_EXTENSION );
     }
 
-    public static String prepareImageFile( String cardId ) {
-        String uri = prepareFile( IMAGE_DIR, cardId, IMAGE_FILE_EXTENSION );
-        File file = new File( uri );
-        /*
+    public static File prepareImageFile( String cardId ) {
+        File file = prepareFile( IMAGE_DIR, cardId, IMAGE_FILE_EXTENSION );
         try {
             file.createNewFile();
         } catch ( IOException e ) {
             throw new RuntimeException( "Can't create image file" );
         }
-        */
-        return Uri.fromFile( file ).toString();
+        return file;
     }
 
-    public static List<File> getAudioFiles( String cardId ) {
-        File dir = new File( ROOT_PATH + AUDIO_DIR + cardId );
+    public static ArrayList<File> getAudioFiles( String cardId ) {
+        return getFiles( cardId, AUDIO_DIR );
+    }
+
+    public static ArrayList<File> getPhotoFiles( String cardId ) {
+        return getFiles( cardId, IMAGE_DIR );
+    }
+
+    public static ArrayList<File> getFiles( String cardId, String path ) {
+        File dir = new File( ROOT_PATH + path + cardId );
+        ArrayList<File> audioFiles = new ArrayList<>();
         if ( dir != null && dir.isDirectory() ) {
-            return Arrays.asList( dir.listFiles() );
+            Collections.addAll( audioFiles, dir.listFiles() );
         }
-        return null;
-    }
-
-    public static void deleteAudioFile( String fileName ) {
-        new File( fileName ).delete();
+        return audioFiles;
     }
 
     public static boolean renameAudioDir( String oldServerId, String newServerId ) {
@@ -64,14 +66,14 @@ public class FileUtils {
         return false;
     }
 
-    private static String prepareFile( String path, String cardId, String extension ) {
+    private static File prepareFile( String path, String cardId, String extension ) {
         String fileDir = ROOT_PATH + path + cardId;
         File dir = new File( fileDir );
         dir.mkdirs();
         if ( !dir.isDirectory() ) {
             throw new RuntimeException( "Can't create dir at : " + fileDir );
         }
-        return fileDir + "/" + Calendar.getInstance().getTimeInMillis() + extension;
+        return new File( fileDir + "/" + Calendar.getInstance().getTimeInMillis() + extension );
     }
 
 }

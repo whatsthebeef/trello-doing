@@ -79,5 +79,6 @@
     <string name="change_what_you_are_doing">Change what you are doing!!!</string>
     <string name="two_things_at_once">You are doing two things at once!!!</string>
     <string name="doing_reminder">Doing Reminder</string>
+    <string name="sync">Sync</string>
 
 </resources>

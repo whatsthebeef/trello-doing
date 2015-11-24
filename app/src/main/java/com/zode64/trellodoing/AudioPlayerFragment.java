@@ -9,15 +9,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 
-import com.zode64.trellodoing.utils.FileUtils;
-
+import java.io.File;
 import java.io.IOException;
 
 public class AudioPlayerFragment extends DoingFragment {
 
     private static final String LOG_TAG = AudioPlayerFragment.class.getName();
 
-    private String fileName;
+    private File audioFile;
 
     private ImageButton play;
     private ImageButton stop;
@@ -35,7 +34,7 @@ public class AudioPlayerFragment extends DoingFragment {
         View view = inflater.inflate( R.layout.audio_play, container, false );
 
         mThis = this;
-        fileName = ( ( AudioPlayerListener ) getActivity() ).getAudioFileName();
+        audioFile = ( ( AudioPlayerListener ) getActivity() ).getAudioFileName();
         play = ( ImageButton ) view.findViewById( R.id.play );
         stop = ( ImageButton ) view.findViewById( R.id.stop );
         delete = ( ImageButton ) view.findViewById( R.id.delete );
@@ -61,8 +60,8 @@ public class AudioPlayerFragment extends DoingFragment {
         delete.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                FileUtils.deleteAudioFile( fileName );
-                listener.onDeleteAudio();
+                audioFile.delete();
+                listener.onDeleteAudio( audioFile );
                 mThis.dismiss();
             }
         } );
@@ -79,7 +78,7 @@ public class AudioPlayerFragment extends DoingFragment {
     private void startPlaying() {
         player = new MediaPlayer();
         try {
-            player.setDataSource( fileName );
+            player.setDataSource( audioFile.getPath() );
             player.prepare();
             player.start();
         } catch ( IOException e ) {
@@ -97,7 +96,8 @@ public class AudioPlayerFragment extends DoingFragment {
     }
 
     interface AudioPlayerListener {
-        String getAudioFileName();
-        void onDeleteAudio();
+        File getAudioFileName();
+
+        void onDeleteAudio( File file );
     }
 }

@@ -5,16 +5,27 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.zode64.trellodoing.models.CardDeserializer;
-import com.zode64.trellodoing.models.MemberDeserializer;
+import com.zode64.trellodoing.DoingPreferences;
+import com.zode64.trellodoing.models.Attachment;
 import com.zode64.trellodoing.models.Card;
 import com.zode64.trellodoing.models.Card.ListType;
+import com.zode64.trellodoing.models.CardDeserializer;
 import com.zode64.trellodoing.models.Member;
+import com.zode64.trellodoing.models.MemberDeserializer;
+
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.ContentBody;
+import org.apache.http.entity.mime.content.FileBody;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -26,9 +37,13 @@ public class TrelloManager {
     public final static String TRELLO_URL = "https://trello.com";
     public final static String TRELLO_URL_API = TRELLO_URL + "/1";
 
-    private SharedPreferences mPreferences;
+    public final static int SUCCESS = 0;
+    public final static int FILE_NOT_FOUND = 1;
+    public final static int FAILED = 2;
 
-    public TrelloManager( SharedPreferences preferences ) {
+    private DoingPreferences mPreferences;
+
+    public TrelloManager( DoingPreferences preferences ) {
         mPreferences = preferences;
     }
 
@@ -45,7 +60,7 @@ public class TrelloManager {
     }
 
     public String tokenPath() {
-        return "/authorize?key=" + mPreferences.getString( "app_key", "" )
+        return "/authorize?key=" + mPreferences.getAppKey()
                 + "&name=Trello+Doing&expiration=never&response_type=token&scope=read,write";
     }
 
@@ -128,12 +143,12 @@ public class TrelloManager {
 
     private String constructTrelloURL( String baseURL ) {
         if ( baseURL.contains( "?" ) ) {
-            return TRELLO_URL_API + baseURL + "&key=" + mPreferences.getString( "app_key", "" )
-                    + "&token=" + mPreferences.getString( "token", "" );
+            return TRELLO_URL_API + baseURL + "&key=" + mPreferences.getAppKey()
+                    + "&token=" + mPreferences.getToken();
 
         } else {
-            return TRELLO_URL_API + baseURL + "?key=" + mPreferences.getString( "app_key", "" )
-                    + "&token=" + mPreferences.getString( "token", "" );
+            return TRELLO_URL_API + baseURL + "?key=" + mPreferences.getAppKey()
+                    + "&token=" + mPreferences.getToken();
         }
     }
 
@@ -155,6 +170,25 @@ public class TrelloManager {
                 urlConnection.disconnect();
             }
         }
+    }
+
+    public int postAttachment( Attachment attachment ) {
+        ContentBody contentPart = new FileBody( new File( attachment.getPath() ) );
+        /*
+        if(attachment.getType() == Attachment.Type.PHOTO) {
+            BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+            Bitmap bitmap = Bitmap.createBitmap( BitmapFactory.decodeFile( attachment.getPath(), bmOptions ) );
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            bitmap.compress( Bitmap.CompressFormat.JPEG, 10, bos );
+            contentPart = new ByteArrayBody( bos.toByteArray(), attachment.getFilename() );
+        }
+        else {
+            contentPart = new FileBody( new File( attachment.getPath() ) );
+        }
+        */
+        MultipartEntity reqEntity = new MultipartEntity( HttpMultipartMode.BROWSER_COMPATIBLE );
+        reqEntity.addPart( "file", contentPart );
+        return multipost( "/cards/" + attachment.getCardServerId() + "/attachments", reqEntity );
     }
 
     /**
@@ -188,11 +222,11 @@ public class TrelloManager {
     }
 
     private Card put( String path, String value ) throws IOException {
-        return push( path, value, "PUT" );
+        return push( path, value, "PUT", Card.class );
     }
 
     private Card post( String path, String value ) throws IOException {
-        return push( path, value, "POST" );
+        return push( path, value, "POST", Card.class );
     }
 
     private void delete( String path ) throws IOException {
@@ -221,7 +255,8 @@ public class TrelloManager {
      * @param path
      * @return
      */
-    private Card push( String path, String value, String method ) throws IOException {
+    private <T> T push( String path, String value, String method, Class<T> type )
+            throws IOException {
         Log.v( TAG, path + " - " + value );
         URL to = null;
         HttpURLConnection urlConnection = null;
@@ -232,15 +267,15 @@ public class TrelloManager {
             urlConnection.setDoOutput( true );
             urlConnection.setRequestMethod( method );
             OutputStreamWriter out = new OutputStreamWriter( urlConnection.getOutputStream() );
-            out.write( "token=" + mPreferences.getString( "token", "" ) );
-            out.write( "&key=" + mPreferences.getString( "app_key", "" ) );
+            out.write( "token=" + mPreferences.getToken() );
+            out.write( "&key=" + mPreferences.getAppKey() );
             out.write( value );
             out.close();
-            InputStream stream = urlConnection.getInputStream();
-            Gson gson = new GsonBuilder().registerTypeAdapter( Card.class, new CardDeserializer() ).create();
-            Card model = gson.fromJson( new InputStreamReader( stream ), Card.class );
-            stream.close();
+            InputStream inputStream = urlConnection.getInputStream();
+            Gson gson = new GsonBuilder().registerTypeAdapter( type, new CardDeserializer() ).create();
+            T model = gson.fromJson( new InputStreamReader( inputStream ), type );
             Log.v( TAG, "Output from " + method + " request : " + model.toString() );
+            inputStream.close();
             return model;
         } catch ( IOException e ) {
             Log.e( TAG, "IOException from " + method + " request" );
@@ -251,6 +286,66 @@ public class TrelloManager {
                 urlConnection.disconnect();
             }
         }
+    }
+
+    private int multipost( String path, MultipartEntity reqEntity ) {
+        try {
+            URL url = new URL( constructTrelloURL( path ) );
+            Log.i( TAG, "Uploading file to: " + url.toString() );
+            HttpURLConnection conn = ( HttpURLConnection ) url.openConnection();
+            conn.setReadTimeout( 10000 );
+            conn.setConnectTimeout( 15000 );
+            conn.setRequestMethod( "POST" );
+            conn.setUseCaches( false );
+            conn.setDoInput( true );
+            conn.setDoOutput( true );
+
+            conn.setFixedLengthStreamingMode( ( int ) reqEntity.getContentLength() );
+            conn.setRequestProperty( "Connection", "Keep-Alive" );
+            conn.addRequestProperty( reqEntity.getContentType().getName(), reqEntity.getContentType().getValue() );
+
+            OutputStream os = conn.getOutputStream();
+            reqEntity.writeTo( conn.getOutputStream() );
+            os.close();
+            conn.connect();
+
+            if ( conn.getResponseCode() == HttpURLConnection.HTTP_OK ) {
+                return SUCCESS;
+            } else {
+                Log.w( TAG, "Response code: " + conn.getResponseCode() );
+            }
+
+        } catch ( FileNotFoundException e ) {
+            e.printStackTrace();
+            return FILE_NOT_FOUND;
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            Log.w( TAG, "multipart post error " + e + "(" + path + ")" );
+        }
+        return FAILED;
+    }
+
+    private String readStream( InputStream in ) {
+        BufferedReader reader = null;
+        StringBuilder builder = new StringBuilder();
+        try {
+            reader = new BufferedReader( new InputStreamReader( in ) );
+            String line = "";
+            while ( ( line = reader.readLine() ) != null ) {
+                builder.append( line );
+            }
+        } catch ( IOException e ) {
+            e.printStackTrace();
+        } finally {
+            if ( reader != null ) {
+                try {
+                    reader.close();
+                } catch ( IOException e ) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return builder.toString();
     }
 
     private String convertStreamToString( InputStream is ) {

@@ -24,15 +24,15 @@
             -->
 
         <TextView
-            android:id="@+id/refresh"
+            android:id="@+id/sync"
             style="@style/menu_item"
             android:paddingLeft="0dip"
-            android:text="@string/refresh"></TextView>
+            android:text="@string/sync"></TextView>
 
         <TextView
             android:id="@+id/separator_1"
             style="@style/menu_separator"
-            android:layout_toRightOf="@id/refresh"></TextView>
+            android:layout_toRightOf="@id/sync"></TextView>
 
         <TextView
             android:id="@+id/settings"

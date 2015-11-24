@@ -8,17 +8,19 @@ import java.util.Calendar;
 
 public class DoingPreferences {
 
-    private static final String LAST_DOING_BOARD = "lastDoingBoard";
     private static final String KEEP_DOING_ALARM = "keepDoingAlarm";
     private static final String START_HOUR = "start_hour";
     private static final String END_HOUR = "end_hour";
     private static final String TODAY_OR_BOARDS = "todayOrBoards";
     private static final String TOKEN = "token";
+    private static final String APP_KEY = "app_key";
 
     private static final String TODAY = "today";
     private static final String BOARDS = "boards";
 
-    public static final String LAST_BOARD = "lastBoard";
+    public static final String LAST_DOING_BOARD = "lastDoingBoard";
+    public static final String LAST_ADDED_BOARD = "lastAddedBoard";
+
     public static final int DEFAULT_START_HOUR = 8;
     public static final int DEFAULT_END_HOUR = 18;
 
@@ -28,10 +30,24 @@ public class DoingPreferences {
         mPreferences = PreferenceManager.getDefaultSharedPreferences( context );
     }
 
-    public void saveBoard( String url ) {
+    public void saveLastDoingBoard( String url ) {
         SharedPreferences.Editor editor = mPreferences.edit();
         editor.putString( LAST_DOING_BOARD, url );
         editor.commit();
+    }
+
+    public String getLastDoingBoard() {
+        return mPreferences.getString( LAST_DOING_BOARD, null );
+    }
+
+    public void saveLastAddedBoard( String boardId ) {
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putString( LAST_ADDED_BOARD, boardId );
+        editor.commit();
+    }
+
+    public String getLastAddedBoard() {
+        return mPreferences.getString( LAST_ADDED_BOARD, null );
     }
 
     public void setKeepDoing( Calendar alarm ) {
@@ -40,18 +56,34 @@ public class DoingPreferences {
         editor.commit();
     }
 
-    public Long getKeepDoing() {
-        return mPreferences.getLong( KEEP_DOING_ALARM, 0 );
-    }
-
     public void resetKeepDoing() {
         SharedPreferences.Editor editor = mPreferences.edit();
         editor.putLong( KEEP_DOING_ALARM, -1 );
         editor.commit();
     }
 
+    public Long getKeepDoing() {
+        return mPreferences.getLong( KEEP_DOING_ALARM, 0 );
+    }
+
     public boolean keepDoing() {
         return getKeepDoing() > Calendar.getInstance().getTimeInMillis();
+    }
+
+    public void setBoards() {
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putString( TODAY_OR_BOARDS, BOARDS );
+        editor.commit();
+    }
+
+    public boolean isBoards() {
+        return BOARDS.equals( mPreferences.getString( TODAY_OR_BOARDS, TODAY ) );
+    }
+
+    public void setToday() {
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putString( TODAY_OR_BOARDS, TODAY );
+        editor.commit();
     }
 
     public Integer getStartHour() {
@@ -62,20 +94,8 @@ public class DoingPreferences {
         return Integer.parseInt( mPreferences.getString( END_HOUR, String.valueOf( DEFAULT_END_HOUR ) ) );
     }
 
-    public void setBoards() {
-        SharedPreferences.Editor editor = mPreferences.edit();
-        editor.putString( TODAY_OR_BOARDS, BOARDS );
-        editor.commit();
-    }
-
-    public void setToday() {
-        SharedPreferences.Editor editor = mPreferences.edit();
-        editor.putString( TODAY_OR_BOARDS, TODAY );
-        editor.commit();
-    }
-
-    public boolean isBoards() {
-        return BOARDS.equals( mPreferences.getString( TODAY_OR_BOARDS, TODAY ) );
+    public String getAppKey() {
+        return mPreferences.getString( APP_KEY, null );
     }
 
     public String getToken() {
@@ -87,11 +107,4 @@ public class DoingPreferences {
         return token != null && !token.equals( "" );
     }
 
-    public String getLastBoard() {
-        return mPreferences.getString( LAST_BOARD, null );
-    }
-
-    public SharedPreferences getSharedPreferences() {
-        return mPreferences;
-    }
 }

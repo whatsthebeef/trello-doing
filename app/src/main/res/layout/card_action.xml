@@ -61,12 +61,6 @@
             android:src="@drawable/record"/>
 
         <ImageButton
-            android:id="@+id/play_audio"
-            style="@style/action_button"
-            android:visibility="gone"
-            android:src="@drawable/play_audio"/>
-
-        <ImageButton
             android:id="@+id/photo"
             style="@style/action_button"
             android:src="@drawable/photo"/>
@@ -127,5 +121,19 @@
             android:src="@drawable/cancel"/>
 
     </LinearLayout>
+
+    <ListView
+        android:layout_below="@id/movement_buttons"
+        android:layout_height="wrap_content"
+        style="@style/list_view"
+        android:id="@+id/audios">
+    </ListView>
+
+    <ListView
+        android:layout_below="@id/audios"
+        android:layout_height="wrap_content"
+        style="@style/list_view"
+        android:id="@+id/photos">
+    </ListView>
 
 </RelativeLayout>

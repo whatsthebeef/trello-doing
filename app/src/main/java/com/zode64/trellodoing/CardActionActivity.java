@@ -1,19 +1,27 @@
 package com.zode64.trellodoing;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.zode64.trellodoing.db.AttachmentDAO;
 import com.zode64.trellodoing.db.CardDAO;
 import com.zode64.trellodoing.db.DeadlineDAO;
 import com.zode64.trellodoing.models.Action;
+import com.zode64.trellodoing.models.Attachment;
 import com.zode64.trellodoing.models.Card;
 import com.zode64.trellodoing.models.Card.ListType;
 import com.zode64.trellodoing.utils.FileUtils;
@@ -30,7 +38,7 @@ import java.util.List;
 
 public class CardActionActivity extends Activity implements ConfigureDelayFragment.DelayChangeListener,
         ConfirmationFragment.ConfirmationListener, InputFragment.TextChangeListener,
-        AudioPlayerFragment.AudioPlayerListener, AudioRecorderFragment.AudioInputListener {
+        AudioPlayerFragment.AudioPlayerListener, AudioRecorderFragment.AudioInputListener, PhotoShowerFragment.PhotoShowerListener {
 
     private TextView cardText;
 
@@ -52,15 +60,24 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
 
     private ImageButton setDeadline;
     private ImageButton recordAudio;
-    private ImageButton playAudio;
     private ImageButton photo;
 
-    private List<File> audioFiles;
+    private ListView audios;
+    private AudiosAdapter audiosAdapter;
+    private ArrayList<File> audioFiles;
+    private File selectedAudioFile;
+
+    private File newImageFile;
+    private ListView photos;
+    private PhotosAdapter photosAdapter;
+    private ArrayList<File> photoFiles;
+    private File selectedPhotoFile;
 
     private TrelloManager trello;
 
     private CardDAO cardDAO;
     private DeadlineDAO deadlineDAO;
+    private AttachmentDAO attachmentDAO;
 
     private Long existingDeadline;
 
@@ -70,25 +87,30 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
 
     private Activity activity;
 
+    private DoingPreferences preferences;
+
     @Override
     public void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
         requestWindowFeature( Window.FEATURE_NO_TITLE );
 
-        DoingPreferences preferences = new DoingPreferences( this );
+        String cardId = getIntent().getStringExtra( DoingWidget.EXTRA_CARD_ID );
 
-        if ( preferences.isBoards() ) {
+        deadlineDAO = new DeadlineDAO( this );
+        cardDAO = new CardDAO( this );
+        attachmentDAO = new AttachmentDAO( this );
+
+        if ( cardId == null ) {
             setContentView( R.layout.dialog );
             getFragmentManager().beginTransaction().replace( R.id.dialog, new BoardActionFragment() ).commit();
             super.onCreate( savedInstanceState );
             return;
         }
+
         setContentView( R.layout.card_action );
 
         alarm = new WidgetAlarm( this, new DoingPreferences( this ) );
 
-        String cardId = getIntent().getStringExtra( DoingWidget.EXTRA_CARD_ID );
-        cardDAO = new CardDAO( this );
         card = cardDAO.findById( cardId );
         activity = this;
 
@@ -104,7 +126,6 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
         cancel = ( ImageButton ) findViewById( R.id.cancel );
 
         recordAudio = ( ImageButton ) findViewById( R.id.record_audio );
-        playAudio = ( ImageButton ) findViewById( R.id.play_audio );
         setDeadline = ( ImageButton ) findViewById( R.id.set_deadline );
         photo = ( ImageButton ) findViewById( R.id.photo );
 
@@ -115,7 +136,7 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
         noTodayListText = ( TextView ) findViewById( R.id.no_today_list );
         noTodoListText = ( TextView ) findViewById( R.id.no_todo_list );
 
-        switch (card.getInListType()  ) {
+        switch ( card.getInListType() ) {
             case DOING:
                 clockOff.setVisibility( View.VISIBLE );
                 done.setVisibility( View.VISIBLE );
@@ -132,7 +153,6 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
                 throw new RuntimeException( "Weird card list type in card action view" );
         }
 
-        deadlineDAO = new DeadlineDAO( this );
         existingDeadline = deadlineDAO.find( card.getServerId() );
         if ( existingDeadline != null ) {
             deadlineText.setVisibility( View.VISIBLE );
@@ -140,7 +160,35 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
                     + " " + TimeUtils.format( new Date( existingDeadline ) ) );
         }
 
-        updateAudioOptions();
+        audioFiles = FileUtils.getAudioFiles( card.getServerId() );
+        audios = ( ListView ) findViewById( R.id.audios );
+        audiosAdapter = new AudiosAdapter( this, audioFiles );
+        audios.setAdapter( audiosAdapter );
+        audios.setOnItemClickListener( new OnItemClickListener() {
+            @Override
+            public void onItemClick( AdapterView<?> parent, View view, int position, long id ) {
+                new AudioPlayerFragment().show( getFragmentManager(), null );
+                selectedAudioFile = audioFiles.get( position );
+            }
+        } );
+
+        photoFiles = new ArrayList<>();
+        photos = ( ListView ) findViewById( R.id.photos );
+        photosAdapter = new PhotosAdapter( this, photoFiles );
+        photos.setAdapter( photosAdapter );
+        photos.setOnItemClickListener( new OnItemClickListener() {
+
+            @Override
+            public void onItemClick( AdapterView<?> parent, View view, int position, long id ) {
+                /*
+                new PhotoShowerFragment().show( getFragmentManager(), null );
+                */
+                selectedPhotoFile = photoFiles.get( position );
+                Intent intent = new Intent( Intent.ACTION_VIEW );
+                intent.setDataAndType( Uri.fromFile( selectedPhotoFile ), "image/*" );
+                startActivity( intent );
+            }
+        } );
 
         if ( card.getListId( ListType.DOING ) == null ) {
             noDoingListText.setVisibility( View.VISIBLE );
@@ -167,7 +215,8 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
             todo.setEnabled( false );
         }
 
-        trello = new TrelloManager( preferences.getSharedPreferences() );
+        preferences = new DoingPreferences( this );
+        trello = new TrelloManager( preferences );
 
         cardText.setText( card.getName() );
 
@@ -249,25 +298,35 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
             }
         } );
 
-        playAudio.setOnClickListener( new View.OnClickListener() {
-            @Override
-            public void onClick( View v ) {
-                new AudioPlayerFragment().show( getFragmentManager(), null );
-            }
-        } );
-
         photo.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
                 //create new Intent
                 Intent intent = new Intent( MediaStore.ACTION_IMAGE_CAPTURE );
-                String fileUri = FileUtils.prepareImageFile( card.getServerId() );
-                intent.putExtra( MediaStore.EXTRA_OUTPUT, fileUri );
-                intent.putExtra( MediaStore.EXTRA_VIDEO_QUALITY, 1 );
+                newImageFile = FileUtils.prepareImageFile( card.getServerId() );
+                intent.putExtra( MediaStore.EXTRA_OUTPUT, Uri.fromFile( newImageFile ) );
                 // start the Video Capture Intent
-                startActivityForResult( intent, 1 );
+                startActivityForResult( intent, 0 );
             }
         } );
+    }
+
+    @Override
+    public void onDestroy() {
+        deadlineDAO.closeDB();
+        attachmentDAO.closeDB();
+        cardDAO.closeDB();
+        super.onDestroy();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if ( card != null ) {
+            photoFiles = FileUtils.getPhotoFiles( card.getServerId() );
+            photosAdapter.clear();
+            photosAdapter.addAll( photoFiles );
+        }
     }
 
     @Override
@@ -305,48 +364,57 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
     @Override
     public void onDelayChange( Double delay ) {
         Calendar deadline = alarm.deadlineAlarm( delay );
+        deadlineDAO.delete( card.getServerId() );
         deadlineDAO.create( card.getServerId(), deadline.getTimeInMillis() );
         startService( new Intent( DoingWidget.ACTION_SET_ALARM ) );
         finish();
     }
 
     @Override
-    public String getAudioFileName() {
-        return audioFiles.get( 0 ).getPath();
+    public File getAudioFileName() {
+        return selectedAudioFile;
     }
 
     @Override
-    public void onSaveAudio( String path ) {
-        updateAudioOptions();
+    public void onSaveAudio( File file ) {
+        audiosAdapter.add( file );
+        attachmentDAO = new AttachmentDAO( this );
+        Attachment attachment = new Attachment();
+        attachment.setFilename( file.getName() );
+        attachment.setType( Attachment.Type.AUDIO );
+        attachment.setCardServerId( card.getServerId() );
+        attachment.setUploaded( false );
+        attachmentDAO.create( attachment );
+        startService( new Intent( DoingWidget.ACTION_UPLOAD_ATTACHMENTS ) );
     }
 
     @Override
-    public void onDeleteAudio() {
-        updateAudioOptions();
+    public void onDeleteAudio( File file ) {
+        audiosAdapter.remove( file );
     }
 
     @Override
     protected void onActivityResult( int requestCode, int resultCode, Intent data ) {
         if ( resultCode == RESULT_OK ) {
-            // Image captured and saved to fileUri specified in the Intent
-            Toast.makeText( this, "Image saved to:\n" +
-                    data.getData(), Toast.LENGTH_LONG ).show();
-        } else if ( resultCode == RESULT_CANCELED ) {
-            // User cancelled the image capture
-        } else {
-            // Image capture failed, advise user
+            attachmentDAO = new AttachmentDAO( this );
+            Attachment attachment = new Attachment();
+            attachment.setFilename( newImageFile.getName() );
+            attachment.setType( Attachment.Type.PHOTO );
+            attachment.setCardServerId( card.getServerId() );
+            attachment.setUploaded( false );
+            attachmentDAO.create( attachment );
+            startService( new Intent( DoingWidget.ACTION_UPLOAD_ATTACHMENTS ) );
         }
     }
 
-    private void updateAudioOptions() {
-        audioFiles = FileUtils.getAudioFiles( card.getServerId() );
-        if ( audioFiles != null && !audioFiles.isEmpty() ) {
-            recordAudio.setVisibility( View.GONE );
-            playAudio.setVisibility( View.VISIBLE );
-        } else {
-            recordAudio.setVisibility( View.VISIBLE );
-            playAudio.setVisibility( View.GONE );
-        }
+    @Override
+    public File getPhotoFile() {
+        return selectedPhotoFile;
+    }
+
+    @Override
+    public void onDeletePhoto( File file ) {
+        photosAdapter.remove( file );
     }
 
     private class ClockOffTask extends TrelloTask {
@@ -458,6 +526,7 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
             List<Action> createActions = getActionDAO().find( card.getId(), Action.Type.CREATE );
             if ( createActions.isEmpty() ) {
                 if ( !getTrello().updateCardName( card.getServerId(), card.getName() ) ) {
+                    getActionDAO().getCardDAO().updateName( card.getId(), card.getName() );
                     getActionDAO().createUpdate( card );
                 }
             } else {
@@ -467,4 +536,51 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
         }
     }
 
+    static class AudiosAdapter extends ArrayAdapter<File> {
+
+        private LayoutInflater inflator;
+
+        public AudiosAdapter( Context context, List<File> files ) {
+            super( context, R.layout.audio_list_item, files );
+            inflator = ( LayoutInflater ) context.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
+        }
+
+        @Override
+        public View getView( int position, View convertView, ViewGroup parent ) {
+            View row = null;
+            if ( convertView == null ) {
+                row = inflator.inflate( R.layout.audio_list_item, null );
+            } else {
+                row = convertView;
+            }
+            TextView fileNameView = ( TextView ) row.findViewById( R.id.filename );
+            fileNameView.setText( getItem( position ).getName() );
+            return row;
+        }
+
+    }
+
+    static class PhotosAdapter extends ArrayAdapter<File> {
+
+        private LayoutInflater inflator;
+
+        public PhotosAdapter( Context context, List<File> files ) {
+            super( context, R.layout.audio_list_item, files );
+            inflator = ( LayoutInflater ) context.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
+        }
+
+        @Override
+        public View getView( int position, View convertView, ViewGroup parent ) {
+            View row = null;
+            if ( convertView == null ) {
+                row = inflator.inflate( R.layout.audio_list_item, null );
+            } else {
+                row = convertView;
+            }
+            TextView fileNameView = ( TextView ) row.findViewById( R.id.filename );
+            fileNameView.setText( getItem( position ).getName() );
+            return row;
+        }
+
+    }
 }

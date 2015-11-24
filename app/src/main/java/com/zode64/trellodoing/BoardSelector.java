@@ -27,7 +27,7 @@ public class BoardSelector extends PreferenceFragment {
         String[] boardNames = new String[ boards.size() ];
         String[] boardIds = new String[ boards.size() ];
 
-        final ListPreference listPreference = ( ListPreference ) getPreferenceManager().findPreference( DoingPreferences.LAST_BOARD );
+        final ListPreference listPreference = ( ListPreference ) getPreferenceManager().findPreference( DoingPreferences.LAST_ADDED_BOARD );
 
         final Map<String, String> boardReg = new HashMap<>();
         for ( int i = 0; i < boards.size(); i++ ) {

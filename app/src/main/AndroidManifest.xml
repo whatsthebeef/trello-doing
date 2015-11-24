@@ -64,7 +64,8 @@
                 <action android:name="com.zode64.trellodoing.intent.action.SET_DEADLINE"/>
             </intent-filter>
             <intent-filter>
-                <action android:name="com.zode64.trellodoing.intent.action.REFRESH"/>
+                <action android:name="com.zode64.trellodoing.intent.action.UPLOAD_ATTACHMENTS"/>
+                <action android:name="com.zode64.trellodoing.intent.action.SYNC"/>
                 <action android:name="com.zode64.trellodoing.intent.action.DEADLINE_ALARM"/>
                 <action android:name="com.zode64.trellodoing.intent.action.STANDARD_ALARM"/>
                 <action android:name="com.zode64.trellodoing.intent.action.SET_ALARM"/>

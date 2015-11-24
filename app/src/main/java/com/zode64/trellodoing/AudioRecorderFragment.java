@@ -11,13 +11,14 @@ import android.widget.ImageButton;
 
 import com.zode64.trellodoing.utils.FileUtils;
 
+import java.io.File;
 import java.io.IOException;
 
 public class AudioRecorderFragment extends DoingFragment {
 
     private static final String LOG_TAG = AudioRecorderFragment.class.getName();
 
-    private String fileName;
+    private File file;
 
     private ImageButton save;
     private ImageButton cancel;
@@ -39,7 +40,7 @@ public class AudioRecorderFragment extends DoingFragment {
 
         mThis = this;
 
-        fileName = FileUtils.prepareAudioFile( listener.getCard().getServerId() );
+        file = FileUtils.prepareAudioFile( listener.getCard().getServerId() );
 
         startRecording();
 
@@ -47,7 +48,7 @@ public class AudioRecorderFragment extends DoingFragment {
             @Override
             public void onClick( View v ) {
                 stopRecording();
-                listener.onSaveAudio( fileName );
+                listener.onSaveAudio( file );
                 mThis.dismiss();
             }
         } );
@@ -72,7 +73,7 @@ public class AudioRecorderFragment extends DoingFragment {
         recorder = new MediaRecorder();
         recorder.setAudioSource( MediaRecorder.AudioSource.MIC );
         recorder.setOutputFormat( MediaRecorder.OutputFormat.MPEG_4 );
-        recorder.setOutputFile( fileName );
+        recorder.setOutputFile( file.getPath() );
         recorder.setAudioEncoder( MediaRecorder.AudioEncoder.DEFAULT );
         try {
             recorder.prepare();
@@ -92,6 +93,6 @@ public class AudioRecorderFragment extends DoingFragment {
     }
 
     interface AudioInputListener extends CardGetter {
-        void onSaveAudio( String path );
+        void onSaveAudio( File audioFile );
     }
 }

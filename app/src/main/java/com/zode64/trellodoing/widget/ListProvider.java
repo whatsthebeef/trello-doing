@@ -8,10 +8,10 @@ import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
 import com.zode64.trellodoing.R;
-import com.zode64.trellodoing.utils.TimeUtils;
 import com.zode64.trellodoing.db.CardDAO;
 import com.zode64.trellodoing.db.DeadlineDAO;
 import com.zode64.trellodoing.models.Card;
+import com.zode64.trellodoing.utils.TimeUtils;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -74,6 +74,9 @@ public abstract class ListProvider implements RemoteViewsService.RemoteViewsFact
 
     @Override
     public RemoteViews getViewAt( int position ) {
+        if ( cards.size() < position ) {
+            return null;
+        }
         Card card = cards.get( position );
         Log.i( TAG, "View with card :" + card.getName() );
         RemoteViews view = null;

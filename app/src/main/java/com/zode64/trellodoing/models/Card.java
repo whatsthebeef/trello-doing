@@ -11,6 +11,7 @@ public class Card {
     public enum ListType {
         UNKNOWN,
         TODO,
+        THIS_WEEK,
         TODAY,
         DOING,
         CLOCKED_OFF,

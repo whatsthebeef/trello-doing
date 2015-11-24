@@ -103,13 +103,9 @@ public class CardDAO {
 
     public ArrayList<Card> where( Card.ListType listType ) {
         Log.i( TAG, "Fetching all cards with list type: " + listType.ordinal() );
-        Cursor cursor = database.query( true, TABLE_NAME, cols, IN_LIST_TYPE + "=?", new String[]{ "" + listType.ordinal() },
-                null, null, null, null );
+        Cursor cursor = database.query( true, TABLE_NAME, cols, IN_LIST_TYPE + "=? AND " + MARKED_FOR_DELETE + "=0",
+                new String[]{ "" + listType.ordinal() }, null, null, null, null );
         return cursorToCards( cursor );
-    }
-
-    public boolean existsDeadlineSet() {
-        return DatabaseUtils.queryNumEntries( database, TABLE_NAME, DEADLINE + ">1", null ) > 0;
     }
 
     public void delete( String id ) {

@@ -12,6 +12,7 @@ public class Board {
     private List doneList;
     private List todoList;
     private List notChargingList;
+    private List thisWeekList;
 
     public String getName() {
         return name;
@@ -111,5 +112,17 @@ public class Board {
 
     public void setNotChargingList( List notChargingList ) {
         this.notChargingList = notChargingList;
+    }
+
+    public void setThisWeekList( List thisWeekList ) {
+        this.thisWeekList = thisWeekList;
+    }
+
+    public void setThisWeekListId( String thisWeekListId ) {
+        this.thisWeekList = new List( thisWeekListId );
+    }
+
+    public String getThisWeekListId() {
+        return thisWeekList != null ? thisWeekList.getId() : null;
     }
 }

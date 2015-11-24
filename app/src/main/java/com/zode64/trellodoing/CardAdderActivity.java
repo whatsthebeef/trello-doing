@@ -3,7 +3,6 @@ package com.zode64.trellodoing;
 import android.app.Activity;
 import android.os.Bundle;
 import android.preference.Preference;
-import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
@@ -15,8 +14,8 @@ import com.zode64.trellodoing.db.BoardDAO;
 import com.zode64.trellodoing.db.CardDAO;
 import com.zode64.trellodoing.models.Board;
 import com.zode64.trellodoing.models.Card;
-import com.zode64.trellodoing.utils.FileUtils;
 import com.zode64.trellodoing.utils.TrelloManager;
+import com.zode64.trellodoing.widget.DoingWidget;
 
 import java.util.Calendar;
 
@@ -28,7 +27,6 @@ public class CardAdderActivity extends Activity implements Preference.OnPreferen
     private ImageButton cancel;
     private EditText nameInput;
 
-    private CardDAO cardDAO;
     private BoardDAO boardDAO;
 
     private Board board;
@@ -43,26 +41,32 @@ public class CardAdderActivity extends Activity implements Preference.OnPreferen
     protected void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
         requestWindowFeature( Window.FEATURE_NO_TITLE );
+
+        // Called before set view so the preference is in the right state
+        boardDAO = new BoardDAO( this );
+        preferences = new DoingPreferences( this );
+        String boardId = getIntent().getStringExtra( DoingWidget.EXTRA_BOARD_ID );
+        if ( boardId == null ) {
+            boardId = preferences.getLastAddedBoard();
+        }
+        else {
+            preferences.saveLastAddedBoard( boardId );
+        }
+        if ( boardId != null ) {
+            board = boardDAO.find( boardId );
+        }
+
         setContentView( R.layout.add_card );
 
         activity = this;
-
-        cardDAO = new CardDAO( this );
-        boardDAO = new BoardDAO( this );
 
         submit = ( ImageButton ) findViewById( R.id.submit_new_card );
         cancel = ( ImageButton ) findViewById( R.id.cancel_new_card );
         nameInput = ( EditText ) findViewById( R.id.new_card_name );
 
-        trelloManager = new TrelloManager( PreferenceManager.getDefaultSharedPreferences( this ) );
-        preferences = new DoingPreferences( this );
+        trelloManager = new TrelloManager( preferences );
 
         nameInput.setHint( getString( R.string.add_card ) );
-
-        String boardId = preferences.getLastBoard();
-        if ( boardId != null ) {
-            board = boardDAO.find( boardId );
-        }
 
         updateSubmitState();
 
@@ -115,7 +119,6 @@ public class CardAdderActivity extends Activity implements Preference.OnPreferen
 
     @Override
     public void onDestroy() {
-        cardDAO.closeDB();
         boardDAO.closeDB();
         super.onDestroy();
     }

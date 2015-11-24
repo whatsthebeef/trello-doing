@@ -61,6 +61,12 @@ public class DeadlineDAO {
         database.update( TABLE_NAME, values, CARD_SERVER_ID + "=?", new String[]{ cardServerId } );
     }
 
+    public void updateDelay( String cardServerId, Long delay ) {
+        ContentValues values = new ContentValues();
+        values.put( TIME, delay );
+        database.update( TABLE_NAME, values, CARD_SERVER_ID + "=?", new String[]{ cardServerId } );
+    }
+
     public Long find( String cardServerId ) {
         Log.i( TAG, "Fetching all deadlines" );
         Cursor cursor = database.query( true, TABLE_NAME, cols, CARD_SERVER_ID + "=?", new String[]{ cardServerId },

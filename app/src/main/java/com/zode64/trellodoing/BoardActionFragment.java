@@ -45,7 +45,9 @@ public class BoardActionFragment extends Fragment {
         newCard.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                startActivity( new Intent( getActivity(), CardAdderActivity.class ) );
+                Intent intent = new Intent( getActivity(), CardAdderActivity.class );
+                intent.putExtra( DoingWidget.EXTRA_BOARD_ID, board.getId() );
+                startActivity( intent );
             }
         } );
 

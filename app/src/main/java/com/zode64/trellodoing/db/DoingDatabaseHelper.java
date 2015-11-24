@@ -26,6 +26,7 @@ public class DoingDatabaseHelper extends SQLiteOpenHelper {
         database.execSQL( BoardDAO.CREATE_TABLE );
         database.execSQL( ActionDAO.CREATE_TABLE );
         database.execSQL( DeadlineDAO.CREATE_TABLE );
+        database.execSQL( AttachmentDAO.CREATE_TABLE );
     }
 
     @Override
@@ -36,6 +37,7 @@ public class DoingDatabaseHelper extends SQLiteOpenHelper {
         database.execSQL( BoardDAO.DELETE_TABLE );
         database.execSQL( ActionDAO.DELETE_TABLE );
         database.execSQL( DeadlineDAO.DELETE_TABLE );
+        database.execSQL( AttachmentDAO.DELETE_TABLE );
         onCreate( database );
     }
 

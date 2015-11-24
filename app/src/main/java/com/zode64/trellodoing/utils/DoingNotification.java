@@ -60,7 +60,7 @@ public class DoingNotification {
                         .setDefaults( Notification.DEFAULT_SOUND )
                                 // .setSound( Uri.parse( "android.resource://" + mContext.getPackageName() + "/" + R.raw.sotp ) )
                         .setVibrate( vibratePattern )
-                        .setContentText( content );
+                        .setContentText( content  + " - " + lastBoard);
 
         if ( warning ) {
             builder.setLights( Color.argb( 0, 255, 255, 0 ), 100, 500 )

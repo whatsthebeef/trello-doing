@@ -28,6 +28,7 @@ public class ActionDAO {
 
     private CardDAO cardDAO;
     private DeadlineDAO deadlineDAO;
+    private AttachmentDAO attachmentDAO;
 
     private TrelloManager trello;
 
@@ -53,6 +54,7 @@ public class ActionDAO {
         this.cardDAO = cardDAO;
         this.trello = trello;
         this.deadlineDAO = new DeadlineDAO( context );
+        this.attachmentDAO = new AttachmentDAO( context );
     }
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ( " +
@@ -153,7 +155,7 @@ public class ActionDAO {
     }
 
     public void setToday( Card card ) {
-        cardDAO.setDone( card.getId() );
+        cardDAO.setToday( card.getId() );
         createMove( card );
     }
 
@@ -177,7 +179,7 @@ public class ActionDAO {
                 }
                 switch ( type ) {
                     case CREATE:
-                        actions.add( new CreateAction( id, type, card, trello, deadlineDAO ) );
+                        actions.add( new CreateAction( id, type, card, trello, deadlineDAO, attachmentDAO ) );
                         break;
                     case MOVE:
                         actions.add( new MoveAction( id, type, card, trello ) );

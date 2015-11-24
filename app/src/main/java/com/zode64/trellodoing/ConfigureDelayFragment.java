@@ -100,6 +100,7 @@ public class ConfigureDelayFragment extends DoingFragment {
         return view;
     }
 
+
     interface DelayChangeListener {
         void onDelayChange( Double delay );
 

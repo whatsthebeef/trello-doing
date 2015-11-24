@@ -30,9 +30,10 @@ public class BoardDAO {
     public final static String DONE_LIST_ID = "doneListId";
     public final static String DOING_LIST_ID = "doingListId";
     public final static String CLOCKED_OFF_LIST_ID = "clockedOffListId";
+    public final static String THIS_WEEK_LIST_ID = "thisWeekListId";
 
     private String[] cols = new String[]{ ID, NAME, SHORTLINK, TODO_LIST_ID, TODAY_LIST_ID, DONE_LIST_ID,
-            DOING_LIST_ID, CLOCKED_OFF_LIST_ID };
+            DOING_LIST_ID, CLOCKED_OFF_LIST_ID, THIS_WEEK_LIST_ID };
 
     /**
      * @param context
@@ -50,7 +51,8 @@ public class BoardDAO {
             TODAY_LIST_ID + " TEXT, " +
             DONE_LIST_ID + " TEXT, " +
             DOING_LIST_ID + " TEXT, " +
-            CLOCKED_OFF_LIST_ID + " TEXT" +
+            CLOCKED_OFF_LIST_ID + " TEXT, " +
+            THIS_WEEK_LIST_ID + " TEXT" +
             ");";
 
     public static final String DELETE_TABLE = "DROP TABLE " + TABLE_NAME + " IF EXIST";
@@ -66,6 +68,7 @@ public class BoardDAO {
         values.put( DONE_LIST_ID, board.getDoneListId() );
         values.put( DOING_LIST_ID, board.getDoingListId() );
         values.put( CLOCKED_OFF_LIST_ID, board.getClockedOffListId() );
+        values.put( THIS_WEEK_LIST_ID, board.getThisWeekListId() );
         database.insert( TABLE_NAME, null, values );
     }
 
@@ -108,6 +111,7 @@ public class BoardDAO {
                 board.setDoneListId( cursor.getString( 5 ) );
                 board.setDoingListId( cursor.getString( 6 ) );
                 board.setClockedOffListId( cursor.getString( 7 ) );
+                board.setThisWeekListId( cursor.getString( 8 ) );
                 boards.add( board );
             }
             cursor.close();

@@ -16,6 +16,7 @@ import java.util.Map;
 
 import static com.zode64.trellodoing.models.Card.ListType.CLOCKED_OFF;
 import static com.zode64.trellodoing.models.Card.ListType.DOING;
+import static com.zode64.trellodoing.models.Card.ListType.THIS_WEEK;
 import static com.zode64.trellodoing.models.Card.ListType.TODAY;
 import static com.zode64.trellodoing.models.Card.ListType.TODO;
 
@@ -36,6 +37,7 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
     private static final String DONE_LIST = "Done";
     private static final String TODAY_LIST = "Today";
     private static final String CLOCKED_OFF_LIST = "Clocked Off";
+    private static final String THIS_WEEK_LIST = "This Week";
     private static final String TODO_LIST = "Todo";
 
     @Override
@@ -87,6 +89,9 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                                                 break;
                                             case TODO_LIST:
                                                 board.setTodoList( list );
+                                                break;
+                                            case THIS_WEEK_LIST:
+                                                board.setThisWeekList( list );
                                                 break;
                                             default:
                                                 // ignore
@@ -167,6 +172,7 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                         if(board != null) {
                             card.setListId( Card.ListType.DOING, board.getDoingListId() );
                             card.setListId( Card.ListType.TODAY, board.getTodayListId() );
+                            card.setListId( Card.ListType.THIS_WEEK, board.getThisWeekListId() );
                             card.setListId( Card.ListType.CLOCKED_OFF, board.getClockedOffListId() );
                             card.setListId( Card.ListType.DONE, board.getDoneListId() );
                             card.setListId( Card.ListType.TODO, board.getTodoListId() );
@@ -182,6 +188,10 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                                 break;
                             case TODAY_LIST:
                                 card.setInListType( TODAY );
+                                member.addCard( card );
+                                break;
+                            case THIS_WEEK_LIST:
+                                card.setInListType( THIS_WEEK );
                                 member.addCard( card );
                                 break;
                             default:
