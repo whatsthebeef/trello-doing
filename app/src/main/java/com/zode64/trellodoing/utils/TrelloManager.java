@@ -95,6 +95,10 @@ public class TrelloManager {
         return moveCard( card.getServerId(), card.getListId( ListType.TODO ) );
     }
 
+    public boolean thisWeek( Card card ) {
+        return moveCard( card.getServerId(), card.getListId( ListType.THIS_WEEK ) );
+    }
+
     public boolean moveCard( String cardId, String toListId ) {
         try {
             put( "/cards/" + cardId + "/idList", "&value=" + toListId );

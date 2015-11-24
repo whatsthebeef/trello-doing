@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              style="@style/list_item">
+
+    <ImageView
+        style="@style/action_icon"
+        android:id="@+id/play_icon"
+        android:src="@drawable/audio_file"/>
+
+    <TextView
+        android:id="@+id/filename"
+        style="@style/list_item_text"/>
+
+</RelativeLayout>

@@ -55,7 +55,7 @@ public class DoingWidget extends AppWidgetProvider {
     public final static String ACTION_STOP_ALARM = "com.zode64.trellodoing.intent.action.STOP_ALARM";
     public final static String ACTION_NETWORK_CHANGE = "com.zode64.trellodoing.intent.action.NETWORK_CHANGE";
     public final static String ACTION_ADD_CARD = "com.zode64.trellodoing.intent.action.ADD_CARD";
-    public final static String ACTION_TODAY_BOARDS_SWITCH = "com.zode64.trellodoing.intent.action.TODAY_BOARDS_SWITCH";
+    public final static String ACTION_TODAY_THIS_WEEK_SWITCH = "com.zode64.trellodoing.intent.action.TODAY_THIS_WEEK_SWITCH";
     public final static String ACTION_UPLOAD_ATTACHMENTS = "com.zode64.trellodoing.intent.action.UPLOAD_ATTACHMENTS";
 
     public static final String EXTRA_CARD_ID = "com.zode64.trellodoing.cardsproivder.EXTRA_CARD_ID";
@@ -151,7 +151,7 @@ public class DoingWidget extends AppWidgetProvider {
     }
 
     private void setTodayBoardsSwitchListener( RemoteViews views, Context context ) {
-        Intent switchIntent = new Intent( ACTION_TODAY_BOARDS_SWITCH );
+        Intent switchIntent = new Intent( ACTION_TODAY_THIS_WEEK_SWITCH );
         PendingIntent pendingSwitchIntent = PendingIntent.getService( context, 0, switchIntent, 0 );
         views.setOnClickPendingIntent( R.id.today_boards, pendingSwitchIntent );
     }
@@ -242,11 +242,11 @@ public class DoingWidget extends AppWidgetProvider {
                 startActivity( cardAdderIntent );
                 return;
             }
-            if ( ACTION_TODAY_BOARDS_SWITCH.equals( intent.getAction() ) ) {
-                if ( preferences.isBoards() ) {
+            if ( ACTION_TODAY_THIS_WEEK_SWITCH.equals( intent.getAction() ) ) {
+                if ( preferences.isThisWeek() ) {
                     preferences.setToday();
                 } else {
-                    preferences.setBoards();
+                    preferences.setThisWeek();
                 }
             }
             if ( !ACTION_SET_ALARM.equals( intent.getAction() ) ) {

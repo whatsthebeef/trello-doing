@@ -71,7 +71,7 @@
             android:id="@+id/today_boards"
             style="@style/menu_item"
             android:layout_toRightOf="@id/separator_4"
-            android:text="@string/today_boards"></TextView>
+            android:text="@string/today_this_week"></TextView>
 
     </RelativeLayout>
 

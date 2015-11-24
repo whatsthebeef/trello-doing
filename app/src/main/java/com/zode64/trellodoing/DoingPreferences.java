@@ -11,12 +11,12 @@ public class DoingPreferences {
     private static final String KEEP_DOING_ALARM = "keepDoingAlarm";
     private static final String START_HOUR = "start_hour";
     private static final String END_HOUR = "end_hour";
-    private static final String TODAY_OR_BOARDS = "todayOrBoards";
+    private static final String TODAY_OR_THIS_WEEK = "todayOrThisWeek";
     private static final String TOKEN = "token";
     private static final String APP_KEY = "app_key";
 
     private static final String TODAY = "today";
-    private static final String BOARDS = "boards";
+    private static final String THIS_WEEK = "thisWeek";
 
     public static final String LAST_DOING_BOARD = "lastDoingBoard";
     public static final String LAST_ADDED_BOARD = "lastAddedBoard";
@@ -70,19 +70,19 @@ public class DoingPreferences {
         return getKeepDoing() > Calendar.getInstance().getTimeInMillis();
     }
 
-    public void setBoards() {
+    public void setThisWeek() {
         SharedPreferences.Editor editor = mPreferences.edit();
-        editor.putString( TODAY_OR_BOARDS, BOARDS );
+        editor.putString( TODAY_OR_THIS_WEEK, THIS_WEEK );
         editor.commit();
     }
 
-    public boolean isBoards() {
-        return BOARDS.equals( mPreferences.getString( TODAY_OR_BOARDS, TODAY ) );
+    public boolean isThisWeek() {
+        return THIS_WEEK.equals( mPreferences.getString( TODAY_OR_THIS_WEEK, TODAY ) );
     }
 
     public void setToday() {
         SharedPreferences.Editor editor = mPreferences.edit();
-        editor.putString( TODAY_OR_BOARDS, TODAY );
+        editor.putString( TODAY_OR_THIS_WEEK, TODAY );
         editor.commit();
     }
 

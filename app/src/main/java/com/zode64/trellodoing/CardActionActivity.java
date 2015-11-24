@@ -48,6 +48,7 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
     private TextView noDoneListText;
     private TextView noClockedOffListText;
     private TextView noTodoListText;
+    private TextView noThisWeekListText;
 
     private ImageButton clockOff;
     private ImageButton clockOn;
@@ -57,6 +58,7 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
     private ImageButton delete;
     private ImageButton open;
     private ImageButton cancel;
+    private ImageButton thisWeek;
 
     private ImageButton setDeadline;
     private ImageButton recordAudio;
@@ -100,13 +102,6 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
         cardDAO = new CardDAO( this );
         attachmentDAO = new AttachmentDAO( this );
 
-        if ( cardId == null ) {
-            setContentView( R.layout.dialog );
-            getFragmentManager().beginTransaction().replace( R.id.dialog, new BoardActionFragment() ).commit();
-            super.onCreate( savedInstanceState );
-            return;
-        }
-
         setContentView( R.layout.card_action );
 
         alarm = new WidgetAlarm( this, new DoingPreferences( this ) );
@@ -124,6 +119,7 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
         delete = ( ImageButton ) findViewById( R.id.delete );
         open = ( ImageButton ) findViewById( R.id.open );
         cancel = ( ImageButton ) findViewById( R.id.cancel );
+        thisWeek = ( ImageButton ) findViewById( R.id.to_this_week );
 
         recordAudio = ( ImageButton ) findViewById( R.id.record_audio );
         setDeadline = ( ImageButton ) findViewById( R.id.set_deadline );
@@ -135,6 +131,7 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
         noClockedOffListText = ( TextView ) findViewById( R.id.no_clocked_off_list );
         noTodayListText = ( TextView ) findViewById( R.id.no_today_list );
         noTodoListText = ( TextView ) findViewById( R.id.no_todo_list );
+        noThisWeekListText = ( TextView ) findViewById( R.id.no_this_week_list );
 
         switch ( card.getInListType() ) {
             case DOING:
@@ -143,10 +140,14 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
                 break;
             case TODAY:
                 clockOn.setVisibility( View.VISIBLE );
-                todo.setVisibility( View.VISIBLE );
+                thisWeek.setVisibility( View.VISIBLE );
                 break;
             case CLOCKED_OFF:
                 clockOn.setVisibility( View.VISIBLE );
+                today.setVisibility( View.VISIBLE );
+                break;
+            case THIS_WEEK:
+                todo.setVisibility( View.VISIBLE );
                 today.setVisibility( View.VISIBLE );
                 break;
             default:
@@ -215,6 +216,11 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
             todo.setEnabled( false );
         }
 
+        if ( card.getListId( ListType.THIS_WEEK ) == null ) {
+            noThisWeekListText.setVisibility( View.VISIBLE );
+            thisWeek.setEnabled( false );
+        }
+
         preferences = new DoingPreferences( this );
         trello = new TrelloManager( preferences );
 
@@ -266,6 +272,13 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
             @Override
             public void onClick( View v ) {
                 new TodayTask( activity, trello ).execute( card );
+            }
+        } );
+
+        thisWeek.setOnClickListener( new View.OnClickListener() {
+            @Override
+            public void onClick( View v ) {
+                new ToThisWeekTask( activity, trello ).execute( card );
             }
         } );
 
@@ -470,6 +483,21 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
         protected Void doInBackground( Card... card ) {
             if ( !getTrello().today( card[ 0 ] ) ) {
                 getActionDAO().setToday( card[ 0 ] );
+            }
+            return null;
+        }
+    }
+
+    private class ToThisWeekTask extends TrelloTask {
+
+        public ToThisWeekTask( Activity activity, TrelloManager trello ) {
+            super( activity, trello );
+        }
+
+        @Override
+        protected Void doInBackground( Card... card ) {
+            if ( !getTrello().thisWeek( card[ 0 ] ) ) {
+                getActionDAO().setThisWeek( card[ 0 ] );
             }
             return null;
         }

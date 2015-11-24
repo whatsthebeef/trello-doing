@@ -51,7 +51,7 @@
     <string name="offline">Offline</string>
     <string name="personal">Personal</string>
     <string name="work">Work</string>
-    <string name="today">Today/Boards</string>
+    <string name="today">Today/This Week</string>
     <string name="card_action">Card action</string>
     <string name="clocked_off">Clocked Off</string>
     <string name="enter_delay">Enter delay</string>
@@ -60,7 +60,7 @@
     <string name="start_doing_something">Start doing something!!!</string>
     <string name="existing_delay">Existing delay</string>
     <string name="loading_text">Loading...</string>
-    <string name="today_boards">Today/Boards</string>
+    <string name="today_this_week">Today/This Week</string>
     <string name="get_cards_from">Board:</string>
     <string name="no_todo_list">No todo list</string>
     <string name="no_today_list">No today list</string>
@@ -80,5 +80,6 @@
     <string name="two_things_at_once">You are doing two things at once!!!</string>
     <string name="doing_reminder">Doing Reminder</string>
     <string name="sync">Sync</string>
+    <string name="no_this_week_list">No this week list</string>
 
 </resources>

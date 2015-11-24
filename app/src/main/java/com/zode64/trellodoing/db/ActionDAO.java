@@ -164,6 +164,12 @@ public class ActionDAO {
         createMove( card );
     }
 
+
+    public void setThisWeek( Card card ) {
+        cardDAO.setThisWeek( card.getId() );
+        createMove( card );
+    }
+
     private ArrayList<Action> cursorToActions( Cursor cursor ) {
         ArrayList<Action> actions = new ArrayList<>();
         if ( cursor != null ) {
@@ -200,4 +206,5 @@ public class ActionDAO {
     public CardDAO getCardDAO() {
         return cardDAO;
     }
+
 }

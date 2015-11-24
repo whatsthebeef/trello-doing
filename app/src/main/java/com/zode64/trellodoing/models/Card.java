@@ -6,8 +6,6 @@ import java.util.Map;
 
 public class Card {
 
-    public final static String PENDING_CARD_ID = "pending";
-
     public enum ListType {
         UNKNOWN,
         TODO,
@@ -118,14 +116,6 @@ public class Card {
         return inListType == ListType.DOING;
     }
 
-    public long getDeadline() {
-        return deadline;
-    }
-
-    public void setDeadline( long deadline ) {
-        this.deadline = deadline;
-    }
-
     public void setInListType( ListType inListType ) {
         this.inListType = inListType;
     }
@@ -152,10 +142,6 @@ public class Card {
 
     public String getCurrentListId() {
         return listIds.get( inListType );
-    }
-
-    public void resetDeadline() {
-        setDeadline( -1 );
     }
 
     public DummyType getDummyType() {

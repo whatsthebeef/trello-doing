@@ -40,6 +40,10 @@
             android:id="@+id/no_todo_list"
             style="@style/warning_text"
             android:text="@string/no_todo_list"/>
+        <TextView
+            android:id="@+id/no_this_week_list"
+            style="@style/warning_text"
+            android:text="@string/no_this_week_list"/>
     </LinearLayout>
 
     <LinearLayout
@@ -97,6 +101,12 @@
             android:id="@+id/to_todo"
             style="@style/action_button"
             android:src="@drawable/to_todo"
+            android:visibility="gone"/>
+
+        <ImageButton
+            android:id="@+id/to_this_week"
+            style="@style/action_button"
+            android:src="@drawable/this_week"
             android:visibility="gone"/>
 
         <ImageButton
