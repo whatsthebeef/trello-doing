@@ -94,6 +94,7 @@ public class ActionDAO {
         database.close();
         cardDAO.closeDB();
         deadlineDAO.closeDB();
+        attachmentDAO.closeDB();
     }
 
     public ArrayList<Action> find( String cardId, Type type ) {

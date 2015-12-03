@@ -68,10 +68,17 @@
             android:layout_toRightOf="@id/keep_doing"></TextView>
 
         <TextView
-            android:id="@+id/today_boards"
+            android:id="@+id/today_btn"
+            style="@style/menu_item"
+            android:visibility="gone"
+            android:layout_toRightOf="@id/separator_4"
+            android:text="@string/today"></TextView>
+
+        <TextView
+            android:id="@+id/this_week_btn"
             style="@style/menu_item"
             android:layout_toRightOf="@id/separator_4"
-            android:text="@string/today_this_week"></TextView>
+            android:text="@string/this_week"></TextView>
 
     </RelativeLayout>
 

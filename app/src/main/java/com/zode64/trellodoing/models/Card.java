@@ -1,6 +1,5 @@
 package com.zode64.trellodoing.models;
 
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,9 +33,9 @@ public class Card {
 
     private ListType inListType;
 
-    private long deadline;
-
     private DummyType dummyType = DummyType.NOT;
+
+    private boolean isWorkCard;
 
     private Map<ListType, String> listIds = new HashMap<>();
 
@@ -46,14 +45,6 @@ public class Card {
 
     public String getBoardShortUrl() {
         return "https://trello.com/b/" + boardShortLink;
-    }
-
-    public boolean hasDeadline() {
-        return deadline > 0;
-    }
-
-    public boolean pastDeadline() {
-        return deadline < Calendar.getInstance().getTimeInMillis() && hasDeadline();
     }
 
     public String getName() {
@@ -152,6 +143,17 @@ public class Card {
         this.dummyType = dummyType;
     }
 
+    public boolean isWorkCard() {
+        return isWorkCard;
+    }
+
+    public void setIsWorkCard( boolean isWorkCard ) {
+        this.isWorkCard = isWorkCard;
+    }
+
+    public void setIsWorkCard( int isWorkCard ) {
+        this.isWorkCard = isWorkCard == 1;
+    }
 
 }
 

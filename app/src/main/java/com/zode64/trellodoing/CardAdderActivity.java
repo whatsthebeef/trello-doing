@@ -95,7 +95,7 @@ public class CardAdderActivity extends Activity implements Preference.OnPreferen
                     Card card = new Card();
                     card.setName( text );
                     card.setServerId( "" + Calendar.getInstance().getTimeInMillis() );
-                    card.setInListType( Card.ListType.TODAY );
+                    card.setInListType( Card.ListType.THIS_WEEK );
                     card.setBoardId( board.getId() );
                     card.setBoardName( board.getName() );
                     card.setBoardShortLink( board.getShortLink() );
@@ -104,6 +104,7 @@ public class CardAdderActivity extends Activity implements Preference.OnPreferen
                     card.setListId( Card.ListType.DOING, board.getDoingListId() );
                     card.setListId( Card.ListType.CLOCKED_OFF, board.getClockedOffListId() );
                     card.setListId( Card.ListType.DONE, board.getDoneListId() );
+                    card.setListId( Card.ListType.THIS_WEEK, board.getThisWeekListId() );
                     new AddCardTask( activity, trelloManager ).execute( card );
                 }
             }
@@ -154,7 +155,7 @@ public class CardAdderActivity extends Activity implements Preference.OnPreferen
                 getActionDAO().createCreate( newCard );
                 getActionDAO().createMove( newCard );
             } else {
-                if ( !trelloManager.today( newCard ) ) {
+                if ( !trelloManager.thisWeek( newCard ) ) {
                     getActionDAO().createMove( newCard );
                 }
             }

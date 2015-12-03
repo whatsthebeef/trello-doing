@@ -51,7 +51,8 @@
     <string name="offline">Offline</string>
     <string name="personal">Personal</string>
     <string name="work">Work</string>
-    <string name="today">Today/This Week</string>
+    <string name="today">Today</string>
+    <string name="this_week">This Week</string>
     <string name="card_action">Card action</string>
     <string name="clocked_off">Clocked Off</string>
     <string name="enter_delay">Enter delay</string>

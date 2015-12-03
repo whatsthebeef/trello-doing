@@ -43,10 +43,11 @@ public class CardDAO {
     public final static String THIS_WEEK_LIST = "thisWeekList";
     public final static String SHORT_LINK = "shortLink";
     public final static String MARKED_FOR_DELETE = "markedForDelete";
+    public final static String IS_WORK_CARD = "isWorkCard";
 
     private String[] cols = new String[]{ ID, SERVER_ID, NAME, BOARD_SHORTLINK, BOARD_NAME, BOARD_ID,
             IN_LIST_TYPE, CLOCKED_OFF_LIST, DOING_LIST, DONE_LIST, TODAY_LIST, TODO_LIST, THIS_WEEK_LIST,
-            SHORT_LINK, MARKED_FOR_DELETE };
+            SHORT_LINK, MARKED_FOR_DELETE, IS_WORK_CARD };
 
     /**
      * @param context
@@ -71,7 +72,8 @@ public class CardDAO {
             TODO_LIST + " TEXT, " +
             THIS_WEEK_LIST + " TEXT, " +
             SHORT_LINK + " TEXT, " +
-            MARKED_FOR_DELETE + " INTEGER NOT NULL" +
+            MARKED_FOR_DELETE + " INTEGER NOT NULL, " +
+            IS_WORK_CARD + " INTEGER NOT NULL" +
             ");";
 
     public static final String DELETE_TABLE = "DROP TABLE " + TABLE_NAME + " IF EXIST";
@@ -93,6 +95,7 @@ public class CardDAO {
         values.put( THIS_WEEK_LIST, card.getListId( THIS_WEEK ) );
         values.put( SHORT_LINK, card.getShortLink() );
         values.put( MARKED_FOR_DELETE, 0 );
+        values.put( IS_WORK_CARD, card.isWorkCard() );
         card.setId( (int) database.insert( TABLE_NAME, null, values ) );
     }
 
@@ -206,6 +209,7 @@ public class CardDAO {
                 card.setListId( TODO, cursor.getString( 11 ) );
                 card.setListId( THIS_WEEK, cursor.getString( 12 ) );
                 card.setShortLink( cursor.getString( 13 ) );
+                card.setIsWorkCard( cursor.getInt( 14 ) );
                 cards.add( card );
             }
             cursor.close();

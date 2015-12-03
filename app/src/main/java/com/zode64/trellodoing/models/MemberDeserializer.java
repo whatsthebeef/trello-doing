@@ -32,6 +32,7 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
     private static final String DATA = "data";
     private static final String LIST_AFTER = "listAfter";
     private static final String ID = "id";
+    private static final String ID_ORGANIZATION = "idOrganization";
 
     private static final String DOING_LIST = "Doing";
     private static final String DONE_LIST = "Done";
@@ -57,6 +58,9 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                         break;
                     case SHORT_LINK:
                         board.setShortLink( boardAttr.getValue().getAsString() );
+                        break;
+                    case ID_ORGANIZATION:
+                        board.setIdOrganization( boardAttr.getValue().getAsString() );
                         break;
                     case ID:
                         board.setId( boardAttr.getValue().getAsString() );
@@ -170,6 +174,7 @@ public class MemberDeserializer implements JsonDeserializer<Member> {
                         card.setBoardName( boardName );
                         Board board = boardReg.get( boardName );
                         if(board != null) {
+                            card.setIsWorkCard( board.isWorkBoard() );
                             card.setListId( Card.ListType.DOING, board.getDoingListId() );
                             card.setListId( Card.ListType.TODAY, board.getTodayListId() );
                             card.setListId( Card.ListType.THIS_WEEK, board.getThisWeekListId() );

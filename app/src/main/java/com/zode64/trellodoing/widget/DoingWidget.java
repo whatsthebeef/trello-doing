@@ -13,6 +13,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Handler;
 import android.util.Log;
+import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
@@ -55,7 +56,9 @@ public class DoingWidget extends AppWidgetProvider {
     public final static String ACTION_STOP_ALARM = "com.zode64.trellodoing.intent.action.STOP_ALARM";
     public final static String ACTION_NETWORK_CHANGE = "com.zode64.trellodoing.intent.action.NETWORK_CHANGE";
     public final static String ACTION_ADD_CARD = "com.zode64.trellodoing.intent.action.ADD_CARD";
-    public final static String ACTION_TODAY_THIS_WEEK_SWITCH = "com.zode64.trellodoing.intent.action.TODAY_THIS_WEEK_SWITCH";
+    public final static String ACTION_TODAY_LIST_SWITCH = "com.zode64.trellodoing.intent.action.TODAY_SWITCH";
+    public final static String ACTION_THIS_WEEK_LIST_SWITCH = "com.zode64.trellodoing.intent.action.THIS_WEEK_SWITCH";
+    public final static String ACTION_LIST_SWITCH = "com.zode64.trellodoing.intent.action.LIST_SWITCH";
     public final static String ACTION_UPLOAD_ATTACHMENTS = "com.zode64.trellodoing.intent.action.UPLOAD_ATTACHMENTS";
 
     public static final String EXTRA_CARD_ID = "com.zode64.trellodoing.cardsproivder.EXTRA_CARD_ID";
@@ -84,21 +87,47 @@ public class DoingWidget extends AppWidgetProvider {
         setSyncClickListener( views, context );
         setKeepDoingClickListener( views, context );
         setAddCardListener( views, context );
-        setTodayBoardsSwitchListener( views, context );
+        setTodayListBtnListener( views, context );
+        setThisWeekListBtnListener( views, context );
 
         setListAdapter( views, R.id.doing_cards_list, DoingWidgetService.class, context );
         setListAdapter( views, R.id.today_cards_list, TodayWidgetService.class, context );
         setListAdapter( views, R.id.clocked_off_cards_list, ClockedOffWidgetService.class, context );
         setCardListListener( views, context );
 
-        AppWidgetManager manager = AppWidgetManager.getInstance( context );
-        ComponentName thisWidget = new ComponentName( context, DoingWidget.class );
-        int[] ids = manager.getAppWidgetIds( thisWidget );
-        manager.updateAppWidget( ids, views );
+        appWidgetManager.updateAppWidget( appWidgetIds, views );
 
-        // start alarm
-        context.startService( new Intent( context, UpdateService.class ) );
+        launchService( views, context );
+
         super.onUpdate( context, appWidgetManager, appWidgetIds );
+    }
+
+    @Override
+    public void onReceive( Context context, Intent intent ) {
+        super.onReceive( context, intent );
+        Log.d( TAG, "onReceive()" );
+        String action = intent.getAction();
+        if ( AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals( action ) ) {
+            return;
+        }
+        DoingPreferences preferences = new DoingPreferences( context );
+        RemoteViews views = new RemoteViews( context.getPackageName(), R.layout.widget_doing );
+        if ( ACTION_LIST_SWITCH.equals( action ) ) {
+            if ( preferences.isThisWeek() ) {
+                preferences.setToday();
+                showToday( views, context );
+            } else {
+                preferences.setThisWeek();
+                showThisWeek( views, context );
+            }
+        } else if ( ACTION_THIS_WEEK_LIST_SWITCH.equals( action ) ) {
+            preferences.setThisWeek();
+            showThisWeek( views, context );
+        } else if ( ACTION_TODAY_LIST_SWITCH.equals( action ) ) {
+            preferences.setToday();
+            showToday( views, context );
+        }
+        launchService( views, context );
     }
 
     @Override
@@ -115,6 +144,17 @@ public class DoingWidget extends AppWidgetProvider {
         WidgetAlarm widgetAlarm = new WidgetAlarm( context.getApplicationContext(), preferences );
         widgetAlarm.stopStandardAlarm();
         widgetAlarm.stopDeadlineAlarm();
+    }
+
+    public static int connectionType( Context context ) {
+        final ConnectivityManager connMgr = ( ConnectivityManager ) context
+                .getSystemService( Context.CONNECTIVITY_SERVICE );
+        NetworkInfo netInfo = connMgr.getActiveNetworkInfo();
+        if ( netInfo != null && netInfo.isConnected() ) {
+            return netInfo.getType();
+        } else {
+            return NO_CONNECTION;
+        }
     }
 
     private void setSyncClickListener( RemoteViews views, Context context ) {
@@ -150,10 +190,16 @@ public class DoingWidget extends AppWidgetProvider {
         views.setOnClickPendingIntent( R.id.add_card, pendingAddPersonalCard );
     }
 
-    private void setTodayBoardsSwitchListener( RemoteViews views, Context context ) {
-        Intent switchIntent = new Intent( ACTION_TODAY_THIS_WEEK_SWITCH );
-        PendingIntent pendingSwitchIntent = PendingIntent.getService( context, 0, switchIntent, 0 );
-        views.setOnClickPendingIntent( R.id.today_boards, pendingSwitchIntent );
+    private void setTodayListBtnListener( RemoteViews views, Context context ) {
+        Intent switchIntent = new Intent( ACTION_TODAY_LIST_SWITCH );
+        PendingIntent pendingBroadcastSwitchIntent = PendingIntent.getBroadcast( context, 0, switchIntent, 0 );
+        views.setOnClickPendingIntent( R.id.today_btn, pendingBroadcastSwitchIntent );
+    }
+
+    private void setThisWeekListBtnListener( RemoteViews views, Context context ) {
+        Intent switchIntent = new Intent( ACTION_THIS_WEEK_LIST_SWITCH );
+        PendingIntent pendingBroadcastSwitchIntent = PendingIntent.getBroadcast( context, 0, switchIntent, 0 );
+        views.setOnClickPendingIntent( R.id.this_week_btn, pendingBroadcastSwitchIntent );
     }
 
     private void setListAdapter( RemoteViews views, int resourceId, Class widgetService, Context context ) {
@@ -162,15 +208,25 @@ public class DoingWidget extends AppWidgetProvider {
         views.setRemoteAdapter( resourceId, intent );
     }
 
-    public static int connectionType( Context context ) {
-        final ConnectivityManager connMgr = ( ConnectivityManager ) context
-                .getSystemService( Context.CONNECTIVITY_SERVICE );
-        NetworkInfo netInfo = connMgr.getActiveNetworkInfo();
-        if ( netInfo != null && netInfo.isConnected() ) {
-            return netInfo.getType();
-        } else {
-            return NO_CONNECTION;
-        }
+    private void launchService( RemoteViews views, Context context ) {
+        AppWidgetManager manager = AppWidgetManager.getInstance( context );
+        ComponentName thisWidget = new ComponentName( context, DoingWidget.class );
+        int[] ids = manager.getAppWidgetIds( thisWidget );
+        manager.partiallyUpdateAppWidget( ids, views );
+        Intent launchService = new Intent( context, UpdateService.class );
+        context.startService( launchService );
+    }
+
+    private void showThisWeek( RemoteViews views, Context context ) {
+        views.setTextViewText( R.id.today_list_title, context.getString( R.string.this_week ) );
+        views.setViewVisibility( R.id.today_btn, View.VISIBLE );
+        views.setViewVisibility( R.id.this_week_btn, View.GONE );
+    }
+
+    private void showToday( RemoteViews views, Context context ) {
+        views.setTextViewText( R.id.today_list_title, context.getString( R.string.today ) );
+        views.setViewVisibility( R.id.today_btn, View.GONE );
+        views.setViewVisibility( R.id.this_week_btn, View.VISIBLE );
     }
 
     public static class NetworkChangeReceiver extends BroadcastReceiver {
@@ -220,35 +276,22 @@ public class DoingWidget extends AppWidgetProvider {
 
             DoingPreferences preferences = new DoingPreferences( this );
             WidgetAlarm appWidgetAlarm = new WidgetAlarm( this.getApplicationContext(), preferences );
+
             if ( ACTION_STOP_ALARM.equals( intent.getAction() ) ) {
                 appWidgetAlarm.stopStandardAlarm();
                 return;
-            }
-            if ( ACTION_STOP_ALARM.equals( intent.getAction() ) ) {
-                appWidgetAlarm.stopStandardAlarm();
-                return;
-            }
-            // If from a network change or something like that don't reset the deadline
-            if ( ACTION_NETWORK_CHANGE.equals( intent.getAction() ) || ACTION_STANDARD_ALARM.equals( intent.getAction() ) ) {
+            } else if ( ACTION_NETWORK_CHANGE.equals( intent.getAction() ) || ACTION_STANDARD_ALARM.equals( intent.getAction() ) ) {
+                // If from a network change or something like that don't reset the deadline
                 if ( preferences.keepDoing() ) {
                     return;
                 }
-            }
-            if ( ACTION_ADD_CARD.equals( intent.getAction() ) ) {
+            } else if ( ACTION_ADD_CARD.equals( intent.getAction() ) ) {
                 Intent cardAdderIntent = new Intent( this, CardAdderActivity.class );
-                BoardDAO boardDAO = new BoardDAO( this );
-                cardAdderIntent.putExtra( EXTRA_BOARD_ID, boardDAO.findPersonalBoard().getId() );
                 cardAdderIntent.addFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
                 startActivity( cardAdderIntent );
                 return;
             }
-            if ( ACTION_TODAY_THIS_WEEK_SWITCH.equals( intent.getAction() ) ) {
-                if ( preferences.isThisWeek() ) {
-                    preferences.setToday();
-                } else {
-                    preferences.setThisWeek();
-                }
-            }
+
             if ( !ACTION_SET_ALARM.equals( intent.getAction() ) ) {
                 appWidgetAlarm.setAlarm();
             }
@@ -306,6 +349,7 @@ public class DoingWidget extends AppWidgetProvider {
             DoingNotification notifications = new DoingNotification( this );
             notifications.removeAll();
             int numDoingCards = 0;
+            int numDoingWorkCards = 0;
             String doingBoardUrl = preferences.getLastDoingBoard();
             Calendar now = Calendar.getInstance();
             for ( Card card : cards ) {
@@ -313,8 +357,11 @@ public class DoingWidget extends AppWidgetProvider {
                     doingBoardUrl = card.getBoardShortUrl();
                     preferences.saveLastDoingBoard( doingBoardUrl );
                     numDoingCards++;
-                    if ( !between( preferences.getStartHour(), preferences.getEndHour(), now ) ) {
-                        notifications.clockOff( doingBoardUrl );
+                    if(card.isWorkCard()) {
+                        numDoingWorkCards++;
+                        if ( !between( preferences.getStartHour(), preferences.getEndHour(), now ) ) {
+                            notifications.clockOff( doingBoardUrl );
+                        }
                     }
                 }
                 if ( card.isClockedOn() || card.getInListType() == Card.ListType.TODAY ) {
@@ -323,7 +370,7 @@ public class DoingWidget extends AppWidgetProvider {
                     }
                 }
             }
-            if ( numDoingCards == 0 ) {
+            if ( numDoingWorkCards == 0 ) {
                 if ( between( preferences.getStartHour(), preferences.getEndHour(), now ) ) {
                     notifications.clockOn( doingBoardUrl );
                 }

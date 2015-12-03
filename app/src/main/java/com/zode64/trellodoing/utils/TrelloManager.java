@@ -34,6 +34,9 @@ public class TrelloManager {
 
     private final static String TAG = TrelloManager.class.getName();
 
+    public final static int REQUEST_TIMEOUT = 8000;
+    public final static int FILE_REQUEST_TIMEOUT = 30000;
+
     public final static String TRELLO_URL = "https://trello.com";
     public final static String TRELLO_URL_API = TRELLO_URL + "/1";
 
@@ -209,6 +212,8 @@ public class TrelloManager {
             to = new URL( constructTrelloURL( path ) );
             Log.i( TAG, to.toString() );
             urlConnection = ( HttpURLConnection ) to.openConnection();
+            urlConnection.setReadTimeout( REQUEST_TIMEOUT );
+            urlConnection.setConnectTimeout( REQUEST_TIMEOUT );
             InputStream stream = new BufferedInputStream( urlConnection.getInputStream() );
             Gson gson = new GsonBuilder().registerTypeAdapter( Member.class, new MemberDeserializer() ).create();
             T member = gson.fromJson( new InputStreamReader( stream ), type );
@@ -242,6 +247,8 @@ public class TrelloManager {
             urlConnection = ( HttpURLConnection ) to.openConnection();
             urlConnection.setRequestMethod( "DELETE" );
             urlConnection.getResponseCode();
+            urlConnection.setReadTimeout( REQUEST_TIMEOUT );
+            urlConnection.setConnectTimeout( REQUEST_TIMEOUT );
         } catch ( IOException e ) {
             Log.e( TAG, "IOException from DELETE request" );
             e.printStackTrace();
@@ -270,6 +277,8 @@ public class TrelloManager {
             urlConnection = ( HttpURLConnection ) to.openConnection();
             urlConnection.setDoOutput( true );
             urlConnection.setRequestMethod( method );
+            urlConnection.setReadTimeout( REQUEST_TIMEOUT );
+            urlConnection.setConnectTimeout( REQUEST_TIMEOUT );
             OutputStreamWriter out = new OutputStreamWriter( urlConnection.getOutputStream() );
             out.write( "token=" + mPreferences.getToken() );
             out.write( "&key=" + mPreferences.getAppKey() );
@@ -297,8 +306,8 @@ public class TrelloManager {
             URL url = new URL( constructTrelloURL( path ) );
             Log.i( TAG, "Uploading file to: " + url.toString() );
             HttpURLConnection conn = ( HttpURLConnection ) url.openConnection();
-            conn.setReadTimeout( 10000 );
-            conn.setConnectTimeout( 15000 );
+            conn.setReadTimeout( FILE_REQUEST_TIMEOUT );
+            conn.setConnectTimeout( FILE_REQUEST_TIMEOUT );
             conn.setRequestMethod( "POST" );
             conn.setUseCaches( false );
             conn.setDoInput( true );

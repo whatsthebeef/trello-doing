@@ -24,6 +24,9 @@ public class DoingWidgetService extends RemoteViewsService {
 
         private DoingPreferences preferences;
 
+        private int mEndHour;
+        private int mStartHour;
+
         public DoingCardsProvider( Context context, Intent intent ) {
             super( context, intent );
             this.preferences = new DoingPreferences( context );
@@ -37,9 +40,11 @@ public class DoingWidgetService extends RemoteViewsService {
         @Override
         public RemoteViews getViewAt( int position ) {
             Card card = cards.get( position );
+            Calendar now = Calendar.getInstance();
             if ( card.getDummyType() == Card.DummyType.START_DOING ) {
                 return new RemoteViews( context.getPackageName(), R.layout.doing_card_start_doing );
-            } else if ( !between( preferences.getStartHour(), preferences.getEndHour(), Calendar.getInstance() ) ) {
+            } else if ( !between( mStartHour, mEndHour, now ) ||
+                    ( between( mStartHour, mEndHour, now ) && !card.isWorkCard() ) ) {
                 RemoteViews view = new RemoteViews( context.getPackageName(), R.layout.doing_card_past_deadline );
                 view.setTextViewText( R.id.card_name, card.getBoardName() + ": " + card.getName() );
                 setClickListener( view, card );
@@ -50,8 +55,10 @@ public class DoingWidgetService extends RemoteViewsService {
         }
 
         protected void loadCards() {
+            mEndHour = preferences.getEndHour();
+            mStartHour = preferences.getStartHour();
             cards = cardDAO.where( Card.ListType.DOING );
-            if ( cards.isEmpty() && between( preferences.getStartHour(), preferences.getEndHour(), Calendar.getInstance() ) ) {
+            if ( cards.isEmpty() && between( mStartHour, mEndHour, Calendar.getInstance() ) ) {
                 Card card = new Card();
                 card.setDummyType( Card.DummyType.START_DOING );
                 cards.add( card );

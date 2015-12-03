@@ -5,6 +5,7 @@ public class Board {
     private String name;
     private String id;
     private String shortLink;
+    private String idOrganization;
 
     private List todayList;
     private List clockedOffList;
@@ -42,8 +43,8 @@ public class Board {
         this.clockedOffList = clockedOffList;
     }
 
-    public void setClockedOffListId(String id) {
-        clockedOffList = new List(id);
+    public void setClockedOffListId( String id ) {
+        clockedOffList = new List( id );
     }
 
     public String getTodayListId() {
@@ -54,8 +55,8 @@ public class Board {
         this.todayList = todoList;
     }
 
-    public void setTodayListId(String id) {
-        todayList = new List(id);
+    public void setTodayListId( String id ) {
+        todayList = new List( id );
     }
 
     public String getDoingListId() {
@@ -66,16 +67,16 @@ public class Board {
         this.doingList = doingList;
     }
 
-    public void setDoingListId(String id) {
-        doingList = new List(id);
+    public void setDoingListId( String id ) {
+        doingList = new List( id );
     }
 
     public String getDoneListId() {
         return doneList != null ? doneList.getId() : null;
     }
 
-    public void setDoneListId(String id) {
-        doneList = new List(id);
+    public void setDoneListId( String id ) {
+        doneList = new List( id );
     }
 
     public void setDoneList( List doneList ) {
@@ -124,5 +125,17 @@ public class Board {
 
     public String getThisWeekListId() {
         return thisWeekList != null ? thisWeekList.getId() : null;
+    }
+
+    public String getIdOrganization() {
+        return idOrganization;
+    }
+
+    public void setIdOrganization( String idOrganization ) {
+        this.idOrganization = idOrganization;
+    }
+
+    public boolean isWorkBoard() {
+        return idOrganization != null && !idOrganization.equals( "" );
     }
 }

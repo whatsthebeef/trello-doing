@@ -49,7 +49,9 @@
             android:label="@string/widget_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+                <action android:name="com.zode64.trellodoing.intent.action.THIS_WEEK_SWITCH"/>
+                <action android:name="com.zode64.trellodoing.intent.action.TODAY_SWITCH"/>
+                <action android:name="com.zode64.trellodoing.intent.action.LIST_SWITCH"/>
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
@@ -71,7 +73,8 @@
                 <action android:name="com.zode64.trellodoing.intent.action.SET_ALARM"/>
                 <action android:name="com.zode64.trellodoing.intent.action.STOP_ALARM"/>
                 <action android:name="com.zode64.trellodoing.intent.action.ADD_CARD"/>
-                <action android:name="com.zode64.trellodoing.intent.action.TODAY_THIS_WEEK_SWITCH"/>
+                <action android:name="com.zode64.trellodoing.intent.action.THIS_WEEK_SWITCH"/>
+                <action android:name="com.zode64.trellodoing.intent.action.TODAY_SWITCH"/>
                 <action android:name="com.zode64.trellodoing.intent.action.NETWORK_CHANGE"/>
             </intent-filter>
         </service>
