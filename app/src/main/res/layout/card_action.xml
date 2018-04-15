@@ -77,7 +77,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/edit_buttons"
         android:orientation="horizontal"
-        android:weightSum="5">
+        android:weightSum="6">
 
         <ImageButton
             android:id="@+id/clock_out"

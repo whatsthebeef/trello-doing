@@ -82,5 +82,13 @@
     <string name="doing_reminder">Doing Reminder</string>
     <string name="sync">Sync</string>
     <string name="no_this_week_list">No this week list</string>
+    <string name="hours_remaining_in_day">hour(s) remaining in the day</string>
+    <string name="minimum_hours_in_day">Minimum number of hours of work that should be done in a
+        day
+    </string>
+    <string name="hours_in_day">Hours in a day</string>
+    <string name="cards_been_in_todoy_too_long">A card has been in \'Today\' too long</string>
+    <string name="two_things_clocked_off">Two cards are clocked off!!!</string>
+    <string name="cards_been_in_week_too_long">A card has been in \'This Week\' too long</string>
 
 </resources>

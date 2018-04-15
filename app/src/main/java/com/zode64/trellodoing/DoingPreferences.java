@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import com.zode64.trellodoing.utils.TimeUtils;
+
 import java.util.Calendar;
 
 public class DoingPreferences {
@@ -14,6 +16,9 @@ public class DoingPreferences {
     private static final String TODAY_OR_THIS_WEEK = "todayOrThisWeek";
     private static final String TOKEN = "token";
     private static final String APP_KEY = "app_key";
+    private static final String TIME_SPENT_DOING_TODAY = "timeSpentDoingToday";
+    private static final String PERIOD_START_TIME = "periodStartTime";
+    private static final String HOURS_IN_DAY = "hoursInDay";
 
     private static final String TODAY = "today";
     private static final String THIS_WEEK = "thisWeek";
@@ -21,6 +26,7 @@ public class DoingPreferences {
     public static final String LAST_DOING_BOARD = "lastDoingBoard";
     public static final String LAST_ADDED_BOARD = "lastAddedBoard";
 
+    public static final int DEFAULT_HOURS_IN_DAY = 9;
     public static final int DEFAULT_START_HOUR = 8;
     public static final int DEFAULT_END_HOUR = 18;
 
@@ -94,6 +100,10 @@ public class DoingPreferences {
         return Integer.parseInt( mPreferences.getString( END_HOUR, String.valueOf( DEFAULT_END_HOUR ) ) );
     }
 
+    public Integer getHoursInDay() {
+        return Integer.parseInt( mPreferences.getString( HOURS_IN_DAY, String.valueOf( DEFAULT_HOURS_IN_DAY ) ) );
+    }
+
     public String getAppKey() {
         return mPreferences.getString( APP_KEY, null );
     }
@@ -105,6 +115,47 @@ public class DoingPreferences {
     public boolean hasToken() {
         String token = mPreferences.getString( TOKEN, null );
         return token != null && !token.equals( "" );
+    }
+
+    public void setPeriodStartTime( Calendar shiftStartTime ) {
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putLong( PERIOD_START_TIME, shiftStartTime.getTimeInMillis() );
+        editor.commit();
+    }
+
+    public void clearPeriodStartTime() {
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putLong( PERIOD_START_TIME, -1 );
+        editor.commit();
+    }
+
+    public Long getPeriodStartTime() {
+        return mPreferences.getLong( PERIOD_START_TIME, -1 );
+    }
+
+    public void addTimeSpentToday( Calendar now ) {
+        SharedPreferences.Editor editor = mPreferences.edit();
+        Long shiftStartTime = getPeriodStartTime();
+        if ( shiftStartTime == -1 ) {
+            return;
+        }
+        if ( TimeUtils.yesterday( shiftStartTime ) ) {
+            shiftStartTime = TimeUtils.startOfToday();
+        }
+        editor.putLong( TIME_SPENT_DOING_TODAY, ( now.getTimeInMillis() - shiftStartTime ) + getTimeSpentToday() );
+        editor.commit();
+    }
+
+    public Long getTimeSpentToday() {
+        return mPreferences.getLong( TIME_SPENT_DOING_TODAY, 0 );
+    }
+
+    public int hoursRemainingInDay() {
+        return ( int ) ( (3600000 * getHoursInDay() ) - getTimeSpentToday() ) / ( 3600000 );
+    }
+
+    public boolean isHoursRemainingInDay() {
+        return hoursRemainingInDay() < getHoursInDay();
     }
 
 }

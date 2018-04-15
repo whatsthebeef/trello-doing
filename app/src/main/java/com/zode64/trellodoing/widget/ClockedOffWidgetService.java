@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.widget.RemoteViewsService;
 
+import com.zode64.trellodoing.models.Board;
 import com.zode64.trellodoing.models.Card;
 
 public class ClockedOffWidgetService extends RemoteViewsService {
@@ -20,7 +21,7 @@ public class ClockedOffWidgetService extends RemoteViewsService {
         }
 
         protected void loadCards() {
-            cards = cardDAO.where( Card.ListType.CLOCKED_OFF );
+            cards = cardDAO.where( Board.ListType.CLOCKED_OFF );
         }
     }
 }

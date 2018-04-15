@@ -1,21 +1,8 @@
 package com.zode64.trellodoing.models;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.zode64.trellodoing.utils.TimeUtils;
 
 public class Card {
-
-    public enum ListType {
-        UNKNOWN,
-        TODO,
-        THIS_WEEK,
-        TODAY,
-        DOING,
-        CLOCKED_OFF,
-        DONE,
-        NOT_CHARGING,
-        NONE
-    }
 
     public enum DummyType {
         NOT,
@@ -26,25 +13,21 @@ public class Card {
     private Integer id;
     private String name;
     private String shortLink;
-    private String boardShortLink;
-    private String boardName;
+    private Board board;
     private String boardId;
     private String serverId;
+    private Long startTimeOfCurrentListType;
 
-    private ListType inListType;
+    private Board.ListType listType;
 
     private DummyType dummyType = DummyType.NOT;
-
-    private boolean isWorkCard;
-
-    private Map<ListType, String> listIds = new HashMap<>();
 
     public String getShortUrl() {
         return "https://trello.com/c/" + shortLink;
     }
 
     public String getBoardShortUrl() {
-        return "https://trello.com/b/" + boardShortLink;
+        return board.getShortUrl();
     }
 
     public String getName() {
@@ -72,11 +55,7 @@ public class Card {
     }
 
     public String getBoardShortLink() {
-        return boardShortLink;
-    }
-
-    public void setBoardShortLink( String boardShortLink ) {
-        this.boardShortLink = boardShortLink;
+        return board.getShortLink();
     }
 
     public String getShortLink() {
@@ -88,15 +67,15 @@ public class Card {
     }
 
     public String getBoardName() {
-        return boardName;
-    }
-
-    public void setBoardName( String boardName ) {
-        this.boardName = boardName;
+        return board.getName();
     }
 
     public String getBoardId() {
-        return boardId;
+        return board == null ? boardId : board.getId();
+    }
+
+    public void setBoard( Board board ) {
+        this.board = board;
     }
 
     public void setBoardId( String boardId ) {
@@ -104,35 +83,15 @@ public class Card {
     }
 
     public boolean isClockedOn() {
-        return inListType == ListType.DOING;
+        return listType == Board.ListType.DOING;
     }
 
-    public void setInListType( ListType inListType ) {
-        this.inListType = inListType;
+    public String getListId() {
+        return board.getListId( listType );
     }
 
-    public int getInListTypeOrdinal() {
-        return inListType != null ? inListType.ordinal() : 0;
-    }
-
-    public ListType getInListType() {
-        return inListType;
-    }
-
-    public void setInListType( int inListType ) {
-        this.inListType = ListType.values()[ inListType ];
-    }
-
-    public void setListId( ListType listType, String listId ) {
-        listIds.put( listType, listId );
-    }
-
-    public String getListId( ListType listType ) {
-        return listIds.get( listType );
-    }
-
-    public String getCurrentListId() {
-        return listIds.get( inListType );
+    public String getBoardListId( Board.ListType listType ) {
+        return board.getListId( listType );
     }
 
     public DummyType getDummyType() {
@@ -144,16 +103,36 @@ public class Card {
     }
 
     public boolean isWorkCard() {
-        return isWorkCard;
+        return board.isWorkBoard();
     }
 
-    public void setIsWorkCard( boolean isWorkCard ) {
-        this.isWorkCard = isWorkCard;
+    public Board.ListType getListType() {
+        return listType;
     }
 
-    public void setIsWorkCard( int isWorkCard ) {
-        this.isWorkCard = isWorkCard == 1;
+    public void setListType( Board.ListType listType ) {
+        this.listType = listType;
     }
 
+    public void setStartTimeOfCurrentListType( Long startTimeOfCurrentListType ) {
+        this.startTimeOfCurrentListType = startTimeOfCurrentListType;
+    }
+
+    public Long getStartTimeForCurrentListType() {
+        return startTimeOfCurrentListType;
+    }
+
+    public boolean tooMuchTimeSpentInCurrentList() {
+        if ( Board.ListType.TODAY == getListType() ) {
+            if ( !TimeUtils.today( startTimeOfCurrentListType ) ) {
+                return true;
+            }
+        } else if ( Board.ListType.THIS_WEEK == getListType() ) {
+            if ( !TimeUtils.thisWeek( startTimeOfCurrentListType ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 

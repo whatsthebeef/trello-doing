@@ -8,6 +8,7 @@ import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
 import com.zode64.trellodoing.R;
+import com.zode64.trellodoing.db.BoardDAO;
 import com.zode64.trellodoing.db.CardDAO;
 import com.zode64.trellodoing.db.DeadlineDAO;
 import com.zode64.trellodoing.models.Card;
@@ -35,12 +36,14 @@ public abstract class ListProvider implements RemoteViewsService.RemoteViewsFact
 
     public ListProvider( Context context, Intent intent ) {
         this.context = context;
-        this.cardDAO = new CardDAO( context );
-        deadlineDAO = new DeadlineDAO( context );
     }
 
     @Override
     public void onCreate() {
+        BoardDAO boardDAO = new BoardDAO( context );
+        this.cardDAO = new CardDAO( context, boardDAO.boardMap() );
+        boardDAO.closeDB();
+        this.deadlineDAO = new DeadlineDAO( context );
         deadlines = deadlineDAO.all();
         now = Calendar.getInstance().getTimeInMillis();
         loadCards();
@@ -55,6 +58,8 @@ public abstract class ListProvider implements RemoteViewsService.RemoteViewsFact
 
     @Override
     public void onDestroy() {
+        deadlineDAO.closeDB();
+        cardDAO.closeDB();
     }
 
     @Override

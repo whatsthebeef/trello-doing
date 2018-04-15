@@ -45,6 +45,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import static android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE;
 import static com.zode64.trellodoing.utils.TimeUtils.between;
 
 public class DoingWidget extends AppWidgetProvider {
@@ -60,6 +61,7 @@ public class DoingWidget extends AppWidgetProvider {
     public final static String ACTION_THIS_WEEK_LIST_SWITCH = "com.zode64.trellodoing.intent.action.THIS_WEEK_SWITCH";
     public final static String ACTION_LIST_SWITCH = "com.zode64.trellodoing.intent.action.LIST_SWITCH";
     public final static String ACTION_UPLOAD_ATTACHMENTS = "com.zode64.trellodoing.intent.action.UPLOAD_ATTACHMENTS";
+    public final static String ACTION_ACTION_PERFORMED = "com.zode64.trellodoing.intent.action.ACTION_PERFORMED";
 
     public static final String EXTRA_CARD_ID = "com.zode64.trellodoing.cardsproivder.EXTRA_CARD_ID";
     public static final String EXTRA_BOARD_ID = "com.zode64.trellodoing.cardsproivder.EXTRA_BOARD_ID";
@@ -107,27 +109,19 @@ public class DoingWidget extends AppWidgetProvider {
         super.onReceive( context, intent );
         Log.d( TAG, "onReceive()" );
         String action = intent.getAction();
-        if ( AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals( action ) ) {
+        if ( ACTION_APPWIDGET_UPDATE.equals( action ) ) {
             return;
         }
         DoingPreferences preferences = new DoingPreferences( context );
         RemoteViews views = new RemoteViews( context.getPackageName(), R.layout.widget_doing );
-        if ( ACTION_LIST_SWITCH.equals( action ) ) {
-            if ( preferences.isThisWeek() ) {
-                preferences.setToday();
-                showToday( views, context );
-            } else {
-                preferences.setThisWeek();
-                showThisWeek( views, context );
-            }
-        } else if ( ACTION_THIS_WEEK_LIST_SWITCH.equals( action ) ) {
+        if ( ACTION_THIS_WEEK_LIST_SWITCH.equals( action ) ) {
             preferences.setThisWeek();
             showThisWeek( views, context );
         } else if ( ACTION_TODAY_LIST_SWITCH.equals( action ) ) {
             preferences.setToday();
             showToday( views, context );
         }
-        launchService( views, context );
+        launchService( views, context, ACTION_LIST_SWITCH );
     }
 
     @Override
@@ -209,11 +203,18 @@ public class DoingWidget extends AppWidgetProvider {
     }
 
     private void launchService( RemoteViews views, Context context ) {
+        launchService( views, context, null );
+    }
+
+    private void launchService( RemoteViews views, Context context, String action ) {
         AppWidgetManager manager = AppWidgetManager.getInstance( context );
         ComponentName thisWidget = new ComponentName( context, DoingWidget.class );
         int[] ids = manager.getAppWidgetIds( thisWidget );
         manager.partiallyUpdateAppWidget( ids, views );
         Intent launchService = new Intent( context, UpdateService.class );
+        if ( action != null ) {
+            launchService.setAction( action );
+        }
         context.startService( launchService );
     }
 
@@ -249,7 +250,6 @@ public class DoingWidget extends AppWidgetProvider {
                 }
                 if ( connectionType == ConnectivityManager.TYPE_WIFI ) {
                     Intent attachmentsIntent = new Intent( ACTION_UPLOAD_ATTACHMENTS, null, context, UpdateService.class );
-                    intent.putExtra( EXTRA_WIFI_CHECKED, true );
                     context.startService( attachmentsIntent );
                 }
             } else {
@@ -276,24 +276,32 @@ public class DoingWidget extends AppWidgetProvider {
 
             DoingPreferences preferences = new DoingPreferences( this );
             WidgetAlarm appWidgetAlarm = new WidgetAlarm( this.getApplicationContext(), preferences );
+            DoingNotification notifications = new DoingNotification( this );
+            TrelloManager trelloManager = new TrelloManager( preferences );
+            AppWidgetManager manager = AppWidgetManager.getInstance( this );
+            ComponentName thisWidget = new ComponentName( this, DoingWidget.class );
+            int[] ids = manager.getAppWidgetIds( thisWidget );
 
-            if ( ACTION_STOP_ALARM.equals( intent.getAction() ) ) {
-                appWidgetAlarm.stopStandardAlarm();
-                return;
-            } else if ( ACTION_NETWORK_CHANGE.equals( intent.getAction() ) || ACTION_STANDARD_ALARM.equals( intent.getAction() ) ) {
-                // If from a network change or something like that don't reset the deadline
-                if ( preferences.keepDoing() ) {
-                    return;
-                }
-            } else if ( ACTION_ADD_CARD.equals( intent.getAction() ) ) {
+            if ( ACTION_ADD_CARD.equals( intent.getAction() ) ) {
                 Intent cardAdderIntent = new Intent( this, CardAdderActivity.class );
                 cardAdderIntent.addFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
                 startActivity( cardAdderIntent );
                 return;
+            } else if ( ACTION_STOP_ALARM.equals( intent.getAction() ) ) {
+                appWidgetAlarm.stopStandardAlarm();
+                return;
             }
 
-            if ( !ACTION_SET_ALARM.equals( intent.getAction() ) ) {
-                appWidgetAlarm.setAlarm();
+            // If from a network change or something like that don't reset the deadline
+            if ( preferences.keepDoing() ) {
+                if ( ACTION_SET_ALARM.equals( intent.getAction() )
+                        || ACTION_LIST_SWITCH.equals( intent.getAction() ) ) {
+                    notifications.removeAll();
+                    notifyLists( ids, manager );
+                }
+                if ( !ACTION_ACTION_PERFORMED.equals( intent.getAction() ) ) {
+                    return;
+                }
             }
 
             if ( !preferences.hasToken() ) {
@@ -301,93 +309,39 @@ public class DoingWidget extends AppWidgetProvider {
                 return;
             }
 
-            TrelloManager trelloManager = new TrelloManager( preferences );
-            CardDAO cardDAO = new CardDAO( this );
-            ActionDAO actionDAO = new ActionDAO( this, trelloManager, cardDAO );
-            ArrayList<Card> cards = null;
-
-            if ( connectionType != NO_CONNECTION ) {
-
-                // Start with out standing operations in the cache
-                ArrayList<Action> actions = actionDAO.all();
-                for ( Action action : actions ) {
-                    if ( action.perform() ) {
-                        actionDAO.delete( action.getId() );
-                    } else {
-                        break;
-                    }
-                }
-
-                if ( ACTION_UPLOAD_ATTACHMENTS.equals( intent.getAction() ) ) {
-                    if ( !intent.getBooleanExtra( EXTRA_WIFI_CHECKED, false ) ) {
-                        if ( connectionType == ConnectivityManager.TYPE_WIFI ) {
-                            return;
-                        }
-                    }
-                    postAttachments( trelloManager );
-                }
-                // Try update the cache
-                Member member = trelloManager.member();
-                if ( member != null ) {
-                    cards = member.getCards();
-                    if ( ACTION_SYNC.equals( intent.getAction() ) ) {
-                        sync( member );
-                    }
-                    // Clear cache
-                    cardDAO.deleteAll();
-                    for ( Card card : cards ) {
-                        cardDAO.create( card );
-                        Log.d( TAG, "Card id: " + card.getId() );
-                    }
-                }
-            }
-
-            cards = cardDAO.all();
-            // Check to see if we should create any notifications
             DeadlineDAO deadlineDAO = new DeadlineDAO( this );
-            HashMap<String, Long> deadlines = deadlineDAO.all();
-            DoingNotification notifications = new DoingNotification( this );
-            notifications.removeAll();
-            int numDoingCards = 0;
-            int numDoingWorkCards = 0;
-            String doingBoardUrl = preferences.getLastDoingBoard();
-            Calendar now = Calendar.getInstance();
-            for ( Card card : cards ) {
-                if ( card.isClockedOn() ) {
-                    doingBoardUrl = card.getBoardShortUrl();
-                    preferences.saveLastDoingBoard( doingBoardUrl );
-                    numDoingCards++;
-                    if(card.isWorkCard()) {
-                        numDoingWorkCards++;
-                        if ( !between( preferences.getStartHour(), preferences.getEndHour(), now ) ) {
-                            notifications.clockOff( doingBoardUrl );
-                        }
-                    }
+            BoardDAO boardDAO = new BoardDAO( this );
+            HashMap<String, Board> boardMap = boardDAO.boardMap();
+            CardDAO cardDAO = new CardDAO( this, boardMap );
+            AttachmentDAO attachmentDAO = new AttachmentDAO( this );
+            ActionDAO actionDAO = new ActionDAO( this, trelloManager, cardDAO, deadlineDAO, attachmentDAO );
+
+            if ( ACTION_SYNC.equals( intent.getAction() ) ) {
+                if ( connectionType != NO_CONNECTION ) {
+                    sync( trelloManager, deadlineDAO, attachmentDAO, boardDAO );
                 }
-                if ( card.isClockedOn() || card.getInListType() == Card.ListType.TODAY ) {
-                    if ( TimeUtils.pastDeadline( deadlines.get( card.getServerId() ), now.getTimeInMillis() ) ) {
-                        notifications.deadline( card.getBoardShortUrl() );
-                    }
-                }
+            } else if ( ACTION_UPLOAD_ATTACHMENTS.equals( intent.getAction() ) ) {
+                postAttachments( trelloManager, attachmentDAO );
             }
-            if ( numDoingWorkCards == 0 ) {
-                if ( between( preferences.getStartHour(), preferences.getEndHour(), now ) ) {
-                    notifications.clockOn( doingBoardUrl );
-                }
-            } else if ( numDoingCards > 1 ) {
-                notifications.multiDoings( doingBoardUrl );
+
+            updateCardLists( cardDAO, actionDAO, trelloManager, boardMap );
+
+            if ( ACTION_ACTION_PERFORMED.equals( intent.getAction() ) && preferences.keepDoing() ) {
+                // don't do notifications
+            } else if ( updateNotifications( cardDAO, deadlineDAO, preferences, notifications ) ) {
+                appWidgetAlarm.setQuickAlarm();
+            } else {
+                appWidgetAlarm.setAlarm();
             }
 
             // Clean up
             actionDAO.closeDB();
             cardDAO.closeDB();
             deadlineDAO.closeDB();
+            boardDAO.closeDB();
+            attachmentDAO.closeDB();
 
-            AppWidgetManager manager = AppWidgetManager.getInstance( this );
-            ComponentName thisWidget = new ComponentName( this, DoingWidget.class );
-            int[] ids = manager.getAppWidgetIds( thisWidget );
             notifyLists( ids, manager );
-
             //setting an empty view in case of no data
             Log.d( TAG, "Widget updated" );
         }
@@ -398,8 +352,7 @@ public class DoingWidget extends AppWidgetProvider {
             manager.notifyAppWidgetViewDataChanged( ids, R.id.clocked_off_cards_list );
         }
 
-        private void postAttachments( TrelloManager trelloManager ) {
-            AttachmentDAO attachmentDAO = new AttachmentDAO( this );
+        private void postAttachments( TrelloManager trelloManager, AttachmentDAO attachmentDAO ) {
             ArrayList<Attachment> pendingAttachments = attachmentDAO.allPending();
             if ( !pendingAttachments.isEmpty() ) {
                 for ( Attachment attachment : pendingAttachments ) {
@@ -419,14 +372,117 @@ public class DoingWidget extends AppWidgetProvider {
             attachmentDAO.closeDB();
         }
 
-        private void sync( Member member ) {
+        private void updateCardLists( CardDAO cardDAO, ActionDAO actionDAO, TrelloManager trelloManager,
+                                      HashMap<String, Board> boardMap ) {
+            if ( connectionType != NO_CONNECTION ) {
+                // Start with out standing operations in the cache
+                ArrayList<Action> actions = actionDAO.all();
+                for ( Action action : actions ) {
+                    if ( action.perform() ) {
+                        actionDAO.delete( action.getId() );
+                    } else {
+                        break;
+                    }
+                }
+                // Try update the cache
+                Member member = trelloManager.cards( boardMap );
+                if ( member != null ) {
+                    ArrayList<Card> cards = member.getCards();
+                    // Clear cache
+                    cardDAO.deleteAll();
+                    for ( Card card : cards ) {
+                        if ( boardMap.containsKey( card.getBoardId() ) ) {
+                            cardDAO.create( card );
+                            Log.d( TAG, "Card id: " + card.getId() );
+                        }
+                    }
+                }
+            }
+        }
+
+        private boolean updateNotifications( CardDAO cardDAO, DeadlineDAO deadlineDAO, DoingPreferences preferences,
+                                             DoingNotification notifications ) {
+            ArrayList<Card> cards = cardDAO.all();
+            // Check to see if we should create any notifications
+            HashMap<String, Long> deadlines = deadlineDAO.all();
+            notifications.removeAll();
+            int numDoingCards = 0;
+            int numDoingWorkCards = 0;
+            int numClockedOffCards = 0;
+            String doingBoardUrl = preferences.getLastDoingBoard();
+            String clockedOffBoardUrl = null;
+            Calendar now = Calendar.getInstance();
+            boolean notificationSet = false;
+            for ( Card card : cards ) {
+                if ( card.isClockedOn() ) {
+                    doingBoardUrl = card.getBoardShortUrl();
+                    preferences.saveLastDoingBoard( doingBoardUrl );
+                    numDoingCards++;
+                    if ( card.isWorkCard() ) {
+                        numDoingWorkCards++;
+                        if ( !between( preferences.getStartHour(), preferences.getEndHour(), now ) ) {
+                            notifications.clockOff( doingBoardUrl );
+                            notificationSet = true;
+                        }
+                        preferences.addTimeSpentToday( now );
+                        preferences.setPeriodStartTime( now );
+                    } else {
+                        preferences.addTimeSpentToday( now );
+                        preferences.clearPeriodStartTime();
+                    }
+                } else {
+                    preferences.addTimeSpentToday( now );
+                    preferences.clearPeriodStartTime();
+                }
+                if ( card.isClockedOn() || card.getListType() == Board.ListType.TODAY ) {
+                    if ( TimeUtils.pastDeadline( deadlines.get( card.getServerId() ), now.getTimeInMillis() ) ) {
+                        notifications.deadline( card.getBoardShortUrl() );
+                        notificationSet = true;
+                    }
+                    if ( card.getListType() == Board.ListType.TODAY && card.tooMuchTimeSpentInCurrentList() ) {
+                        notifications.todayTooLong( card.getBoardShortUrl() );
+                        notificationSet = true;
+                    }
+                }
+                if ( card.getListType() == Board.ListType.THIS_WEEK && card.tooMuchTimeSpentInCurrentList() ) {
+                    notifications.thisWeekTooLong( card.getBoardShortUrl() );
+                    notificationSet = true;
+                }
+                if ( card.getListType() == Board.ListType.CLOCKED_OFF ) {
+                    numClockedOffCards++;
+                    clockedOffBoardUrl = card.getBoardShortUrl();
+                }
+            }
+            if ( numDoingWorkCards == 0 ) {
+                int hoursRemainingInDay = preferences.hoursRemainingInDay();
+                int hoursInDay = preferences.getHoursInDay();
+                if ( hoursRemainingInDay < hoursInDay ) {
+                    notifications.hoursRemainingInDay( doingBoardUrl, hoursRemainingInDay );
+                    notificationSet = true;
+                }
+                if ( between( preferences.getStartHour(), preferences.getEndHour(), now ) ) {
+                    notifications.clockOn( doingBoardUrl );
+                    notificationSet = true;
+                }
+            } else if ( numDoingCards > 1 ) {
+                notifications.multiDoings( doingBoardUrl );
+                notificationSet = true;
+            }
+            if ( numClockedOffCards > 1 ) {
+                notifications.multiClockedOff( clockedOffBoardUrl );
+                notificationSet = true;
+            }
+            return notificationSet;
+        }
+
+        private void sync( TrelloManager trello, DeadlineDAO deadlineDAO, AttachmentDAO attachmentDAO, BoardDAO boardDAO ) {
             Log.i( TAG, "Syncing..." );
+            Member member = trello.boards();
             ArrayList<Card> cards = member.getCards();
             HashMap<String, Card> cardReg = new HashMap<>();
             for ( Card card : cards ) {
                 cardReg.put( card.getServerId(), card );
             }
-            AttachmentDAO attachmentDAO = new AttachmentDAO( this );
             Iterator<Attachment> attachments = attachmentDAO.all().iterator();
             while ( attachments.hasNext() ) {
                 Attachment attachment = attachments.next();
@@ -442,8 +498,6 @@ public class DoingWidget extends AppWidgetProvider {
                     attachmentDAO.delete( attachment.getId() );
                 }
             }
-            attachmentDAO.closeDB();
-            DeadlineDAO deadlineDAO = new DeadlineDAO( this );
             HashMap<String, Long> deadlines = deadlineDAO.all();
             for ( Map.Entry<String, Long> deadline : deadlines.entrySet() ) {
                 if ( !cardReg.containsKey( deadline.getKey() ) ) {
@@ -451,13 +505,10 @@ public class DoingWidget extends AppWidgetProvider {
                     deadlineDAO.delete( deadline.getKey() );
                 }
             }
-            deadlineDAO.closeDB();
-            BoardDAO boardDAO = new BoardDAO( this );
             boardDAO.deleteAll();
             for ( Board board : member.getBoards() ) {
                 boardDAO.create( board );
             }
-            boardDAO.closeDB();
         }
 
         public class DisplayTokenMissingToast implements Runnable {

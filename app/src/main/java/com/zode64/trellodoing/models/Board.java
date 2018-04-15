@@ -1,19 +1,29 @@
 package com.zode64.trellodoing.models;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Board {
+
+
+    public enum ListType {
+        UNKNOWN,
+        TODO,
+        THIS_WEEK,
+        TODAY,
+        DOING,
+        CLOCKED_OFF,
+        DONE,
+        NOT_CHARGING,
+        NONE
+    }
 
     private String name;
     private String id;
     private String shortLink;
     private String idOrganization;
 
-    private List todayList;
-    private List clockedOffList;
-    private List doingList;
-    private List doneList;
-    private List todoList;
-    private List notChargingList;
-    private List thisWeekList;
+    private HashMap<String, ListType> listMap = new HashMap<>();
 
     public String getName() {
         return name;
@@ -35,64 +45,21 @@ public class Board {
         return "https://trello.com/b/" + shortLink;
     }
 
-    public String getClockedOffListId() {
-        return clockedOffList != null ? clockedOffList.getId() : null;
+    public void addList( String listId, ListType listType ) {
+        listMap.put( listId, listType );
     }
 
-    public void setClockedOffList( List clockedOffList ) {
-        this.clockedOffList = clockedOffList;
+    public ListType getListType( String listId ) {
+        return listMap.get( listId );
     }
 
-    public void setClockedOffListId( String id ) {
-        clockedOffList = new List( id );
-    }
-
-    public String getTodayListId() {
-        return todayList != null ? todayList.getId() : null;
-    }
-
-    public void setTodayList( List todoList ) {
-        this.todayList = todoList;
-    }
-
-    public void setTodayListId( String id ) {
-        todayList = new List( id );
-    }
-
-    public String getDoingListId() {
-        return doingList != null ? doingList.getId() : null;
-    }
-
-    public void setDoingList( List doingList ) {
-        this.doingList = doingList;
-    }
-
-    public void setDoingListId( String id ) {
-        doingList = new List( id );
-    }
-
-    public String getDoneListId() {
-        return doneList != null ? doneList.getId() : null;
-    }
-
-    public void setDoneListId( String id ) {
-        doneList = new List( id );
-    }
-
-    public void setDoneList( List doneList ) {
-        this.doneList = doneList;
-    }
-
-    public String getTodoListId() {
-        return todoList != null ? todoList.getId() : null;
-    }
-
-    public void setTodoList( List todoList ) {
-        this.todoList = todoList;
-    }
-
-    public void setTodoListId( String id ) {
-        this.todoList = new List( id );
+    public String getListId( ListType listType ) {
+        for ( Map.Entry<String, ListType> entry : listMap.entrySet() ) {
+            if(listType == entry.getValue()) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 
     public String getShortLink() {
@@ -101,30 +68,6 @@ public class Board {
 
     public void setShortLink( String shortLink ) {
         this.shortLink = shortLink;
-    }
-
-    public List getNotChargingList() {
-        return notChargingList;
-    }
-
-    public String getNotChargingListId() {
-        return notChargingList != null ? notChargingList.getId() : null;
-    }
-
-    public void setNotChargingList( List notChargingList ) {
-        this.notChargingList = notChargingList;
-    }
-
-    public void setThisWeekList( List thisWeekList ) {
-        this.thisWeekList = thisWeekList;
-    }
-
-    public void setThisWeekListId( String thisWeekListId ) {
-        this.thisWeekList = new List( thisWeekListId );
-    }
-
-    public String getThisWeekListId() {
-        return thisWeekList != null ? thisWeekList.getId() : null;
     }
 
     public String getIdOrganization() {
@@ -137,5 +80,9 @@ public class Board {
 
     public boolean isWorkBoard() {
         return idOrganization != null && !idOrganization.equals( "" );
+    }
+
+    public boolean isDoingList( String listId ) {
+        return listMap.get( listId ) == ListType.DOING;
     }
 }

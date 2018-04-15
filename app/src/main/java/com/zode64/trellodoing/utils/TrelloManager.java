@@ -1,17 +1,18 @@
 package com.zode64.trellodoing.utils;
 
-import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
 import com.zode64.trellodoing.DoingPreferences;
 import com.zode64.trellodoing.models.Attachment;
+import com.zode64.trellodoing.models.Board;
+import com.zode64.trellodoing.models.BoardsDeserializer;
 import com.zode64.trellodoing.models.Card;
-import com.zode64.trellodoing.models.Card.ListType;
 import com.zode64.trellodoing.models.CardDeserializer;
+import com.zode64.trellodoing.models.CardsDeserializer;
 import com.zode64.trellodoing.models.Member;
-import com.zode64.trellodoing.models.MemberDeserializer;
 
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
@@ -29,6 +30,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
 
 public class TrelloManager {
 
@@ -67,44 +69,29 @@ public class TrelloManager {
                 + "&name=Trello+Doing&expiration=never&response_type=token&scope=read,write";
     }
 
-    public Member member() {
+    public Member cards( HashMap<String, Board> boardReg ) {
         try {
-            return get( "/members/me?actions=updateCard:idList&action_fields=data,date&board_lists=open"
-                            + "&fields=initials&boards=starred&board_fields=lists,name,shortLink&actions_limit=200",
-                    Member.class );
+            return get( "/members/me?actions=updateCard:idList&action_fields=data,date&fields=initials&actions_limit=200",
+                    Member.class, new CardsDeserializer( boardReg ) );
         } catch ( IOException e ) {
             e.printStackTrace();
             return null;
         }
     }
 
-    public boolean clockOff( Card card ) {
-        return moveCard( card.getServerId(), card.getListId( ListType.CLOCKED_OFF ) );
-    }
-
-    public boolean clockOn( Card card ) {
-        return moveCard( card.getServerId(), card.getListId( ListType.DOING ) );
-    }
-
-    public boolean done( Card card ) {
-        return moveCard( card.getServerId(), card.getListId( ListType.DONE ) );
-    }
-
-    public boolean today( Card card ) {
-        return moveCard( card.getServerId(), card.getListId( ListType.TODAY ) );
-    }
-
-    public boolean todo( Card card ) {
-        return moveCard( card.getServerId(), card.getListId( ListType.TODO ) );
-    }
-
-    public boolean thisWeek( Card card ) {
-        return moveCard( card.getServerId(), card.getListId( ListType.THIS_WEEK ) );
-    }
-
-    public boolean moveCard( String cardId, String toListId ) {
+    public Member boards() {
         try {
-            put( "/cards/" + cardId + "/idList", "&value=" + toListId );
+            return get( "/members/me?board_lists=open&boards=starred&fields=initials&board_fields=lists,name,shortLink,idOrganization",
+                    Member.class, new BoardsDeserializer() );
+        } catch ( IOException e ) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public boolean moveCard( String cardServerId, String toListId ) {
+        try {
+            put( "/cards/" + cardServerId + "/idList", "&value=" + toListId );
             return true;
         } catch ( IOException e ) {
             e.printStackTrace();
@@ -115,7 +102,7 @@ public class TrelloManager {
     public Card createCard( Card card ) {
         try {
             Card persisted = post( "/cards", "&name=" + card.getName() + "&idList="
-                    + card.getListId( ListType.TODO ) );
+                    + card.getBoardListId( Board.ListType.TODO ) );
             card.setServerId( persisted.getServerId() );
             return card;
         } catch ( IOException e ) {
@@ -204,7 +191,7 @@ public class TrelloManager {
      * @param path
      * @return
      */
-    private <T> T get( String path, Class<T> type ) throws IOException {
+    private <T> T get( String path, Class<T> type, JsonDeserializer deserializer ) throws IOException {
         Log.v( TAG, path + " - " + type.toString() );
         URL to = null;
         HttpURLConnection urlConnection = null;
@@ -215,7 +202,7 @@ public class TrelloManager {
             urlConnection.setReadTimeout( REQUEST_TIMEOUT );
             urlConnection.setConnectTimeout( REQUEST_TIMEOUT );
             InputStream stream = new BufferedInputStream( urlConnection.getInputStream() );
-            Gson gson = new GsonBuilder().registerTypeAdapter( Member.class, new MemberDeserializer() ).create();
+            Gson gson = new GsonBuilder().registerTypeAdapter( Member.class, deserializer ).create();
             T member = gson.fromJson( new InputStreamReader( stream ), type );
             stream.close();
             return member;

@@ -14,16 +14,18 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import com.zode64.trellodoing.db.AttachmentDAO;
+import com.zode64.trellodoing.db.BoardDAO;
 import com.zode64.trellodoing.db.CardDAO;
 import com.zode64.trellodoing.db.DeadlineDAO;
 import com.zode64.trellodoing.models.Action;
 import com.zode64.trellodoing.models.Attachment;
+import com.zode64.trellodoing.models.Board;
 import com.zode64.trellodoing.models.Card;
-import com.zode64.trellodoing.models.Card.ListType;
 import com.zode64.trellodoing.utils.FileUtils;
 import com.zode64.trellodoing.utils.TimeUtils;
 import com.zode64.trellodoing.utils.TrelloManager;
@@ -49,6 +51,8 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
     private TextView noClockedOffListText;
     private TextView noTodoListText;
     private TextView noThisWeekListText;
+
+    private LinearLayout movementButtons;
 
     private ImageButton clockOff;
     private ImageButton clockOn;
@@ -99,7 +103,8 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
         String cardId = getIntent().getStringExtra( DoingWidget.EXTRA_CARD_ID );
 
         deadlineDAO = new DeadlineDAO( this );
-        cardDAO = new CardDAO( this );
+        BoardDAO boardDAO = new BoardDAO( this );
+        cardDAO = new CardDAO( this, boardDAO.boardMap() );
         attachmentDAO = new AttachmentDAO( this );
 
         setContentView( R.layout.card_action );
@@ -110,6 +115,8 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
         activity = this;
 
         cardText = ( TextView ) findViewById( R.id.card_name );
+
+        movementButtons = ( LinearLayout ) findViewById( R.id.movement_buttons );
 
         clockOff = ( ImageButton ) findViewById( R.id.clock_out );
         clockOn = ( ImageButton ) findViewById( R.id.clock_on );
@@ -133,22 +140,26 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
         noTodoListText = ( TextView ) findViewById( R.id.no_todo_list );
         noThisWeekListText = ( TextView ) findViewById( R.id.no_this_week_list );
 
-        switch ( card.getInListType() ) {
+        switch ( card.getListType() ) {
             case DOING:
+                today.setVisibility( View.VISIBLE );
                 clockOff.setVisibility( View.VISIBLE );
                 done.setVisibility( View.VISIBLE );
                 break;
             case TODAY:
                 clockOn.setVisibility( View.VISIBLE );
                 thisWeek.setVisibility( View.VISIBLE );
+                done.setVisibility( View.VISIBLE );
                 break;
             case CLOCKED_OFF:
                 clockOn.setVisibility( View.VISIBLE );
                 today.setVisibility( View.VISIBLE );
+                done.setVisibility( View.VISIBLE );
                 break;
             case THIS_WEEK:
                 todo.setVisibility( View.VISIBLE );
                 today.setVisibility( View.VISIBLE );
+                clockOn.setVisibility( View.VISIBLE );
                 break;
             default:
                 throw new RuntimeException( "Weird card list type in card action view" );
@@ -191,32 +202,32 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
             }
         } );
 
-        if ( card.getListId( ListType.DOING ) == null ) {
+        if ( card.getBoardListId( Board.ListType.DOING ) == null ) {
             noDoingListText.setVisibility( View.VISIBLE );
             clockOn.setEnabled( false );
         }
 
-        if ( card.getListId( ListType.DONE ) == null ) {
+        if ( card.getBoardListId( Board.ListType.DONE ) == null ) {
             noDoneListText.setVisibility( View.VISIBLE );
             done.setEnabled( false );
         }
 
-        if ( card.getListId( ListType.TODAY ) == null ) {
+        if ( card.getBoardListId( Board.ListType.TODAY ) == null ) {
             noTodayListText.setVisibility( View.VISIBLE );
             today.setEnabled( false );
         }
 
-        if ( card.getListId( ListType.CLOCKED_OFF ) == null ) {
+        if ( card.getBoardListId( Board.ListType.CLOCKED_OFF ) == null ) {
             noClockedOffListText.setVisibility( View.VISIBLE );
             clockOff.setEnabled( false );
         }
 
-        if ( card.getListId( ListType.TODO ) == null ) {
+        if ( card.getBoardListId( Board.ListType.TODO ) == null ) {
             noTodoListText.setVisibility( View.VISIBLE );
             todo.setEnabled( false );
         }
 
-        if ( card.getListId( ListType.THIS_WEEK ) == null ) {
+        if ( card.getBoardListId( Board.ListType.THIS_WEEK ) == null ) {
             noThisWeekListText.setVisibility( View.VISIBLE );
             thisWeek.setEnabled( false );
         }
@@ -236,28 +247,28 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
         clockOff.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                new ClockOffTask( activity, trello ).execute( card );
+                new MoveTask( activity, trello, Board.ListType.CLOCKED_OFF ).execute( card );
             }
         } );
 
         clockOn.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                new ClockOnTask( activity, trello ).execute( card );
+                new MoveTask( activity, trello, Board.ListType.DOING ).execute( card );
             }
         } );
 
         done.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                new DoneTask( activity, trello ).execute( card );
+                new MoveTask( activity, trello, Board.ListType.DONE ).execute( card );
             }
         } );
 
         todo.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                new ToTodoTask( activity, trello ).execute( card );
+                new MoveTask( activity, trello, Board.ListType.TODO ).execute( card );
             }
         } );
 
@@ -271,14 +282,14 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
         today.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                new TodayTask( activity, trello ).execute( card );
+                new MoveTask( activity, trello, Board.ListType.TODAY ).execute( card );
             }
         } );
 
         thisWeek.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                new ToThisWeekTask( activity, trello ).execute( card );
+                new MoveTask( activity, trello, Board.ListType.THIS_WEEK ).execute( card );
             }
         } );
 
@@ -430,89 +441,19 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
         photosAdapter.remove( file );
     }
 
-    private class ClockOffTask extends TrelloTask {
-        public ClockOffTask( Activity activity, TrelloManager trello ) {
+    private class MoveTask extends TrelloTask {
+        private Board.ListType listType;
+        public MoveTask( Activity activity, TrelloManager trello, Board.ListType listType ) {
             super( activity, trello );
+            this.listType = listType;
         }
 
         @Override
-        protected Void doInBackground( Card... card ) {
-            if ( !getTrello().clockOff( card[ 0 ] ) ) {
-                getActionDAO().setClockedOff( card[ 0 ] );
-            }
-            return null;
-        }
-    }
-
-    private class ClockOnTask extends TrelloTask {
-        public ClockOnTask( Activity activity, TrelloManager trello ) {
-            super( activity, trello );
-        }
-
-        @Override
-        protected Void doInBackground( Card... card ) {
-            if ( !getTrello().clockOn( card[ 0 ] ) ) {
-                getActionDAO().setClockedOn( card[ 0 ] );
-            }
-            return null;
-        }
-    }
-
-    private class DoneTask extends TrelloTask {
-
-        public DoneTask( Activity activity, TrelloManager trello ) {
-            super( activity, trello );
-        }
-
-        @Override
-        protected Void doInBackground( Card... card ) {
-            if ( !getTrello().done( card[ 0 ] ) ) {
-                getActionDAO().setDone( card[ 0 ] );
-            }
-            return null;
-        }
-    }
-
-    private class TodayTask extends TrelloTask {
-
-        public TodayTask( Activity activity, TrelloManager trello ) {
-            super( activity, trello );
-        }
-
-        @Override
-        protected Void doInBackground( Card... card ) {
-            if ( !getTrello().today( card[ 0 ] ) ) {
-                getActionDAO().setToday( card[ 0 ] );
-            }
-            return null;
-        }
-    }
-
-    private class ToThisWeekTask extends TrelloTask {
-
-        public ToThisWeekTask( Activity activity, TrelloManager trello ) {
-            super( activity, trello );
-        }
-
-        @Override
-        protected Void doInBackground( Card... card ) {
-            if ( !getTrello().thisWeek( card[ 0 ] ) ) {
-                getActionDAO().setThisWeek( card[ 0 ] );
-            }
-            return null;
-        }
-    }
-
-    private class ToTodoTask extends TrelloTask {
-
-        public ToTodoTask( Activity activity, TrelloManager trello ) {
-            super( activity, trello );
-        }
-
-        @Override
-        protected Void doInBackground( Card... card ) {
-            if ( !getTrello().todo( card[ 0 ] ) ) {
-                getActionDAO().setTodo( card[ 0 ] );
+        protected Void doInBackground( Card... cards ) {
+            Card card = cards[ 0 ];
+            if ( !getTrello().moveCard( card.getServerId(), card.getBoardListId( listType ) ) ) {
+                getCardDAO().setListType( card.getId(), listType  );
+                getActionDAO().createMove( card );
             }
             return null;
         }
@@ -530,12 +471,12 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
             ArrayList<Action> createActions = getActionDAO().find( card.getId(), Action.Type.CREATE );
             if ( !createActions.isEmpty() ) {
                 getActionDAO().delete( card.getId() );
-                getActionDAO().getCardDAO().delete( card.getId() );
+                getCardDAO().delete( card.getId() );
                 return null;
             } else {
                 if ( !getTrello().deleteCard( card.getServerId() ) ) {
                     getActionDAO().createDelete( card );
-                    getActionDAO().getCardDAO().markForDelete( card.getId() );
+                    getCardDAO().markForDelete( card.getId() );
                 }
             }
             return null;
@@ -554,11 +495,11 @@ public class CardActionActivity extends Activity implements ConfigureDelayFragme
             List<Action> createActions = getActionDAO().find( card.getId(), Action.Type.CREATE );
             if ( createActions.isEmpty() ) {
                 if ( !getTrello().updateCardName( card.getServerId(), card.getName() ) ) {
-                    getActionDAO().getCardDAO().updateName( card.getId(), card.getName() );
+                    getCardDAO().updateName( card.getId(), card.getName() );
                     getActionDAO().createUpdate( card );
                 }
             } else {
-                getActionDAO().getCardDAO().updateName( card.getId(), card.getName() );
+                getCardDAO().updateName( card.getId(), card.getName() );
             }
             return null;
         }

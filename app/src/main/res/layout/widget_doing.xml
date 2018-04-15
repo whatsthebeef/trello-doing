@@ -78,7 +78,7 @@
             android:id="@+id/this_week_btn"
             style="@style/menu_item"
             android:layout_toRightOf="@id/separator_4"
-            android:text="@string/this_week"></TextView>
+            android:text="@string/today"></TextView>
 
     </RelativeLayout>
 

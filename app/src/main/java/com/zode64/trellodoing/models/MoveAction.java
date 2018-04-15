@@ -10,6 +10,6 @@ public class MoveAction extends Action {
 
     @Override
     public boolean perform() {
-        return trello.moveCard( card.getServerId(), card.getCurrentListId() );
+        return trello.moveCard( card.getServerId(), card.getListId() );
     }
 }

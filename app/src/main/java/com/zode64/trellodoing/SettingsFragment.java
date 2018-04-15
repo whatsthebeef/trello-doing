@@ -124,7 +124,7 @@ public class SettingsFragment extends PreferenceFragment {
 
         @Override
         protected Boolean doInBackground( Void... v ) {
-            return mTrelloManager.member() != null;
+            return mTrelloManager.boards() != null;
         }
 
         @Override

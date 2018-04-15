@@ -20,6 +20,7 @@ public class WidgetAlarm {
     private static final int MINUTES_IN_HOUR = 60;
 
     private static final int WORKING_DELAY_MINUTES = 30;
+    private static final int QUICK_DELAY_MINUTES = 5;
     private static final int NON_WORKING_DELAY_HOURS = 2;
 
     private static final int ALARM_ID = 0;
@@ -46,6 +47,13 @@ public class WidgetAlarm {
             alarm.add( Calendar.HOUR, NON_WORKING_DELAY_HOURS );
             setAlarmWithCalendar( alarm, DoingWidget.ACTION_STANDARD_ALARM, ALARM_ID, AlarmManager.RTC );
         }
+    }
+
+    public void setQuickAlarm() {
+        stopStandardAlarm();
+        Calendar alarm = Calendar.getInstance();
+        alarm.add( Calendar.MINUTE, QUICK_DELAY_MINUTES );
+        setAlarmWithCalendar( alarm, DoingWidget.ACTION_STANDARD_ALARM, ALARM_ID, AlarmManager.RTC_WAKEUP );
     }
 
     public Calendar delayAlarm( double hours ) {

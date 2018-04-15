@@ -41,20 +41,14 @@ public class ActionDAO {
 
     private String[] cols = new String[]{ ID, TYPE, CARD_ID, CREATED_AT };
 
-    /**
-     * @param context
-     */
-    public ActionDAO( Context context, TrelloManager trello ) {
-        this( context, trello, new CardDAO( context ) );
-    }
-
-    public ActionDAO( Context context, TrelloManager trello, CardDAO cardDAO ) {
+    public ActionDAO( Context context, TrelloManager trello, CardDAO cardDAO, DeadlineDAO deadlineDAO,
+                      AttachmentDAO attachmentDAO ) {
         dbHelper = new DoingDatabaseHelper( context );
         database = dbHelper.getWritableDatabase();
         this.cardDAO = cardDAO;
         this.trello = trello;
-        this.deadlineDAO = new DeadlineDAO( context );
-        this.attachmentDAO = new AttachmentDAO( context );
+        this.deadlineDAO = deadlineDAO;
+        this.attachmentDAO = attachmentDAO;
     }
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ( " +
@@ -92,9 +86,6 @@ public class ActionDAO {
 
     public void closeDB() {
         database.close();
-        cardDAO.closeDB();
-        deadlineDAO.closeDB();
-        attachmentDAO.closeDB();
     }
 
     public ArrayList<Action> find( String cardId, Type type ) {
@@ -140,37 +131,6 @@ public class ActionDAO {
         database.insert( TABLE_NAME, null, values );
     }
 
-    public void setClockedOff( Card card ) {
-        cardDAO.setClockedOff( card.getId() );
-        createMove( card );
-    }
-
-    public void setClockedOn( Card card ) {
-        cardDAO.setClockedOn( card.getId() );
-        createMove( card );
-    }
-
-    public void setDone( Card card ) {
-        cardDAO.setDone( card.getId() );
-        createMove( card );
-    }
-
-    public void setToday( Card card ) {
-        cardDAO.setToday( card.getId() );
-        createMove( card );
-    }
-
-    public void setTodo( Card card ) {
-        cardDAO.setTodo( card.getId() );
-        createMove( card );
-    }
-
-
-    public void setThisWeek( Card card ) {
-        cardDAO.setThisWeek( card.getId() );
-        createMove( card );
-    }
-
     private ArrayList<Action> cursorToActions( Cursor cursor ) {
         ArrayList<Action> actions = new ArrayList<>();
         if ( cursor != null ) {
@@ -182,7 +142,14 @@ public class ActionDAO {
                 Card card = cardReg.get( cardId );
                 if ( card == null ) {
                     card = cardDAO.findById( cardId );
-                    cardReg.put( cardId, card );
+                    if ( card == null ) {
+                        Log.w( TAG, "Something has happened to the card outside of the widget" );
+                        Log.w( TAG, "Removing action" );
+                        delete( cardId );
+                        continue;
+                    } else {
+                        cardReg.put( cardId, card );
+                    }
                 }
                 switch ( type ) {
                     case CREATE:
@@ -203,9 +170,4 @@ public class ActionDAO {
         }
         return actions;
     }
-
-    public CardDAO getCardDAO() {
-        return cardDAO;
-    }
-
 }

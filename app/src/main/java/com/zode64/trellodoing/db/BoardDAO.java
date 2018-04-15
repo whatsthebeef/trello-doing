@@ -9,6 +9,7 @@ import android.util.Log;
 import com.zode64.trellodoing.models.Board;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 
 public class BoardDAO {
@@ -18,8 +19,6 @@ public class BoardDAO {
     private DoingDatabaseHelper dbHelper;
 
     private SQLiteDatabase database;
-
-    public final static String PERSONAL_BOARD = "Personal";
 
     public final static String TABLE_NAME = "boards";
     public final static String ID = "id";
@@ -65,12 +64,12 @@ public class BoardDAO {
         values.put( ID, board.getId() );
         values.put( NAME, board.getName() );
         values.put( SHORTLINK, board.getShortLink() );
-        values.put( TODO_LIST_ID, board.getTodoListId() );
-        values.put( TODAY_LIST_ID, board.getTodayListId() );
-        values.put( DONE_LIST_ID, board.getDoneListId() );
-        values.put( DOING_LIST_ID, board.getDoingListId() );
-        values.put( CLOCKED_OFF_LIST_ID, board.getClockedOffListId() );
-        values.put( THIS_WEEK_LIST_ID, board.getThisWeekListId() );
+        values.put( TODO_LIST_ID, board.getListId( Board.ListType.TODO ) );
+        values.put( TODAY_LIST_ID, board.getListId( Board.ListType.TODAY ) );
+        values.put( DONE_LIST_ID, board.getListId( Board.ListType.DONE ) );
+        values.put( DOING_LIST_ID, board.getListId( Board.ListType.DOING ) );
+        values.put( CLOCKED_OFF_LIST_ID, board.getListId( Board.ListType.CLOCKED_OFF ) );
+        values.put( THIS_WEEK_LIST_ID, board.getListId( Board.ListType.THIS_WEEK ) );
         values.put( ORGANIZATION_ID, board.getIdOrganization() );
         database.insert( TABLE_NAME, null, values );
     }
@@ -87,12 +86,6 @@ public class BoardDAO {
         return board.isEmpty() ? null : board.get( 0 );
     }
 
-    public Board findPersonalBoard() {
-        Cursor cursor = database.query( true, TABLE_NAME, cols, NAME + "=?", new String[]{ PERSONAL_BOARD }, null, null, null, null );
-        ArrayList<Board> board = cursorToBoards( cursor );
-        return board.isEmpty() ? null : board.get( 0 );
-    }
-
     public void deleteAll() {
         database.delete( TABLE_NAME, null, null );
     }
@@ -101,25 +94,43 @@ public class BoardDAO {
         database.close();
     }
 
-    private ArrayList<Board> cursorToBoards( Cursor cursor ) {
-        ArrayList<Board> boards = new ArrayList<>();
+    public HashMap<String, Board> boardMap() {
+        Cursor cursor = database.query( true, TABLE_NAME, cols, null, null, null, null, null, null );
+        HashMap<String, Board> boards = new HashMap<>();
         if ( cursor != null ) {
             while ( cursor.moveToNext() ) {
-                Board board = new Board();
-                board.setId( cursor.getString( 0 ) );
-                board.setName( cursor.getString( 1 ) );
-                board.setShortLink( cursor.getString( 2 ) );
-                board.setTodoListId( cursor.getString( 3 ) );
-                board.setTodayListId( cursor.getString( 4 ) );
-                board.setDoneListId( cursor.getString( 5 ) );
-                board.setDoingListId( cursor.getString( 6 ) );
-                board.setClockedOffListId( cursor.getString( 7 ) );
-                board.setThisWeekListId( cursor.getString( 8 ) );
-                board.setIdOrganization( cursor.getString( 9 ) );
-                boards.add( board );
+                boards.put( cursor.getString( 0 ), cursorToBoard( cursor ) );
             }
             cursor.close();
         }
         return boards;
     }
+
+    private ArrayList<Board> cursorToBoards( Cursor cursor ) {
+        ArrayList<Board> boards = new ArrayList<>();
+        if ( cursor != null ) {
+            while ( cursor.moveToNext() ) {
+                boards.add( cursorToBoard( cursor ) );
+            }
+            cursor.close();
+        }
+        return boards;
+    }
+
+    private Board cursorToBoard( Cursor cursor ) {
+        Board board = new Board();
+        board.setId( cursor.getString( 0 ) );
+        board.setName( cursor.getString( 1 ) );
+        board.setShortLink( cursor.getString( 2 ) );
+        board.addList( cursor.getString( 3 ), Board.ListType.TODO );
+        board.addList( cursor.getString( 4 ), Board.ListType.TODAY );
+        board.addList( cursor.getString( 5 ), Board.ListType.DONE );
+        board.addList( cursor.getString( 6 ), Board.ListType.DOING );
+        board.addList( cursor.getString( 7 ), Board.ListType.CLOCKED_OFF );
+        board.addList( cursor.getString( 8 ), Board.ListType.THIS_WEEK );
+        board.setIdOrganization( cursor.getString( 9 ) );
+        return board;
+    }
+
+
 }

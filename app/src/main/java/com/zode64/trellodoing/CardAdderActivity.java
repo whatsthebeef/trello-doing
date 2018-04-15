@@ -11,8 +11,8 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 
 import com.zode64.trellodoing.db.BoardDAO;
-import com.zode64.trellodoing.db.CardDAO;
 import com.zode64.trellodoing.models.Board;
+import com.zode64.trellodoing.models.Board.ListType;
 import com.zode64.trellodoing.models.Card;
 import com.zode64.trellodoing.utils.TrelloManager;
 import com.zode64.trellodoing.widget.DoingWidget;
@@ -95,16 +95,8 @@ public class CardAdderActivity extends Activity implements Preference.OnPreferen
                     Card card = new Card();
                     card.setName( text );
                     card.setServerId( "" + Calendar.getInstance().getTimeInMillis() );
-                    card.setInListType( Card.ListType.THIS_WEEK );
-                    card.setBoardId( board.getId() );
-                    card.setBoardName( board.getName() );
-                    card.setBoardShortLink( board.getShortLink() );
-                    card.setListId( Card.ListType.TODO, board.getTodoListId() );
-                    card.setListId( Card.ListType.TODAY, board.getTodayListId() );
-                    card.setListId( Card.ListType.DOING, board.getDoingListId() );
-                    card.setListId( Card.ListType.CLOCKED_OFF, board.getClockedOffListId() );
-                    card.setListId( Card.ListType.DONE, board.getDoneListId() );
-                    card.setListId( Card.ListType.THIS_WEEK, board.getThisWeekListId() );
+                    card.setListType( ListType.THIS_WEEK );
+                    card.setBoard( board );
                     new AddCardTask( activity, trelloManager ).execute( card );
                 }
             }
@@ -151,11 +143,11 @@ public class CardAdderActivity extends Activity implements Preference.OnPreferen
             Card newCard = card[ 0 ];
             Card persistedCard = trelloManager.createCard( newCard );
             if ( persistedCard == null ) {
-                getActionDAO().getCardDAO().create( newCard );
+                getCardDAO().create( newCard );
                 getActionDAO().createCreate( newCard );
                 getActionDAO().createMove( newCard );
             } else {
-                if ( !trelloManager.thisWeek( newCard ) ) {
+                if ( !trelloManager.moveCard( newCard.getServerId(), newCard.getBoardListId( ListType.THIS_WEEK ) ) ) {
                     getActionDAO().createMove( newCard );
                 }
             }
