@@ -5,19 +5,18 @@ import android.content.Intent;
 import android.widget.RemoteViewsService;
 
 import com.zode64.trellodoing.models.Board;
-import com.zode64.trellodoing.models.Card;
 
 public class ClockedOffWidgetService extends RemoteViewsService {
 
     @Override
     public RemoteViewsFactory onGetViewFactory( Intent intent ) {
-        return ( new ClockedOffListProvider( this.getApplicationContext(), intent ) );
+        return ( new ClockedOffListProvider( this.getApplicationContext() ) );
     }
 
     static class ClockedOffListProvider extends ListProvider {
 
-        public ClockedOffListProvider( Context context, Intent intent ) {
-            super( context, intent );
+        ClockedOffListProvider( Context context ) {
+            super( context );
         }
 
         protected void loadCards() {

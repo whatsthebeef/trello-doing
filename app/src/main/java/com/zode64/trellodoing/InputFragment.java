@@ -1,17 +1,14 @@
 package com.zode64.trellodoing;
 
-import android.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 
 public class InputFragment extends DoingFragment {
-
-    private ImageButton submit;
-    private ImageButton cancel;
 
     private EditText newCardName;
 
@@ -24,8 +21,8 @@ public class InputFragment extends DoingFragment {
 
         listener = ( TextChangeListener ) getActivity();
 
-        submit = ( ImageButton ) view.findViewById( R.id.submit );
-        cancel = ( ImageButton ) view.findViewById( R.id.cancel );
+        Button submit = ( Button ) view.findViewById( R.id.submit );
+        Button cancel = ( Button ) view.findViewById( R.id.cancel );
 
         newCardName = ( EditText ) view.findViewById( R.id.new_card_name );
 

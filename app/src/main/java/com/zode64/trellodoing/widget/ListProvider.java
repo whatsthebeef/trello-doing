@@ -3,20 +3,15 @@ package com.zode64.trellodoing.widget;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
 import com.zode64.trellodoing.R;
 import com.zode64.trellodoing.db.BoardDAO;
 import com.zode64.trellodoing.db.CardDAO;
-import com.zode64.trellodoing.db.DeadlineDAO;
 import com.zode64.trellodoing.models.Card;
-import com.zode64.trellodoing.utils.TimeUtils;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
 
 public abstract class ListProvider implements RemoteViewsService.RemoteViewsFactory {
 
@@ -26,15 +21,9 @@ public abstract class ListProvider implements RemoteViewsService.RemoteViewsFact
 
     protected Context context;
 
-    protected CardDAO cardDAO;
+    CardDAO cardDAO;
 
-    protected DeadlineDAO deadlineDAO;
-
-    protected HashMap<String, Long> deadlines;
-
-    protected long now;
-
-    public ListProvider( Context context, Intent intent ) {
+    ListProvider( Context context ) {
         this.context = context;
     }
 
@@ -43,22 +32,16 @@ public abstract class ListProvider implements RemoteViewsService.RemoteViewsFact
         BoardDAO boardDAO = new BoardDAO( context );
         this.cardDAO = new CardDAO( context, boardDAO.boardMap() );
         boardDAO.closeDB();
-        this.deadlineDAO = new DeadlineDAO( context );
-        deadlines = deadlineDAO.all();
-        now = Calendar.getInstance().getTimeInMillis();
         loadCards();
     }
 
     @Override
     public void onDataSetChanged() {
-        deadlines = deadlineDAO.all();
-        now = Calendar.getInstance().getTimeInMillis();
         loadCards();
     }
 
     @Override
     public void onDestroy() {
-        deadlineDAO.closeDB();
         cardDAO.closeDB();
     }
 
@@ -84,20 +67,7 @@ public abstract class ListProvider implements RemoteViewsService.RemoteViewsFact
         }
         Card card = cards.get( position );
         Log.i( TAG, "View with card :" + card.getName() );
-        RemoteViews view = null;
-        Long deadline = deadlines.get( card.getServerId() );
-        if ( TimeUtils.pastDeadline( deadline, now ) ) {
-            view = new RemoteViews( context.getPackageName(), R.layout.doing_card_past_deadline );
-        } else {
-            view = new RemoteViews( context.getPackageName(), R.layout.doing_card );
-            if ( deadline != null ) {
-                view.setViewVisibility( R.id.deadline_set, View.VISIBLE );
-                view.setViewVisibility( R.id.deadline_not_set, View.GONE );
-            } else {
-                view.setViewVisibility( R.id.deadline_set, View.GONE );
-                view.setViewVisibility( R.id.deadline_not_set, View.VISIBLE );
-            }
-        }
+        RemoteViews view = new RemoteViews( context.getPackageName(), R.layout.doing_card );
         view.setTextViewText( R.id.card_name, card.getBoardName() + ": " + card.getName() );
         setClickListener( view, card );
         return view;
@@ -115,7 +85,7 @@ public abstract class ListProvider implements RemoteViewsService.RemoteViewsFact
 
     protected abstract void loadCards();
 
-    protected void setClickListener( RemoteViews view, Card card ) {
+    void setClickListener( RemoteViews view, Card card ) {
         Intent fillInIntent = new Intent();
         fillInIntent.putExtra( DoingWidget.EXTRA_CARD_ID, card.getId() );
         view.setOnClickFillInIntent( R.id.doing_card, fillInIntent );

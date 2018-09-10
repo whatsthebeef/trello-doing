@@ -16,35 +16,30 @@ public class CardDAO {
 
     private static final String TAG = CardDAO.class.getName();
 
-    public final static String TABLE_NAME = "cards";
-    public final static String ID = "id";
-    public final static String SERVER_ID = "serverId";
-    public final static String NAME = "name";
-    public final static String BOARD_ID = "boardId";
-    public final static String SHORT_LINK = "shortLink";
-    public final static String LIST_TYPE = "listType";
-    public final static String MARKED_FOR_DELETE = "markedForDelete";
-    public final static String START_TIME_FOR_CURRENT_LIST_TYPE = "startTimeForCurrentListType";
+    private final static String TABLE_NAME = "cards";
+    private final static String ID = "id";
+    private final static String SERVER_ID = "serverId";
+    private final static String NAME = "name";
+    private final static String BOARD_ID = "boardId";
+    private final static String SHORT_LINK = "shortLink";
+    private final static String LIST_TYPE = "listType";
+    private final static String MARKED_FOR_DELETE = "markedForDelete";
+    private final static String START_TIME_FOR_CURRENT_LIST_TYPE = "startTimeForCurrentListType";
 
     private String[] cols = new String[]{ ID, SERVER_ID, NAME, BOARD_ID,
             SHORT_LINK, LIST_TYPE, START_TIME_FOR_CURRENT_LIST_TYPE, MARKED_FOR_DELETE };
-
-    private DoingDatabaseHelper dbHelper;
 
     private SQLiteDatabase database;
 
     private HashMap<String, Board> boardReg;
 
-    /**
-     * @param context
-     */
     public CardDAO( Context context, HashMap<String, Board> boardReg ) {
-        dbHelper = new DoingDatabaseHelper( context );
+        DoingDatabaseHelper dbHelper = new DoingDatabaseHelper( context );
         database = dbHelper.getWritableDatabase();
         this.boardReg = boardReg;
     }
 
-    public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ( " +
+    static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ( " +
             ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
             SERVER_ID + " TEXT, " +
             NAME + " TEXT NOT NULL, " +
@@ -55,7 +50,7 @@ public class CardDAO {
             MARKED_FOR_DELETE + " INTEGER NOT NULL" +
             ");";
 
-    public static final String DELETE_TABLE = "DROP TABLE " + TABLE_NAME + " IF EXIST";
+    static final String DELETE_TABLE = "DROP TABLE " + TABLE_NAME + " IF EXIST";
 
     public void create( Card card ) {
         Log.i( TAG, "Creating card : " + card.getName() );

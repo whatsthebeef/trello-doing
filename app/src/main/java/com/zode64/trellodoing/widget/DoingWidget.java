@@ -17,6 +17,7 @@ import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
+import com.zode64.trellodoing.BoardSelectActivity;
 import com.zode64.trellodoing.CardActionActivity;
 import com.zode64.trellodoing.CardAdderActivity;
 import com.zode64.trellodoing.DoingPreferences;
@@ -24,34 +25,27 @@ import com.zode64.trellodoing.KeepDoingActivity;
 import com.zode64.trellodoing.MainActivity;
 import com.zode64.trellodoing.R;
 import com.zode64.trellodoing.db.ActionDAO;
-import com.zode64.trellodoing.db.AttachmentDAO;
 import com.zode64.trellodoing.db.BoardDAO;
 import com.zode64.trellodoing.db.CardDAO;
-import com.zode64.trellodoing.db.DeadlineDAO;
 import com.zode64.trellodoing.models.Action;
-import com.zode64.trellodoing.models.Attachment;
 import com.zode64.trellodoing.models.Board;
 import com.zode64.trellodoing.models.Card;
 import com.zode64.trellodoing.models.Member;
 import com.zode64.trellodoing.utils.DoingNotification;
-import com.zode64.trellodoing.utils.TimeUtils;
 import com.zode64.trellodoing.utils.TrelloManager;
 import com.zode64.trellodoing.utils.WidgetAlarm;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 import static android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE;
-import static com.zode64.trellodoing.utils.TimeUtils.between;
+import static com.zode64.trellodoing.utils.TimeUtils.betweenHours;
+import static com.zode64.trellodoing.utils.TimeUtils.mondayToThursday;
 
 public class DoingWidget extends AppWidgetProvider {
 
     public final static String ACTION_SYNC = "com.zode64.trellodoing.intent.action.SYNC";
-    public final static String ACTION_DEADLINE_ALARM = "com.zode64.trellodoing.intent.action.DEADLINE_ALARM";
     public final static String ACTION_STANDARD_ALARM = "com.zode64.trellodoing.intent.action.STANDARD_ALARM";
     public final static String ACTION_SET_ALARM = "com.zode64.trellodoing.intent.action.SET_ALARM";
     public final static String ACTION_STOP_ALARM = "com.zode64.trellodoing.intent.action.STOP_ALARM";
@@ -59,13 +53,12 @@ public class DoingWidget extends AppWidgetProvider {
     public final static String ACTION_ADD_CARD = "com.zode64.trellodoing.intent.action.ADD_CARD";
     public final static String ACTION_TODAY_LIST_SWITCH = "com.zode64.trellodoing.intent.action.TODAY_SWITCH";
     public final static String ACTION_THIS_WEEK_LIST_SWITCH = "com.zode64.trellodoing.intent.action.THIS_WEEK_SWITCH";
+    public final static String ACTION_SHOW_BOARDS = "com.zode64.trellodoing.intent.action.SHOW_BOARDS";
     public final static String ACTION_LIST_SWITCH = "com.zode64.trellodoing.intent.action.LIST_SWITCH";
-    public final static String ACTION_UPLOAD_ATTACHMENTS = "com.zode64.trellodoing.intent.action.UPLOAD_ATTACHMENTS";
     public final static String ACTION_ACTION_PERFORMED = "com.zode64.trellodoing.intent.action.ACTION_PERFORMED";
 
     public static final String EXTRA_CARD_ID = "com.zode64.trellodoing.cardsproivder.EXTRA_CARD_ID";
     public static final String EXTRA_BOARD_ID = "com.zode64.trellodoing.cardsproivder.EXTRA_BOARD_ID";
-    public static final String EXTRA_WIFI_CHECKED = "com.zode64.trellodoing.cardsproivder.EXTRA_WIFI_CHECKED";
 
     public static final int NO_CONNECTION = -1;
 
@@ -91,6 +84,7 @@ public class DoingWidget extends AppWidgetProvider {
         setAddCardListener( views, context );
         setTodayListBtnListener( views, context );
         setThisWeekListBtnListener( views, context );
+        setShowBoardsBtnListener( views, context );
 
         setListAdapter( views, R.id.doing_cards_list, DoingWidgetService.class, context );
         setListAdapter( views, R.id.today_cards_list, TodayWidgetService.class, context );
@@ -98,6 +92,13 @@ public class DoingWidget extends AppWidgetProvider {
         setCardListListener( views, context );
 
         appWidgetManager.updateAppWidget( appWidgetIds, views );
+
+        DoingPreferences preferences = new DoingPreferences( context );
+        if ( preferences.isThisWeek() ) {
+            showThisWeek( views, context );
+        } else {
+            showToday( views, context );
+        }
 
         launchService( views, context );
 
@@ -117,7 +118,7 @@ public class DoingWidget extends AppWidgetProvider {
         if ( ACTION_THIS_WEEK_LIST_SWITCH.equals( action ) ) {
             preferences.setThisWeek();
             showThisWeek( views, context );
-        } else if ( ACTION_TODAY_LIST_SWITCH.equals( action ) ) {
+        } else {
             preferences.setToday();
             showToday( views, context );
         }
@@ -137,7 +138,6 @@ public class DoingWidget extends AppWidgetProvider {
         DoingPreferences preferences = new DoingPreferences( context );
         WidgetAlarm widgetAlarm = new WidgetAlarm( context.getApplicationContext(), preferences );
         widgetAlarm.stopStandardAlarm();
-        widgetAlarm.stopDeadlineAlarm();
     }
 
     public static int connectionType( Context context ) {
@@ -161,6 +161,12 @@ public class DoingWidget extends AppWidgetProvider {
         Intent keepDoing = new Intent( context, KeepDoingActivity.class );
         PendingIntent pendingKeepDoing = PendingIntent.getActivity( context, 0, keepDoing, 0 );
         views.setOnClickPendingIntent( R.id.keep_doing, pendingKeepDoing );
+    }
+
+    private void setShowBoardsBtnListener( RemoteViews views, Context context ) {
+        Intent boardsIntent = new Intent( context, BoardSelectActivity.class );
+        PendingIntent pendingBroadcastBoardsIntent = PendingIntent.getActivity( context, 0, boardsIntent, 0 );
+        views.setOnClickPendingIntent( R.id.show_boards_btn, pendingBroadcastBoardsIntent );
     }
 
     private void setSettingsListener( RemoteViews views, Context context ) {
@@ -248,10 +254,6 @@ public class DoingWidget extends AppWidgetProvider {
                     isAlreadyConnected = true;
                     context.startService( new Intent( ACTION_NETWORK_CHANGE, null, context, UpdateService.class ) );
                 }
-                if ( connectionType == ConnectivityManager.TYPE_WIFI ) {
-                    Intent attachmentsIntent = new Intent( ACTION_UPLOAD_ATTACHMENTS, null, context, UpdateService.class );
-                    context.startService( attachmentsIntent );
-                }
             } else {
                 Log.d( TAG, "No network, stop checking for now" );
                 isAlreadyConnected = false;
@@ -290,6 +292,11 @@ public class DoingWidget extends AppWidgetProvider {
             } else if ( ACTION_STOP_ALARM.equals( intent.getAction() ) ) {
                 appWidgetAlarm.stopStandardAlarm();
                 return;
+            } else if ( ACTION_SHOW_BOARDS.equals( intent.getAction() ) ) {
+                Intent boardsIntent = new Intent( this, BoardSelectActivity.class );
+                boardsIntent.addFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
+                startActivity( boardsIntent );
+                return;
             }
 
             // If from a network change or something like that don't reset the deadline
@@ -309,26 +316,22 @@ public class DoingWidget extends AppWidgetProvider {
                 return;
             }
 
-            DeadlineDAO deadlineDAO = new DeadlineDAO( this );
             BoardDAO boardDAO = new BoardDAO( this );
             HashMap<String, Board> boardMap = boardDAO.boardMap();
             CardDAO cardDAO = new CardDAO( this, boardMap );
-            AttachmentDAO attachmentDAO = new AttachmentDAO( this );
-            ActionDAO actionDAO = new ActionDAO( this, trelloManager, cardDAO, deadlineDAO, attachmentDAO );
+            ActionDAO actionDAO = new ActionDAO( this, trelloManager, cardDAO );
 
             if ( ACTION_SYNC.equals( intent.getAction() ) ) {
                 if ( connectionType != NO_CONNECTION ) {
-                    sync( trelloManager, deadlineDAO, attachmentDAO, boardDAO );
+                    sync( trelloManager, boardDAO );
                 }
-            } else if ( ACTION_UPLOAD_ATTACHMENTS.equals( intent.getAction() ) ) {
-                postAttachments( trelloManager, attachmentDAO );
             }
 
             updateCardLists( cardDAO, actionDAO, trelloManager, boardMap );
 
             if ( ACTION_ACTION_PERFORMED.equals( intent.getAction() ) && preferences.keepDoing() ) {
                 // don't do notifications
-            } else if ( updateNotifications( cardDAO, deadlineDAO, preferences, notifications ) ) {
+            } else if ( updateNotifications( cardDAO, preferences, notifications ) ) {
                 appWidgetAlarm.setQuickAlarm();
             } else {
                 appWidgetAlarm.setAlarm();
@@ -337,9 +340,7 @@ public class DoingWidget extends AppWidgetProvider {
             // Clean up
             actionDAO.closeDB();
             cardDAO.closeDB();
-            deadlineDAO.closeDB();
             boardDAO.closeDB();
-            attachmentDAO.closeDB();
 
             notifyLists( ids, manager );
             //setting an empty view in case of no data
@@ -350,26 +351,6 @@ public class DoingWidget extends AppWidgetProvider {
             manager.notifyAppWidgetViewDataChanged( ids, R.id.doing_cards_list );
             manager.notifyAppWidgetViewDataChanged( ids, R.id.today_cards_list );
             manager.notifyAppWidgetViewDataChanged( ids, R.id.clocked_off_cards_list );
-        }
-
-        private void postAttachments( TrelloManager trelloManager, AttachmentDAO attachmentDAO ) {
-            ArrayList<Attachment> pendingAttachments = attachmentDAO.allPending();
-            if ( !pendingAttachments.isEmpty() ) {
-                for ( Attachment attachment : pendingAttachments ) {
-                    int result = trelloManager.postAttachment( attachment );
-                    switch ( result ) {
-                        case TrelloManager.SUCCESS:
-                            attachmentDAO.setUploaded( attachment.getId() );
-                            break;
-                        case TrelloManager.FILE_NOT_FOUND:
-                            attachmentDAO.delete( attachment.getId() );
-                            break;
-                        default:
-                            // Do nothing
-                    }
-                }
-            }
-            attachmentDAO.closeDB();
         }
 
         private void updateCardLists( CardDAO cardDAO, ActionDAO actionDAO, TrelloManager trelloManager,
@@ -400,15 +381,16 @@ public class DoingWidget extends AppWidgetProvider {
             }
         }
 
-        private boolean updateNotifications( CardDAO cardDAO, DeadlineDAO deadlineDAO, DoingPreferences preferences,
+        private boolean updateNotifications( CardDAO cardDAO, DoingPreferences preferences,
                                              DoingNotification notifications ) {
             ArrayList<Card> cards = cardDAO.all();
             // Check to see if we should create any notifications
-            HashMap<String, Long> deadlines = deadlineDAO.all();
             notifications.removeAll();
             int numDoingCards = 0;
             int numDoingWorkCards = 0;
             int numClockedOffCards = 0;
+            int numTodayCards = 0;
+            int numThisWeekCards = 0;
             String doingBoardUrl = preferences.getLastDoingBoard();
             String clockedOffBoardUrl = null;
             Calendar now = Calendar.getInstance();
@@ -420,33 +402,27 @@ public class DoingWidget extends AppWidgetProvider {
                     numDoingCards++;
                     if ( card.isWorkCard() ) {
                         numDoingWorkCards++;
-                        if ( !between( preferences.getStartHour(), preferences.getEndHour(), now ) ) {
+                        if ( !betweenHours( preferences.getStartHour(), preferences.getEndHour(), now ) ) {
                             notifications.clockOff( doingBoardUrl );
                             notificationSet = true;
                         }
-                        preferences.addTimeSpentToday( now );
-                        preferences.setPeriodStartTime( now );
-                    } else {
-                        preferences.addTimeSpentToday( now );
-                        preferences.clearPeriodStartTime();
                     }
-                } else {
-                    preferences.addTimeSpentToday( now );
-                    preferences.clearPeriodStartTime();
                 }
                 if ( card.isClockedOn() || card.getListType() == Board.ListType.TODAY ) {
-                    if ( TimeUtils.pastDeadline( deadlines.get( card.getServerId() ), now.getTimeInMillis() ) ) {
-                        notifications.deadline( card.getBoardShortUrl() );
-                        notificationSet = true;
-                    }
-                    if ( card.getListType() == Board.ListType.TODAY && card.tooMuchTimeSpentInCurrentList() ) {
-                        notifications.todayTooLong( card.getBoardShortUrl() );
-                        notificationSet = true;
+                    if ( card.getListType() == Board.ListType.TODAY ) {
+                        if ( card.tooMuchTimeSpentInCurrentList( preferences.getEndHour() ) ) {
+                            notifications.todayTooLong( card.getBoardShortUrl() );
+                            notificationSet = true;
+                        }
+                        numTodayCards++;
                     }
                 }
-                if ( card.getListType() == Board.ListType.THIS_WEEK && card.tooMuchTimeSpentInCurrentList() ) {
-                    notifications.thisWeekTooLong( card.getBoardShortUrl() );
-                    notificationSet = true;
+                if ( card.getListType() == Board.ListType.THIS_WEEK ) {
+                    if ( card.tooMuchTimeSpentInCurrentList( preferences.getEndHour() ) ) {
+                        notifications.thisWeekTooLong( card.getBoardShortUrl() );
+                        notificationSet = true;
+                    }
+                    numThisWeekCards++;
                 }
                 if ( card.getListType() == Board.ListType.CLOCKED_OFF ) {
                     numClockedOffCards++;
@@ -454,13 +430,7 @@ public class DoingWidget extends AppWidgetProvider {
                 }
             }
             if ( numDoingWorkCards == 0 ) {
-                int hoursRemainingInDay = preferences.hoursRemainingInDay();
-                int hoursInDay = preferences.getHoursInDay();
-                if ( hoursRemainingInDay < hoursInDay ) {
-                    notifications.hoursRemainingInDay( doingBoardUrl, hoursRemainingInDay );
-                    notificationSet = true;
-                }
-                if ( between( preferences.getStartHour(), preferences.getEndHour(), now ) ) {
+                if ( betweenHours( preferences.getStartHour(), preferences.getEndHour(), now ) ) {
                     notifications.clockOn( doingBoardUrl );
                     notificationSet = true;
                 }
@@ -472,39 +442,23 @@ public class DoingWidget extends AppWidgetProvider {
                 notifications.multiClockedOff( clockedOffBoardUrl );
                 notificationSet = true;
             }
+            if ( numThisWeekCards == 0 && mondayToThursday( now ) && betweenHours( preferences.getStartHour(), 23, now ) ) {
+                notifications.thisWeekEmpty( clockedOffBoardUrl );
+                notificationSet = true;
+            }
+            /*
+            if ( numTodayCards == 0 && betweenHours(preferences.getStartHour(), 12, now ) ) {
+                notifications.todayEmpty( clockedOffBoardUrl );
+                notificationSet = true;
+            }
+            */
             return notificationSet;
         }
 
-        private void sync( TrelloManager trello, DeadlineDAO deadlineDAO, AttachmentDAO attachmentDAO, BoardDAO boardDAO ) {
+        private void sync( TrelloManager trello, BoardDAO boardDAO ) {
             Log.i( TAG, "Syncing..." );
             Member member = trello.boards();
             ArrayList<Card> cards = member.getCards();
-            HashMap<String, Card> cardReg = new HashMap<>();
-            for ( Card card : cards ) {
-                cardReg.put( card.getServerId(), card );
-            }
-            Iterator<Attachment> attachments = attachmentDAO.all().iterator();
-            while ( attachments.hasNext() ) {
-                Attachment attachment = attachments.next();
-                if ( !cardReg.containsKey( attachment.getCardServerId() ) ) {
-                    File file = attachment.getFile();
-                    File dir = file.getParentFile();
-                    file.delete();
-                    Log.i( TAG, "Deleting file:" + file.getName() );
-                    if ( dir.list().length == 0 ) {
-                        dir.delete();
-                        Log.i( TAG, "Deleting dir:" + dir.getName() );
-                    }
-                    attachmentDAO.delete( attachment.getId() );
-                }
-            }
-            HashMap<String, Long> deadlines = deadlineDAO.all();
-            for ( Map.Entry<String, Long> deadline : deadlines.entrySet() ) {
-                if ( !cardReg.containsKey( deadline.getKey() ) ) {
-                    Log.i( TAG, "Deleting deadline for " + deadline.getKey() );
-                    deadlineDAO.delete( deadline.getKey() );
-                }
-            }
             boardDAO.deleteAll();
             for ( Board board : member.getBoards() ) {
                 boardDAO.create( board );
@@ -514,7 +468,7 @@ public class DoingWidget extends AppWidgetProvider {
         public class DisplayTokenMissingToast implements Runnable {
             private final Context mContext;
 
-            public DisplayTokenMissingToast( Context mContext ) {
+            DisplayTokenMissingToast( Context mContext ) {
                 this.mContext = mContext;
             }
 

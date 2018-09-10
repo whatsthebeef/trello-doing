@@ -1,14 +1,16 @@
 package com.zode64.trellodoing;
 
 import android.app.Activity;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 
 import com.zode64.trellodoing.db.BoardDAO;
 import com.zode64.trellodoing.models.Board;
@@ -21,10 +23,7 @@ import java.util.Calendar;
 
 public class CardAdderActivity extends Activity implements Preference.OnPreferenceChangeListener {
 
-    private final static String TAG = CardAdderActivity.class.getName();
-
-    private ImageButton submit;
-    private ImageButton cancel;
+    private Button submit;
     private EditText nameInput;
 
     private BoardDAO boardDAO;
@@ -33,23 +32,19 @@ public class CardAdderActivity extends Activity implements Preference.OnPreferen
 
     private TrelloManager trelloManager;
 
-    private CardAdderActivity activity;
-
-    private DoingPreferences preferences;
-
     @Override
     protected void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
         requestWindowFeature( Window.FEATURE_NO_TITLE );
+        getWindow().setBackgroundDrawable( new ColorDrawable( Color.TRANSPARENT ) );
 
         // Called before set view so the preference is in the right state
         boardDAO = new BoardDAO( this );
-        preferences = new DoingPreferences( this );
+        final DoingPreferences preferences = new DoingPreferences( this );
         String boardId = getIntent().getStringExtra( DoingWidget.EXTRA_BOARD_ID );
         if ( boardId == null ) {
             boardId = preferences.getLastAddedBoard();
-        }
-        else {
+        } else {
             preferences.saveLastAddedBoard( boardId );
         }
         if ( boardId != null ) {
@@ -58,15 +53,14 @@ public class CardAdderActivity extends Activity implements Preference.OnPreferen
 
         setContentView( R.layout.add_card );
 
-        activity = this;
-
-        submit = ( ImageButton ) findViewById( R.id.submit_new_card );
-        cancel = ( ImageButton ) findViewById( R.id.cancel_new_card );
+        submit = ( Button ) findViewById( R.id.submit_new_card );
+        Button cancel = ( Button ) findViewById( R.id.cancel_new_card );
         nameInput = ( EditText ) findViewById( R.id.new_card_name );
 
         trelloManager = new TrelloManager( preferences );
 
         nameInput.setHint( getString( R.string.add_card ) );
+        nameInput.requestFocus();
 
         updateSubmitState();
 
@@ -91,13 +85,13 @@ public class CardAdderActivity extends Activity implements Preference.OnPreferen
             @Override
             public void onClick( View v ) {
                 String text = nameInput.getText().toString();
-                if ( text != null && !text.equals( "" ) ) {
+                if ( !text.equals( "" ) ) {
                     Card card = new Card();
                     card.setName( text );
                     card.setServerId( "" + Calendar.getInstance().getTimeInMillis() );
-                    card.setListType( ListType.THIS_WEEK );
+                    card.setListType( preferences.isThisWeek() ? ListType.THIS_WEEK : ListType.TODAY );
                     card.setBoard( board );
-                    new AddCardTask( activity, trelloManager ).execute( card );
+                    new AddCardTask( CardAdderActivity.this, trelloManager ).execute( card );
                 }
             }
         } );
@@ -105,7 +99,7 @@ public class CardAdderActivity extends Activity implements Preference.OnPreferen
         cancel.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                activity.finish();
+                CardAdderActivity.this.finish();
             }
         } );
     }
@@ -125,29 +119,29 @@ public class CardAdderActivity extends Activity implements Preference.OnPreferen
 
     private void updateSubmitState() {
         String text = nameInput.getText().toString();
-        if ( board != null && text != null && !text.equals( "" ) ) {
+        if ( board != null && !text.equals( "" ) ) {
             submit.setEnabled( true );
         } else {
             submit.setEnabled( false );
         }
     }
 
-    private class AddCardTask extends TrelloTask {
+    private static class AddCardTask extends TrelloTask {
 
-        public AddCardTask( Activity activity, TrelloManager trello ) {
+        AddCardTask( Activity activity, TrelloManager trello ) {
             super( activity, trello );
         }
 
         @Override
         protected Void doInBackground( Card... card ) {
             Card newCard = card[ 0 ];
-            Card persistedCard = trelloManager.createCard( newCard );
+            Card persistedCard = trello.createCard( newCard );
             if ( persistedCard == null ) {
                 getCardDAO().create( newCard );
                 getActionDAO().createCreate( newCard );
                 getActionDAO().createMove( newCard );
             } else {
-                if ( !trelloManager.moveCard( newCard.getServerId(), newCard.getBoardListId( ListType.THIS_WEEK ) ) ) {
+                if ( !trello.moveCard( newCard.getServerId(), newCard.getBoardListId( ListType.TODO ) ) ) {
                     getActionDAO().createMove( newCard );
                 }
             }

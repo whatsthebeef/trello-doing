@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout style="@style/dialog_box"
-                xmlns:android="http://schemas.android.com/apk/res/android">
+<RelativeLayout
+    style="android:Theme.Holo.Light.Dialog.NoActionBar"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <EditText
         android:id="@+id/new_card_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        />
+        android:inputType="text"/>
 
     <LinearLayout
         android:id="@+id/buttons"
@@ -16,15 +17,22 @@
         android:orientation="horizontal"
         android:weightSum="2">
 
-        <ImageButton
-            android:id="@+id/submit"
-            style="@style/action_button"
-            android:src="@drawable/done"/>
-
-        <ImageButton
+        <Button
             android:id="@+id/cancel"
-            style="@style/action_button"
-            android:src="@drawable/cancel"/>
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            style="@style/Button.Light"
+            android:layout_weight="1"
+            android:text="@string/cancel"/>
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            style="@style/Button.Light"
+            android:layout_weight="1"
+            android:id="@+id/submit"
+            android:text="@string/submit_button"/>
+
 
     </LinearLayout>
 

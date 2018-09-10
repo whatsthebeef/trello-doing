@@ -12,13 +12,13 @@ import com.zode64.trellodoing.models.Card;
 
 import java.util.Calendar;
 
-import static com.zode64.trellodoing.utils.TimeUtils.between;
+import static com.zode64.trellodoing.utils.TimeUtils.betweenHours;
 
 public class DoingWidgetService extends RemoteViewsService {
 
     @Override
     public RemoteViewsFactory onGetViewFactory( Intent intent ) {
-        return ( new DoingCardsProvider( this.getApplicationContext(), intent ) );
+        return ( new DoingCardsProvider( this.getApplicationContext() ) );
     }
 
     static class DoingCardsProvider extends ListProvider {
@@ -29,8 +29,8 @@ public class DoingWidgetService extends RemoteViewsService {
         private int mStartHour;
         private boolean mKeepDoing = false;
 
-        public DoingCardsProvider( Context context, Intent intent ) {
-            super( context, intent );
+        DoingCardsProvider( Context context ) {
+            super( context );
             this.preferences = new DoingPreferences( context );
         }
 
@@ -47,8 +47,8 @@ public class DoingWidgetService extends RemoteViewsService {
                 return new RemoteViews( context.getPackageName(), R.layout.doing_card_start_doing );
             } else if ( mKeepDoing ) {
                 return super.getViewAt( position );
-            } else if ( !between( mStartHour, mEndHour, now )
-                    || ( between( mStartHour, mEndHour, now ) && !card.isWorkCard() ) ) {
+            } else if ( !betweenHours( mStartHour, mEndHour, now )
+                    || ( betweenHours( mStartHour, mEndHour, now ) && !card.isWorkCard() ) ) {
                 RemoteViews view = new RemoteViews( context.getPackageName(), R.layout.doing_card_past_deadline );
                 view.setTextViewText( R.id.card_name, card.getBoardName() + ": " + card.getName() );
                 setClickListener( view, card );
@@ -63,8 +63,7 @@ public class DoingWidgetService extends RemoteViewsService {
             mStartHour = preferences.getStartHour();
             mKeepDoing = preferences.keepDoing();
             cards = cardDAO.where( Board.ListType.DOING );
-            if ( cards.isEmpty() && !mKeepDoing && ( between( mStartHour, mEndHour, Calendar.getInstance() )
-                    || preferences.isHoursRemainingInDay() ) ) {
+            if ( cards.isEmpty() && !mKeepDoing && ( betweenHours( mStartHour, mEndHour, Calendar.getInstance() ) ) ) {
                 Card card = new Card();
                 card.setDummyType( Card.DummyType.START_DOING );
                 cards.add( card );

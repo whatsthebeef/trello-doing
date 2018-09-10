@@ -25,7 +25,7 @@
     <string name="set_deadline">Set Deadline</string>
     <string name="last_updated">Last updated </string>
     <string name="refresh">Refresh</string>
-    <string name="done">Done / Next</string>
+    <string name="done">Done</string>
 
     <string name="get_app_key">Get App Key</string>
     <string name="insert_app_key">Enter the App Key</string>
@@ -56,7 +56,7 @@
     <string name="card_action">Card action</string>
     <string name="clocked_off">Clocked Off</string>
     <string name="enter_delay">Enter delay</string>
-    <string name="set_delay_text">Set new delay</string>
+    <string name="set_delay_text">How many hours?</string>
     <string name="deadline_set_for">Deadline set for</string>
     <string name="start_doing_something">Start doing something!!!</string>
     <string name="existing_delay">Existing delay</string>
@@ -72,11 +72,11 @@
     </string>
     <string name="add_card">Add card</string>
     <string name="confirm">Confirm</string>
-    <string name="delete">delete</string>
+    <string name="delete">Delete</string>
     <string name="recording_audio">Recording audio...</string>
     <string name="playing_audio">Playing audio...</string>
     <string name="select_board">Select board</string>
-    <string name="clock_on">Clock on!!!</string>
+    <string name="clock_on">Clock on</string>
     <string name="change_what_you_are_doing">Change what you are doing!!!</string>
     <string name="two_things_at_once">You are doing two things at once!!!</string>
     <string name="doing_reminder">Doing Reminder</string>
@@ -90,5 +90,11 @@
     <string name="cards_been_in_todoy_too_long">A card has been in \'Today\' too long</string>
     <string name="two_things_clocked_off">Two cards are clocked off!!!</string>
     <string name="cards_been_in_week_too_long">A card has been in \'This Week\' too long</string>
+    <string name="cancel">Cancel</string>
+    <string name="todo">Todo</string>
+    <string name="open">Open</string>
+    <string name="today_empty">\'Today\' empty</string>
+    <string name="this_week_empty">\'This Week\' empty</string>
+    <string name="boards">Boards</string>
 
 </resources>

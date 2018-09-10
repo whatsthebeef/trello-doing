@@ -6,7 +6,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -30,10 +29,8 @@ public class BoardsDeserializer implements JsonDeserializer<Member> {
     public Member deserialize( JsonElement json, java.lang.reflect.Type typeOfT, JsonDeserializationContext context ) throws JsonParseException {
         Member member = new Member();
         JsonObject obj = json.getAsJsonObject();
-        Iterator<JsonElement> boardsItr = obj.getAsJsonArray( BOARDS ).iterator();
-        Map<String, Board> boardReg = new HashMap<>();
-        while ( boardsItr.hasNext() ) {
-            Iterator<Map.Entry<String, JsonElement>> boardAttrs = boardsItr.next().getAsJsonObject().entrySet().iterator();
+        for ( JsonElement jsonElement1 : obj.getAsJsonArray( BOARDS ) ) {
+            Iterator<Map.Entry<String, JsonElement>> boardAttrs = jsonElement1.getAsJsonObject().entrySet().iterator();
             Board board = new Board();
             while ( boardAttrs.hasNext() ) {
                 Map.Entry<String, JsonElement> boardAttr = boardAttrs.next();
@@ -53,9 +50,8 @@ public class BoardsDeserializer implements JsonDeserializer<Member> {
                         board.setId( boardAttr.getValue().getAsString() );
                         break;
                     case LISTS:
-                        Iterator<JsonElement> listsItr = boardAttr.getValue().getAsJsonArray().iterator();
-                        while ( listsItr.hasNext() ) {
-                            Iterator<Map.Entry<String, JsonElement>> listAttrs = listsItr.next().getAsJsonObject().entrySet().iterator();
+                        for ( JsonElement jsonElement : boardAttr.getValue().getAsJsonArray() ) {
+                            Iterator<Map.Entry<String, JsonElement>> listAttrs = jsonElement.getAsJsonObject().entrySet().iterator();
                             String listId = null;
                             Board.ListType listType = null;
                             while ( listAttrs.hasNext() ) {

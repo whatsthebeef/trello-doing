@@ -28,11 +28,5 @@
                         android:inputType="number"
                         android:summary="@string/end_hour_summary"
                         android:title="@string/end_hour"/>
-    <EditTextPreference android:key="minimum_hours_in_day"
-                        android:persistent="true"
-                        android:defaultValue="9"
-                        android:inputType="number"
-                        android:summary="@string/minimum_hours_in_day"
-                        android:title="@string/hours_in_day"/>
 
 </PreferenceScreen>

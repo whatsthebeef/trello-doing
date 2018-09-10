@@ -11,7 +11,7 @@ import com.zode64.trellodoing.widget.DoingWidget;
 
 import java.util.Calendar;
 
-import static com.zode64.trellodoing.utils.TimeUtils.between;
+import static com.zode64.trellodoing.utils.TimeUtils.betweenHours;
 
 public class WidgetAlarm {
 
@@ -38,7 +38,7 @@ public class WidgetAlarm {
         stopStandardAlarm();
         Calendar alarm = Calendar.getInstance();
         Log.d( TAG, "Hour in the day : " + String.valueOf( alarm.get( Calendar.HOUR_OF_DAY ) ) );
-        if ( between( mPreferences.getStartHour(), mPreferences.getEndHour(), alarm ) ) {
+        if ( betweenHours( mPreferences.getStartHour(), mPreferences.getEndHour(), alarm ) ) {
             alarm.add( Calendar.MINUTE, WORKING_DELAY_MINUTES );
             Log.d( TAG, "Inside working hours" );
             setAlarmWithCalendar( alarm, DoingWidget.ACTION_STANDARD_ALARM, ALARM_ID, AlarmManager.RTC_WAKEUP );
@@ -64,14 +64,6 @@ public class WidgetAlarm {
         return alarm;
     }
 
-    public Calendar deadlineAlarm( double hours ) {
-        stopDeadlineAlarm();
-        Calendar alarm = Calendar.getInstance();
-        alarm.add( Calendar.MINUTE, ( int ) ( hours * MINUTES_IN_HOUR ) );
-        setAlarmWithCalendar( alarm, DoingWidget.ACTION_DEADLINE_ALARM, DEADLINE_ALARM_ID, AlarmManager.RTC_WAKEUP );
-        return alarm;
-    }
-
     private void setAlarmWithCalendar( Calendar calendar, String action, int alarmId, int type ) {
         Intent alarm = new Intent( action );
         PendingIntent pendingAlarm = PendingIntent.getService( mContext, alarmId, alarm, PendingIntent.FLAG_CANCEL_CURRENT );
@@ -82,10 +74,6 @@ public class WidgetAlarm {
 
     public void stopStandardAlarm() {
         stopAlarm( DoingWidget.ACTION_STANDARD_ALARM, ALARM_ID );
-    }
-
-    public void stopDeadlineAlarm() {
-        stopAlarm( DoingWidget.ACTION_DEADLINE_ALARM, DEADLINE_ALARM_ID );
     }
 
     private void stopAlarm( String action, int alarmId ) {

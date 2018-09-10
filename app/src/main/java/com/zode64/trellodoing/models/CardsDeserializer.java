@@ -1,5 +1,7 @@
 package com.zode64.trellodoing.models;
 
+import android.util.Log;
+
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -9,15 +11,23 @@ import com.google.gson.JsonParseException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TimeZone;
+
+import static com.zode64.trellodoing.utils.TimeUtils.format;
 
 public class CardsDeserializer implements JsonDeserializer<Member> {
+
+    private static final String TAG = CardsDeserializer.class.getSimpleName();
 
     private static final String CARD = "card";
     private static final String ACTIONS = "actions";
     private static final String BOARD = "board";
+    private static final String LIST = "list";
     private static final String SHORT_LINK = "shortLink";
     private static final String NAME = "name";
     private static final String DATA = "data";
@@ -37,9 +47,7 @@ public class CardsDeserializer implements JsonDeserializer<Member> {
         Member member = new Member();
         JsonObject obj = json.getAsJsonObject();
         Map<String, Card> cardReg = new HashMap<>();
-        Iterator<JsonElement> actions = obj.getAsJsonArray( ACTIONS ).iterator();
-        while ( actions.hasNext() ) {
-            JsonElement action = actions.next();
+        for ( JsonElement action : obj.getAsJsonArray( ACTIONS ) ) {
             JsonObject actionObj = action.getAsJsonObject();
             Iterator<Map.Entry<String, JsonElement>> dataAttrs = actionObj.getAsJsonObject( DATA )
                     .entrySet().iterator();
@@ -53,21 +61,19 @@ public class CardsDeserializer implements JsonDeserializer<Member> {
                 Map.Entry<String, JsonElement> dataAttr = dataAttrs.next();
                 switch ( dataAttr.getKey() ) {
                     case CARD:
-                        Iterator<Map.Entry<String, JsonElement>> cardAttrs = dataAttr.getValue().getAsJsonObject().entrySet().iterator();
-                        while ( cardAttrs.hasNext() ) {
+                        for ( Map.Entry<String, JsonElement> stringJsonElementEntry1 : dataAttr.getValue().getAsJsonObject().entrySet() ) {
                             if ( dontAdd ) {
                                 break;
                             }
-                            Map.Entry<String, JsonElement> cardAttr = cardAttrs.next();
-                            switch ( cardAttr.getKey() ) {
+                            switch ( stringJsonElementEntry1.getKey() ) {
                                 case NAME:
-                                    card.setName( cardAttr.getValue().getAsString() );
+                                    card.setName( stringJsonElementEntry1.getValue().getAsString() );
                                     break;
                                 case SHORT_LINK:
-                                    card.setShortLink( cardAttr.getValue().getAsString() );
+                                    card.setShortLink( stringJsonElementEntry1.getValue().getAsString() );
                                     break;
                                 case ID:
-                                    card.setServerId( cardAttr.getValue().getAsString() );
+                                    card.setServerId( stringJsonElementEntry1.getValue().getAsString() );
                                     if ( !cardReg.containsKey( card.getServerId() ) ) {
                                         cardReg.put( card.getServerId(), card );
                                     } else {
@@ -75,21 +81,31 @@ public class CardsDeserializer implements JsonDeserializer<Member> {
                                     }
                                     break;
                                 case ID_LIST:
-                                    cardListId = cardAttr.getValue().getAsString();
+                                    cardListId = stringJsonElementEntry1.getValue().getAsString();
+                                    break;
+                            }
+                        }
+                        break;
+                    case LIST:
+                        for ( Map.Entry<String, JsonElement> stringJsonElementEntry1 : dataAttr.getValue().getAsJsonObject().entrySet() ) {
+                            if ( dontAdd ) {
+                                break;
+                            }
+                            switch ( stringJsonElementEntry1.getKey() ) {
+                                case ID:
+                                    cardListId = stringJsonElementEntry1.getValue().getAsString();
                                     break;
                             }
                         }
                         break;
                     case BOARD:
-                        Iterator<Map.Entry<String, JsonElement>> boardAttrs = dataAttr.getValue().getAsJsonObject().entrySet().iterator();
-                        while ( boardAttrs.hasNext() ) {
+                        for ( Map.Entry<String, JsonElement> stringJsonElementEntry : dataAttr.getValue().getAsJsonObject().entrySet() ) {
                             if ( dontAdd ) {
                                 break;
                             }
-                            Map.Entry<String, JsonElement> boardAttr = boardAttrs.next();
-                            switch ( boardAttr.getKey() ) {
+                            switch ( stringJsonElementEntry.getKey() ) {
                                 case ID:
-                                    card.setBoardId( boardAttr.getValue().getAsString() );
+                                    card.setBoardId( stringJsonElementEntry.getValue().getAsString() );
                                     if ( !boardReg.containsKey( card.getBoardId() ) ) {
                                         dontAdd = true;
                                     }
@@ -107,8 +123,13 @@ public class CardsDeserializer implements JsonDeserializer<Member> {
                     DateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'" );
                     try {
                         card.setStartTimeOfCurrentListType( dateFormat.parse( date ).getTime() );
+                        Calendar cal = GregorianCalendar.getInstance();
+                        cal.setTimeZone( TimeZone.getDefault() );
+                        cal.setTimeInMillis( card.getStartTimeForCurrentListType() );
+                        Log.d( TAG, format( cal ) );
+                        Log.d( TAG, cal.getTimeZone().getDisplayName() );
                     } catch ( ParseException e ) {
-                        throw new RuntimeException( "Can't handle date format received from trello" + ": " + date);
+                        throw new RuntimeException( "Can't handle date format received from trello" + ": " + date );
                     }
                     member.addCard( card );
                 }

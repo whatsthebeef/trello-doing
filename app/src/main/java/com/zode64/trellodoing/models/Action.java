@@ -16,7 +16,7 @@ public abstract class Action {
     protected Type type;
     protected TrelloManager trello;
 
-    public Action( int id, Type type, Card card, TrelloManager trello ) {
+    Action( int id, Type type, Card card, TrelloManager trello ) {
         this.id = id;
         this.card = card;
         this.type = type;
@@ -35,20 +35,12 @@ public abstract class Action {
         return card;
     }
 
-    public String getCardId() {
-        return card.getId();
-    }
-
     public void setCard( Card card ) {
         this.card = card;
     }
 
     public Type getType() {
         return type;
-    }
-
-    public int getTypeOrdinal() {
-        return type.ordinal();
     }
 
     public void setType( Type type ) {

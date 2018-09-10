@@ -49,7 +49,7 @@ public class Board {
         listMap.put( listId, listType );
     }
 
-    public ListType getListType( String listId ) {
+    ListType getListType( String listId ) {
         return listMap.get( listId );
     }
 
@@ -78,11 +78,8 @@ public class Board {
         this.idOrganization = idOrganization;
     }
 
-    public boolean isWorkBoard() {
+    boolean isWorkBoard() {
         return idOrganization != null && !idOrganization.equals( "" );
     }
 
-    public boolean isDoingList( String listId ) {
-        return listMap.get( listId ) == ListType.DOING;
-    }
 }

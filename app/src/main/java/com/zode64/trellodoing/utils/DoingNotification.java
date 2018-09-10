@@ -14,12 +14,13 @@ public class DoingNotification {
 
     private static final int CLOCK_ON_ID = 676767;
     private static final int CLOCK_OFF_ID = 767676;
-    private static final int DEADLINE_ID = 666666;
     private static final int MULTIPLE_DOINGS_ID = 777777;
     private static final int HOURS_REMAINING_IN_DAY_ID = 787878;
     private static final int TODAY_TOO_LONG_ID = 878787;
     private static final int MULTIPLE_CLOCKED_OFF_ID = 888888;
     private static final int THIS_WEEK_TOO_LONG_ID = 898989;
+    private static final int TODAY_EMPTY = 565656;
+    private static final int THIS_WEEK_EMPTY = 656565;
 
     private NotificationManager mNotificationManager;
 
@@ -38,10 +39,6 @@ public class DoingNotification {
         generate( mContext.getString( R.string.clock_out ), CLOCK_OFF_ID, lastBoard, false );
     }
 
-    public void deadline( String lastBoard ) {
-        generate( mContext.getString( R.string.change_what_you_are_doing ), DEADLINE_ID, lastBoard, true );
-    }
-
     public void todayTooLong( String cardBoard ) {
         generate( mContext.getString( R.string.cards_been_in_todoy_too_long ), TODAY_TOO_LONG_ID, cardBoard, true );
     }
@@ -49,11 +46,6 @@ public class DoingNotification {
     public void thisWeekTooLong( String cardBoard ) {
         generate( mContext.getString( R.string.cards_been_in_week_too_long ), THIS_WEEK_TOO_LONG_ID,
                 cardBoard, true );
-    }
-
-    public void hoursRemainingInDay( String lastBoard, int hoursInDay ) {
-        generate( hoursInDay + " " + mContext.getString( R.string.hours_remaining_in_day ),
-                +HOURS_REMAINING_IN_DAY_ID, lastBoard, false );
     }
 
     public void multiDoings( String lastBoard ) {
@@ -64,14 +56,24 @@ public class DoingNotification {
         generate( mContext.getString( R.string.two_things_clocked_off ), MULTIPLE_CLOCKED_OFF_ID, lastBoard, true );
     }
 
+    public void thisWeekEmpty( String lastBoard ) {
+        generate( mContext.getString( R.string.this_week_empty ), THIS_WEEK_EMPTY, lastBoard, true );
+    }
+
+    public void todayEmpty( String lastBoard ) {
+        generate( mContext.getString( R.string.today_empty ), TODAY_EMPTY, lastBoard, true );
+    }
+
     public void removeAll() {
-        mNotificationManager.cancel( DEADLINE_ID );
         mNotificationManager.cancel( CLOCK_ON_ID );
         mNotificationManager.cancel( CLOCK_OFF_ID );
         mNotificationManager.cancel( MULTIPLE_DOINGS_ID );
         mNotificationManager.cancel( HOURS_REMAINING_IN_DAY_ID );
         mNotificationManager.cancel( TODAY_TOO_LONG_ID );
         mNotificationManager.cancel( THIS_WEEK_TOO_LONG_ID );
+        mNotificationManager.cancel( MULTIPLE_CLOCKED_OFF_ID );
+        mNotificationManager.cancel( THIS_WEEK_EMPTY );
+        mNotificationManager.cancel( TODAY_EMPTY );
         mNotificationManager.cancel( MULTIPLE_CLOCKED_OFF_ID );
     }
 
@@ -85,11 +87,10 @@ public class DoingNotification {
                         .setDefaults( Notification.DEFAULT_SOUND )
                                 // .setSound( Uri.parse( "android.resource://" + mContext.getPackageName() + "/" + R.raw.sotp ) )
                         .setVibrate( vibratePattern )
-                        .setContentText( content + " - " + lastBoard );
+                        .setContentText( content + ( lastBoard != null ? " - " + lastBoard : "" ) );
 
         if ( warning ) {
-            builder.setLights( Color.argb( 0, 255, 255, 0 ), 100, 500 )
-                    .setSound( Uri.parse( "android.resource://" + mContext.getPackageName() + "/" + R.raw.sotp ) );
+            builder.setLights( Color.argb( 0, 255, 255, 0 ), 100, 500 );
         }
 
         if ( lastBoard != null ) {

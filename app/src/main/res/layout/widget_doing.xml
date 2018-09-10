@@ -68,17 +68,30 @@
             android:layout_toRightOf="@id/keep_doing"></TextView>
 
         <TextView
+            android:id="@+id/show_boards_btn"
+            style="@style/menu_item"
+            android:layout_toRightOf="@id/separator_4"
+            android:text="@string/boards"></TextView>
+
+        <TextView
+            android:id="@+id/separator_5"
+            style="@style/menu_separator"
+            android:layout_toRightOf="@id/show_boards_btn"></TextView>
+
+        <TextView
             android:id="@+id/today_btn"
             style="@style/menu_item"
-            android:visibility="gone"
-            android:layout_toRightOf="@id/separator_4"
+            android:layout_toRightOf="@id/separator_5"
             android:text="@string/today"></TextView>
 
         <TextView
             android:id="@+id/this_week_btn"
             style="@style/menu_item"
-            android:layout_toRightOf="@id/separator_4"
-            android:text="@string/today"></TextView>
+            android:visibility="gone"
+            android:layout_toRightOf="@id/separator_5"
+            android:text="@string/this_week"></TextView>
+
+
 
     </RelativeLayout>
 

@@ -3,7 +3,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/keep_doing"
-                android:background="@drawable/layout_list_item"
+                style="@style/dialog_box"
                 android:orientation="vertical">
 
 </RelativeLayout>

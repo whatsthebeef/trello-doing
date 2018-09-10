@@ -1,30 +1,26 @@
 package com.zode64.trellodoing;
 
-import android.app.Fragment;
-import android.os.AsyncTask;
+import android.app.DialogFragment;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
 public class ConfirmationFragment extends DoingFragment {
 
-    private ImageButton confirmed;
-    private ImageButton cancel;
-
-    private TextView instruction;
-
     @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ) {
-
         View view = inflater.inflate( R.layout.confirmation, container, false );
 
-        confirmed = ( ImageButton ) view.findViewById( R.id.confirmed );
-        cancel = ( ImageButton ) view.findViewById( R.id.cancel );
+        Button confirmed = ( Button ) view.findViewById( R.id.confirmed );
+        Button cancel = ( Button ) view.findViewById( R.id.cancel );
 
-        instruction = ( TextView ) view.findViewById( R.id.instruction );
+        TextView instruction = ( TextView ) view.findViewById( R.id.instruction );
         instruction.setText( ( ( ConfirmationListener ) getActivity() ).getConfirmationInstruction() );
 
         confirmed.setOnClickListener( new View.OnClickListener() {

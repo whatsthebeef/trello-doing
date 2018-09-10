@@ -6,7 +6,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.zode64.trellodoing.DoingPreferences;
-import com.zode64.trellodoing.models.Attachment;
 import com.zode64.trellodoing.models.Board;
 import com.zode64.trellodoing.models.BoardsDeserializer;
 import com.zode64.trellodoing.models.Card;
@@ -14,19 +13,10 @@ import com.zode64.trellodoing.models.CardDeserializer;
 import com.zode64.trellodoing.models.CardsDeserializer;
 import com.zode64.trellodoing.models.Member;
 
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntity;
-import org.apache.http.entity.mime.content.ContentBody;
-import org.apache.http.entity.mime.content.FileBody;
-
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -36,15 +26,10 @@ public class TrelloManager {
 
     private final static String TAG = TrelloManager.class.getName();
 
-    public final static int REQUEST_TIMEOUT = 8000;
-    public final static int FILE_REQUEST_TIMEOUT = 30000;
+    private final static int REQUEST_TIMEOUT = 8000;
 
-    public final static String TRELLO_URL = "https://trello.com";
-    public final static String TRELLO_URL_API = TRELLO_URL + "/1";
-
-    public final static int SUCCESS = 0;
-    public final static int FILE_NOT_FOUND = 1;
-    public final static int FAILED = 2;
+    private final static String TRELLO_URL = "https://trello.com";
+    private final static String TRELLO_URL_API = TRELLO_URL + "/1";
 
     private DoingPreferences mPreferences;
 
@@ -56,7 +41,7 @@ public class TrelloManager {
         return TRELLO_URL_API + appKeyPath();
     }
 
-    public String appKeyPath() {
+    private String appKeyPath() {
         return "/appKey/generate";
     }
 
@@ -64,14 +49,24 @@ public class TrelloManager {
         return TRELLO_URL_API + tokenPath();
     }
 
-    public String tokenPath() {
+    private String tokenPath() {
         return "/authorize?key=" + mPreferences.getAppKey()
                 + "&name=Trello+Doing&expiration=never&response_type=token&scope=read,write";
     }
 
     public Member cards( HashMap<String, Board> boardReg ) {
         try {
-            return get( "/members/me?actions=updateCard:idList&action_fields=data,date&fields=initials&actions_limit=200",
+            return get( "/members/me?actions=updateCard:idList&action_fields=data,date&fields=initials&actions_limit=250",
+                    Member.class, new CardsDeserializer( boardReg ) );
+        } catch ( IOException e ) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public Member cards2( HashMap<String, Board> boardReg ) {
+        try {
+            return get( "/members/me?actions=updateCard:idList&action_fields=data,date&fields=initials&actions_limit=250",
                     Member.class, new CardsDeserializer( boardReg ) );
         } catch ( IOException e ) {
             e.printStackTrace();
@@ -101,7 +96,7 @@ public class TrelloManager {
 
     public Card createCard( Card card ) {
         try {
-            Card persisted = post( "/cards", "&name=" + card.getName() + "&idList="
+            Card persisted = post( "&name=" + card.getName() + "&idList="
                     + card.getBoardListId( Board.ListType.TODO ) );
             card.setServerId( persisted.getServerId() );
             return card;
@@ -166,30 +161,8 @@ public class TrelloManager {
         }
     }
 
-    public int postAttachment( Attachment attachment ) {
-        ContentBody contentPart = new FileBody( new File( attachment.getPath() ) );
-        /*
-        if(attachment.getType() == Attachment.Type.PHOTO) {
-            BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-            Bitmap bitmap = Bitmap.createBitmap( BitmapFactory.decodeFile( attachment.getPath(), bmOptions ) );
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            bitmap.compress( Bitmap.CompressFormat.JPEG, 10, bos );
-            contentPart = new ByteArrayBody( bos.toByteArray(), attachment.getFilename() );
-        }
-        else {
-            contentPart = new FileBody( new File( attachment.getPath() ) );
-        }
-        */
-        MultipartEntity reqEntity = new MultipartEntity( HttpMultipartMode.BROWSER_COMPATIBLE );
-        reqEntity.addPart( "file", contentPart );
-        return multipost( "/cards/" + attachment.getCardServerId() + "/attachments", reqEntity );
-    }
-
     /**
      * Must be called in AyncTask or from a service
-     *
-     * @param path
-     * @return
      */
     private <T> T get( String path, Class<T> type, JsonDeserializer deserializer ) throws IOException {
         Log.v( TAG, path + " - " + type.toString() );
@@ -217,12 +190,12 @@ public class TrelloManager {
         }
     }
 
-    private Card put( String path, String value ) throws IOException {
-        return push( path, value, "PUT", Card.class );
+    private void put( String path, String value ) throws IOException {
+        push( path, value, "PUT", Card.class );
     }
 
-    private Card post( String path, String value ) throws IOException {
-        return push( path, value, "POST", Card.class );
+    private Card post( String value ) throws IOException {
+        return push( "/cards", value, "POST", Card.class );
     }
 
     private void delete( String path ) throws IOException {
@@ -249,9 +222,6 @@ public class TrelloManager {
 
     /**
      * Must be called in AyncTask or from a service
-     *
-     * @param path
-     * @return
      */
     private <T> T push( String path, String value, String method, Class<T> type )
             throws IOException {
@@ -287,70 +257,6 @@ public class TrelloManager {
             }
         }
     }
-
-    private int multipost( String path, MultipartEntity reqEntity ) {
-        try {
-            URL url = new URL( constructTrelloURL( path ) );
-            Log.i( TAG, "Uploading file to: " + url.toString() );
-            HttpURLConnection conn = ( HttpURLConnection ) url.openConnection();
-            conn.setReadTimeout( FILE_REQUEST_TIMEOUT );
-            conn.setConnectTimeout( FILE_REQUEST_TIMEOUT );
-            conn.setRequestMethod( "POST" );
-            conn.setUseCaches( false );
-            conn.setDoInput( true );
-            conn.setDoOutput( true );
-
-            conn.setFixedLengthStreamingMode( ( int ) reqEntity.getContentLength() );
-            conn.setRequestProperty( "Connection", "Keep-Alive" );
-            conn.addRequestProperty( reqEntity.getContentType().getName(), reqEntity.getContentType().getValue() );
-
-            OutputStream os = conn.getOutputStream();
-            reqEntity.writeTo( conn.getOutputStream() );
-            os.close();
-            conn.connect();
-
-            if ( conn.getResponseCode() == HttpURLConnection.HTTP_OK ) {
-                return SUCCESS;
-            } else {
-                Log.w( TAG, "Response code: " + conn.getResponseCode() );
-            }
-
-        } catch ( FileNotFoundException e ) {
-            e.printStackTrace();
-            return FILE_NOT_FOUND;
-        } catch ( Exception e ) {
-            e.printStackTrace();
-            Log.w( TAG, "multipart post error " + e + "(" + path + ")" );
-        }
-        return FAILED;
-    }
-
-    private String readStream( InputStream in ) {
-        BufferedReader reader = null;
-        StringBuilder builder = new StringBuilder();
-        try {
-            reader = new BufferedReader( new InputStreamReader( in ) );
-            String line = "";
-            while ( ( line = reader.readLine() ) != null ) {
-                builder.append( line );
-            }
-        } catch ( IOException e ) {
-            e.printStackTrace();
-        } finally {
-            if ( reader != null ) {
-                try {
-                    reader.close();
-                } catch ( IOException e ) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return builder.toString();
-    }
-
-    private String convertStreamToString( InputStream is ) {
-        java.util.Scanner s = new java.util.Scanner( is ).useDelimiter( "\\A" );
-        return s.hasNext() ? s.next() : "";
-    }
-
 }
+
+

@@ -1,13 +1,16 @@
 package com.zode64.trellodoing.models;
 
-import com.zode64.trellodoing.utils.TimeUtils;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+
+import static com.zode64.trellodoing.utils.TimeUtils.isThisWeek;
+import static com.zode64.trellodoing.utils.TimeUtils.isToday;
 
 public class Card {
 
     public enum DummyType {
         NOT,
-        START_DOING,
-        STOP_DOING
+        START_DOING
     }
 
     private Integer id;
@@ -54,10 +57,6 @@ public class Card {
         this.serverId = cardId;
     }
 
-    public String getBoardShortLink() {
-        return board.getShortLink();
-    }
-
     public String getShortLink() {
         return shortLink;
     }
@@ -78,7 +77,7 @@ public class Card {
         this.board = board;
     }
 
-    public void setBoardId( String boardId ) {
+    void setBoardId( String boardId ) {
         this.boardId = boardId;
     }
 
@@ -86,7 +85,7 @@ public class Card {
         return listType == Board.ListType.DOING;
     }
 
-    public String getListId() {
+    String getListId() {
         return board.getListId( listType );
     }
 
@@ -122,13 +121,15 @@ public class Card {
         return startTimeOfCurrentListType;
     }
 
-    public boolean tooMuchTimeSpentInCurrentList() {
+    public boolean tooMuchTimeSpentInCurrentList( int endHour ) {
+        Calendar startTime = GregorianCalendar.getInstance();
+        startTime.setTimeInMillis( startTimeOfCurrentListType );
         if ( Board.ListType.TODAY == getListType() ) {
-            if ( !TimeUtils.today( startTimeOfCurrentListType ) ) {
+            if ( !isToday( startTime, endHour ) ) {
                 return true;
             }
         } else if ( Board.ListType.THIS_WEEK == getListType() ) {
-            if ( !TimeUtils.thisWeek( startTimeOfCurrentListType ) ) {
+            if ( !isThisWeek( startTime, endHour ) ) {
                 return true;
             }
         }

@@ -22,43 +22,36 @@ public class ActionDAO {
 
     private static final String TAG = CardDAO.class.getName();
 
-    private DoingDatabaseHelper dbHelper;
-
     private SQLiteDatabase database;
 
     private CardDAO cardDAO;
-    private DeadlineDAO deadlineDAO;
-    private AttachmentDAO attachmentDAO;
 
     private TrelloManager trello;
 
-    public final static String TABLE_NAME = "actions";
+    private final static String TABLE_NAME = "actions";
 
-    public final static String ID = "id";
-    public final static String TYPE = "type";
-    public final static String CARD_ID = "cardId";
-    public final static String CREATED_AT = "created_at";
+    private final static String ID = "id";
+    private final static String TYPE = "type";
+    private final static String CARD_ID = "cardId";
+    private final static String CREATED_AT = "created_at";
 
     private String[] cols = new String[]{ ID, TYPE, CARD_ID, CREATED_AT };
 
-    public ActionDAO( Context context, TrelloManager trello, CardDAO cardDAO, DeadlineDAO deadlineDAO,
-                      AttachmentDAO attachmentDAO ) {
-        dbHelper = new DoingDatabaseHelper( context );
+    public ActionDAO( Context context, TrelloManager trello, CardDAO cardDAO ) {
+        DoingDatabaseHelper dbHelper = new DoingDatabaseHelper( context );
         database = dbHelper.getWritableDatabase();
         this.cardDAO = cardDAO;
         this.trello = trello;
-        this.deadlineDAO = deadlineDAO;
-        this.attachmentDAO = attachmentDAO;
     }
 
-    public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ( " +
+    static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ( " +
             ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
             TYPE + " INTEGER NOT NULL, " +
             CARD_ID + " INTEGER NOT NULL, " +
             CREATED_AT + " DATETIME DEFAULT CURRENT_TIMESTAMP " +
             ");";
 
-    public static final String DELETE_TABLE = "DROP TABLE " + TABLE_NAME + " IF EXIST";
+    static final String DELETE_TABLE = "DROP TABLE " + TABLE_NAME + " IF EXIST";
 
     public ArrayList<Action> all() {
         Log.i( TAG, "Fetching all actions" );
@@ -153,7 +146,7 @@ public class ActionDAO {
                 }
                 switch ( type ) {
                     case CREATE:
-                        actions.add( new CreateAction( id, type, card, trello, deadlineDAO, attachmentDAO ) );
+                        actions.add( new CreateAction( id, type, card, trello ) );
                         break;
                     case MOVE:
                         actions.add( new MoveAction( id, type, card, trello ) );

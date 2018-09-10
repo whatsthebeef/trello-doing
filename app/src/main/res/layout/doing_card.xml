@@ -3,17 +3,6 @@
                 style="@style/list_item"
                 xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <ImageView
-        android:id="@+id/deadline_not_set"
-        style="@style/action_icon"
-        android:src="@drawable/alarm_clock_grey"/>
-
-    <ImageView
-        android:id="@+id/deadline_set"
-        style="@style/action_icon"
-        android:src="@drawable/alarm_clock_green"
-        android:visibility="gone"/>
-
     <TextView
         android:id="@+id/card_name"
         style="@style/list_item_text"/>

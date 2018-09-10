@@ -12,17 +12,12 @@ import android.preference.PreferenceFragment;
 import com.zode64.trellodoing.utils.TrelloManager;
 import com.zode64.trellodoing.widget.DoingWidget;
 
-/**
- * Created by john on 9/18/15.
- */
 public class SettingsFragment extends PreferenceFragment {
 
     private TrelloManager mTrelloManager;
 
-    private EditTextPreference mAppKey;
     private EditTextPreference mToken;
     private Preference mGetToken;
-    private Preference mGetAppKey;
 
     private ProgressDialog mProgress;
 
@@ -32,8 +27,8 @@ public class SettingsFragment extends PreferenceFragment {
         setHasOptionsMenu( true );
         addPreferencesFromResource( R.xml.settings );
 
-        mGetAppKey = findPreference( "get_app_key" );
-        mAppKey = ( EditTextPreference ) findPreference( "app_key" );
+        Preference mGetAppKey = findPreference( "get_app_key" );
+        EditTextPreference mAppKey = ( EditTextPreference ) findPreference( "app_key" );
         mGetToken = findPreference( "get_token" );
         mToken = ( EditTextPreference ) findPreference( "token" );
 

@@ -6,6 +6,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -14,9 +15,8 @@ import com.zode64.trellodoing.utils.TimeUtils;
 
 public class ConfigureDelayFragment extends DoingFragment {
 
-    private ImageButton done;
-    private ImageButton cancel;
-    private ImageButton delete;
+    private Button done;
+    private Button delete;
 
     private EditText delayInput;
 
@@ -31,9 +31,9 @@ public class ConfigureDelayFragment extends DoingFragment {
 
         listener = ( DelayChangeListener ) getActivity();
 
-        done = ( ImageButton ) view.findViewById( R.id.done );
-        cancel = ( ImageButton ) view.findViewById( R.id.cancel );
-        delete = ( ImageButton ) view.findViewById( R.id.delete );
+        done = ( Button ) view.findViewById( R.id.done );
+        Button cancel = ( Button ) view.findViewById( R.id.cancel );
+        delete = ( Button ) view.findViewById( R.id.delete );
         delayInput = ( EditText ) view.findViewById( R.id.delay_input );
 
         existingDelayView = ( TextView ) view.findViewById( R.id.existing_delay_text );

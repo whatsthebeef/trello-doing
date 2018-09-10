@@ -2,6 +2,8 @@ package com.zode64.trellodoing;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.Window;
 
@@ -18,8 +20,11 @@ public class KeepDoingActivity extends Activity implements ConfigureDelayFragmen
     @Override
     protected void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
+
         requestWindowFeature( Window.FEATURE_NO_TITLE );
+        getWindow().setBackgroundDrawable( new ColorDrawable( Color.TRANSPARENT ) );
         setContentView( R.layout.keep_doing );
+
         preferences = new DoingPreferences( this );
         alarm = new WidgetAlarm( this, preferences );
         getFragmentManager().beginTransaction().replace( R.id.keep_doing,

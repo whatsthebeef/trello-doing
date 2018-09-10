@@ -5,18 +5,15 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-/**
- * Created by john on 10/2/15.
- */
 public class DoingDatabaseHelper extends SQLiteOpenHelper {
 
     private final static String TAG = DoingDatabaseHelper.class.getName();
 
-    public static final String DATABASE_NAME = "doing";
+    private static final String DATABASE_NAME = "doing";
 
     private static final int DATABASE_VERSION = 2;
 
-    public DoingDatabaseHelper( Context context ) {
+    DoingDatabaseHelper( Context context ) {
         super( context, DATABASE_NAME, null, DATABASE_VERSION );
     }
 
@@ -25,8 +22,6 @@ public class DoingDatabaseHelper extends SQLiteOpenHelper {
         database.execSQL( CardDAO.CREATE_TABLE );
         database.execSQL( BoardDAO.CREATE_TABLE );
         database.execSQL( ActionDAO.CREATE_TABLE );
-        database.execSQL( DeadlineDAO.CREATE_TABLE );
-        database.execSQL( AttachmentDAO.CREATE_TABLE );
     }
 
     @Override
@@ -36,8 +31,6 @@ public class DoingDatabaseHelper extends SQLiteOpenHelper {
         database.execSQL( CardDAO.DELETE_TABLE );
         database.execSQL( BoardDAO.DELETE_TABLE );
         database.execSQL( ActionDAO.DELETE_TABLE );
-        database.execSQL( DeadlineDAO.DELETE_TABLE );
-        database.execSQL( AttachmentDAO.DELETE_TABLE );
         onCreate( database );
     }
 

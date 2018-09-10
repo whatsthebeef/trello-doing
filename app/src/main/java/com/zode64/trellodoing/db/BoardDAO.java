@@ -16,34 +16,29 @@ public class BoardDAO {
 
     private static final String TAG = BoardDAO.class.getName();
 
-    private DoingDatabaseHelper dbHelper;
-
     private SQLiteDatabase database;
 
-    public final static String TABLE_NAME = "boards";
-    public final static String ID = "id";
-    public final static String NAME = "name";
-    public final static String SHORTLINK = "shortLink";
-    public final static String TODO_LIST_ID = "todoListId";
-    public final static String TODAY_LIST_ID = "todayListId";
-    public final static String DONE_LIST_ID = "doneListId";
-    public final static String DOING_LIST_ID = "doingListId";
-    public final static String CLOCKED_OFF_LIST_ID = "clockedOffListId";
-    public final static String THIS_WEEK_LIST_ID = "thisWeekListId";
-    public final static String ORGANIZATION_ID = "idOrganization";
+    private final static String TABLE_NAME = "boards";
+    private final static String ID = "id";
+    private final static String NAME = "name";
+    private final static String SHORTLINK = "shortLink";
+    private final static String TODO_LIST_ID = "todoListId";
+    private final static String TODAY_LIST_ID = "todayListId";
+    private final static String DONE_LIST_ID = "doneListId";
+    private final static String DOING_LIST_ID = "doingListId";
+    private final static String CLOCKED_OFF_LIST_ID = "clockedOffListId";
+    private final static String THIS_WEEK_LIST_ID = "thisWeekListId";
+    private final static String ORGANIZATION_ID = "idOrganization";
 
     private String[] cols = new String[]{ ID, NAME, SHORTLINK, TODO_LIST_ID, TODAY_LIST_ID, DONE_LIST_ID,
             DOING_LIST_ID, CLOCKED_OFF_LIST_ID, THIS_WEEK_LIST_ID, ORGANIZATION_ID };
 
-    /**
-     * @param context
-     */
     public BoardDAO( Context context ) {
-        dbHelper = new DoingDatabaseHelper( context );
+        DoingDatabaseHelper dbHelper = new DoingDatabaseHelper( context );
         database = dbHelper.getWritableDatabase();
     }
 
-    public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ( " +
+    static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ( " +
             ID + " TEXT PRIMARY KEY, " +
             NAME + " TEXT NOT NULL, " +
             SHORTLINK + " TEXT, " +
@@ -56,7 +51,7 @@ public class BoardDAO {
             ORGANIZATION_ID + " TEXT" +
             ");";
 
-    public static final String DELETE_TABLE = "DROP TABLE " + TABLE_NAME + " IF EXIST";
+    static final String DELETE_TABLE = "DROP TABLE " + TABLE_NAME + " IF EXIST";
 
     public void create( Board board ) {
         Log.i( TAG, "Creating board : " + board.getName() );

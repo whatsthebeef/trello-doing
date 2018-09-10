@@ -14,15 +14,15 @@ public class TodayWidgetService extends RemoteViewsService {
 
     @Override
     public RemoteViewsFactory onGetViewFactory( Intent intent ) {
-        return new TodayListProvider( getApplicationContext(), intent );
+        return new TodayListProvider( getApplicationContext() );
     }
 
     static class TodayListProvider extends ListProvider {
 
         private DoingPreferences preferences;
 
-        public TodayListProvider( Context context, Intent intent ) {
-            super( context, intent );
+        TodayListProvider( Context context ) {
+            super( context );
             preferences = new DoingPreferences( context );
         }
 
@@ -32,7 +32,7 @@ public class TodayWidgetService extends RemoteViewsService {
                 return null;
             }
             Card card = cards.get( position );
-            if ( card.tooMuchTimeSpentInCurrentList() ) {
+            if ( card.tooMuchTimeSpentInCurrentList( preferences.getEndHour() ) ) {
                 RemoteViews view = new RemoteViews( context.getPackageName(), R.layout.doing_card_past_deadline );
                 view.setTextViewText( R.id.card_name, card.getBoardName() + ": " + card.getName() );
                 setClickListener( view, card );

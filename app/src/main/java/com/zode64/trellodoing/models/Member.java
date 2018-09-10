@@ -11,7 +11,7 @@ public class Member {
         return cards;
     }
 
-    public void addBoard( Board board ) {
+    void addBoard( Board board ) {
         boards.add( board );
     }
 
@@ -19,7 +19,7 @@ public class Member {
         return boards;
     }
 
-    public void addCard( Card card ) {
+    void addCard( Card card ) {
         cards.add( card );
     }
 
