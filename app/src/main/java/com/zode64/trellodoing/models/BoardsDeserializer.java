@@ -9,7 +9,7 @@ import com.google.gson.JsonParseException;
 import java.util.Iterator;
 import java.util.Map;
 
-public class BoardsDeserializer implements JsonDeserializer<Member> {
+public class BoardsDeserializer implements JsonDeserializer<CardsStatus> {
 
     private static final String BOARDS = "boards";
     private static final String SHORT_LINK = "shortLink";
@@ -26,9 +26,10 @@ public class BoardsDeserializer implements JsonDeserializer<Member> {
     private static final String TODO_LIST = "Todo";
 
     @Override
-    public Member deserialize( JsonElement json, java.lang.reflect.Type typeOfT, JsonDeserializationContext context ) throws JsonParseException {
-        Member member = new Member();
+    public CardsStatus deserialize( JsonElement json, java.lang.reflect.Type typeOfT, JsonDeserializationContext context ) throws JsonParseException {
+        CardsStatus member = new CardsStatus();
         JsonObject obj = json.getAsJsonObject();
+        member.setMemberId( obj.getAsJsonPrimitive( ID ).getAsString() );
         for ( JsonElement jsonElement1 : obj.getAsJsonArray( BOARDS ) ) {
             Iterator<Map.Entry<String, JsonElement>> boardAttrs = jsonElement1.getAsJsonObject().entrySet().iterator();
             Board board = new Board();

@@ -45,10 +45,13 @@ public class DoingWidgetService extends RemoteViewsService {
             Calendar now = Calendar.getInstance();
             if ( card.getDummyType() == Card.DummyType.START_DOING ) {
                 return new RemoteViews( context.getPackageName(), R.layout.doing_card_start_doing );
+            } else if ( !card.isCurrentUserDoing() ) {
+                RemoteViews view = new RemoteViews( context.getPackageName(), R.layout.doing_card_past_other );
+                view.setTextViewText( R.id.card_name, card.getBoardName() + ": " + card.getName() );
+                return view;
             } else if ( mKeepDoing ) {
                 return super.getViewAt( position );
-            } else if ( !betweenHours( mStartHour, mEndHour, now )
-                    || ( betweenHours( mStartHour, mEndHour, now ) && !card.isWorkCard() ) ) {
+            } else if ( !betweenHours( mStartHour, mEndHour, now ) && card.isCurrentUserDoing() ) {
                 RemoteViews view = new RemoteViews( context.getPackageName(), R.layout.doing_card_past_deadline );
                 view.setTextViewText( R.id.card_name, card.getBoardName() + ": " + card.getName() );
                 setClickListener( view, card );

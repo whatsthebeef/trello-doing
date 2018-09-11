@@ -30,7 +30,7 @@ import com.zode64.trellodoing.db.CardDAO;
 import com.zode64.trellodoing.models.Action;
 import com.zode64.trellodoing.models.Board;
 import com.zode64.trellodoing.models.Card;
-import com.zode64.trellodoing.models.Member;
+import com.zode64.trellodoing.models.CardsStatus;
 import com.zode64.trellodoing.utils.DoingNotification;
 import com.zode64.trellodoing.utils.TrelloManager;
 import com.zode64.trellodoing.utils.WidgetAlarm;
@@ -41,7 +41,6 @@ import java.util.HashMap;
 
 import static android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE;
 import static com.zode64.trellodoing.utils.TimeUtils.betweenHours;
-import static com.zode64.trellodoing.utils.TimeUtils.mondayToThursday;
 
 public class DoingWidget extends AppWidgetProvider {
 
@@ -306,7 +305,7 @@ public class DoingWidget extends AppWidgetProvider {
                     notifications.removeAll();
                     notifyLists( ids, manager );
                 }
-                if ( !ACTION_ACTION_PERFORMED.equals( intent.getAction() ) ) {
+                if ( !ACTION_ACTION_PERFORMED.equals( intent.getAction() ) && !ACTION_SYNC.equals( intent.getAction() )) {
                     return;
                 }
             }
@@ -323,7 +322,7 @@ public class DoingWidget extends AppWidgetProvider {
 
             if ( ACTION_SYNC.equals( intent.getAction() ) ) {
                 if ( connectionType != NO_CONNECTION ) {
-                    sync( trelloManager, boardDAO );
+                    sync( trelloManager, boardDAO, cardDAO, actionDAO );
                 }
             }
 
@@ -366,9 +365,9 @@ public class DoingWidget extends AppWidgetProvider {
                     }
                 }
                 // Try update the cache
-                Member member = trelloManager.cards( boardMap );
-                if ( member != null ) {
-                    ArrayList<Card> cards = member.getCards();
+                CardsStatus status = trelloManager.cards( boardMap );
+                if ( status != null ) {
+                    ArrayList<Card> cards = status.getCards();
                     // Clear cache
                     cardDAO.deleteAll();
                     for ( Card card : cards ) {
@@ -388,15 +387,11 @@ public class DoingWidget extends AppWidgetProvider {
             notifications.removeAll();
             int numDoingCards = 0;
             int numDoingWorkCards = 0;
-            int numClockedOffCards = 0;
-            int numTodayCards = 0;
-            int numThisWeekCards = 0;
             String doingBoardUrl = preferences.getLastDoingBoard();
-            String clockedOffBoardUrl = null;
             Calendar now = Calendar.getInstance();
             boolean notificationSet = false;
             for ( Card card : cards ) {
-                if ( card.isClockedOn() ) {
+                if ( card.isCurrentUserDoing() ) {
                     doingBoardUrl = card.getBoardShortUrl();
                     preferences.saveLastDoingBoard( doingBoardUrl );
                     numDoingCards++;
@@ -408,26 +403,6 @@ public class DoingWidget extends AppWidgetProvider {
                         }
                     }
                 }
-                if ( card.isClockedOn() || card.getListType() == Board.ListType.TODAY ) {
-                    if ( card.getListType() == Board.ListType.TODAY ) {
-                        if ( card.tooMuchTimeSpentInCurrentList( preferences.getEndHour() ) ) {
-                            notifications.todayTooLong( card.getBoardShortUrl() );
-                            notificationSet = true;
-                        }
-                        numTodayCards++;
-                    }
-                }
-                if ( card.getListType() == Board.ListType.THIS_WEEK ) {
-                    if ( card.tooMuchTimeSpentInCurrentList( preferences.getEndHour() ) ) {
-                        notifications.thisWeekTooLong( card.getBoardShortUrl() );
-                        notificationSet = true;
-                    }
-                    numThisWeekCards++;
-                }
-                if ( card.getListType() == Board.ListType.CLOCKED_OFF ) {
-                    numClockedOffCards++;
-                    clockedOffBoardUrl = card.getBoardShortUrl();
-                }
             }
             if ( numDoingWorkCards == 0 ) {
                 if ( betweenHours( preferences.getStartHour(), preferences.getEndHour(), now ) ) {
@@ -438,29 +413,16 @@ public class DoingWidget extends AppWidgetProvider {
                 notifications.multiDoings( doingBoardUrl );
                 notificationSet = true;
             }
-            if ( numClockedOffCards > 1 ) {
-                notifications.multiClockedOff( clockedOffBoardUrl );
-                notificationSet = true;
-            }
-            if ( numThisWeekCards == 0 && mondayToThursday( now ) && betweenHours( preferences.getStartHour(), 23, now ) ) {
-                notifications.thisWeekEmpty( clockedOffBoardUrl );
-                notificationSet = true;
-            }
-            /*
-            if ( numTodayCards == 0 && betweenHours(preferences.getStartHour(), 12, now ) ) {
-                notifications.todayEmpty( clockedOffBoardUrl );
-                notificationSet = true;
-            }
-            */
             return notificationSet;
         }
 
-        private void sync( TrelloManager trello, BoardDAO boardDAO ) {
+        private void sync( TrelloManager trello, BoardDAO boardDAO, CardDAO cardDAO, ActionDAO actionDAO ) {
             Log.i( TAG, "Syncing..." );
-            Member member = trello.boards();
-            ArrayList<Card> cards = member.getCards();
+            CardsStatus cardsStatus = trello.boards();
             boardDAO.deleteAll();
-            for ( Board board : member.getBoards() ) {
+            cardDAO.deleteAll();
+            actionDAO.deleteAll();
+            for ( Board board : cardsStatus.getBoards() ) {
                 boardDAO.create( board );
             }
         }

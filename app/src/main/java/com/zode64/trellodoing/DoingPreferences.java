@@ -4,8 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
-import com.zode64.trellodoing.utils.TimeUtils;
-
 import java.util.Calendar;
 
 public class DoingPreferences {
@@ -16,6 +14,7 @@ public class DoingPreferences {
     private static final String TODAY_OR_THIS_WEEK = "todayOrThisWeek";
     private static final String TOKEN = "token";
     private static final String APP_KEY = "app_key";
+    private static final String USER_ID_KEY = "user_id";
     private static final String HOURS_IN_DAY = "hoursInDay";
 
     private static final String TODAY = "isToday";
@@ -122,4 +121,13 @@ public class DoingPreferences {
         return token != null && !token.equals( "" );
     }
 
+    public String getUserId() {
+        return mPreferences.getString( USER_ID_KEY, "" );
+    }
+
+    public void setUserId( String userId ) {
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putString( USER_ID_KEY, userId );
+        editor.apply();
+    }
 }

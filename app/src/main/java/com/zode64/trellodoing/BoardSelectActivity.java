@@ -36,7 +36,6 @@ public class BoardSelectActivity extends Activity {
         // Called before set view so the preference is in the right state
         boardDAO = new BoardDAO( this );
         boards = boardDAO.all();
-        final DoingPreferences preferences = new DoingPreferences( this );
 
         setContentView( R.layout.select_board );
 

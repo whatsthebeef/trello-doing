@@ -10,8 +10,8 @@ import com.zode64.trellodoing.models.Board;
 import com.zode64.trellodoing.models.BoardsDeserializer;
 import com.zode64.trellodoing.models.Card;
 import com.zode64.trellodoing.models.CardDeserializer;
-import com.zode64.trellodoing.models.CardsDeserializer;
-import com.zode64.trellodoing.models.Member;
+import com.zode64.trellodoing.models.CardsStatus;
+import com.zode64.trellodoing.models.CardsStatusDeserializer;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -54,30 +54,25 @@ public class TrelloManager {
                 + "&name=Trello+Doing&expiration=never&response_type=token&scope=read,write";
     }
 
-    public Member cards( HashMap<String, Board> boardReg ) {
+    public CardsStatus cards( HashMap<String, Board> boardReg ) {
         try {
-            return get( "/members/me?actions=updateCard:idList&action_fields=data,date&fields=initials&actions_limit=250",
-                    Member.class, new CardsDeserializer( boardReg ) );
+            String path = "/batch?urls=";
+            for ( Board board : boardReg.values() ) {
+                path += "/boards/" + board.getId() + "/cards,";
+                path += "/lists/" + board.getListId( Board.ListType.DOING ) + "/actions,";
+            }
+            path = path.substring( 0, path.length() - 1 );
+            return get( path, CardsStatus.class, new CardsStatusDeserializer( boardReg, mPreferences.getUserId() ) );
         } catch ( IOException e ) {
             e.printStackTrace();
             return null;
         }
     }
 
-    public Member cards2( HashMap<String, Board> boardReg ) {
-        try {
-            return get( "/members/me?actions=updateCard:idList&action_fields=data,date&fields=initials&actions_limit=250",
-                    Member.class, new CardsDeserializer( boardReg ) );
-        } catch ( IOException e ) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public Member boards() {
+    public CardsStatus boards() {
         try {
             return get( "/members/me?board_lists=open&boards=starred&fields=initials&board_fields=lists,name,shortLink,idOrganization",
-                    Member.class, new BoardsDeserializer() );
+                    CardsStatus.class, new BoardsDeserializer() );
         } catch ( IOException e ) {
             e.printStackTrace();
             return null;
@@ -175,7 +170,7 @@ public class TrelloManager {
             urlConnection.setReadTimeout( REQUEST_TIMEOUT );
             urlConnection.setConnectTimeout( REQUEST_TIMEOUT );
             InputStream stream = new BufferedInputStream( urlConnection.getInputStream() );
-            Gson gson = new GsonBuilder().registerTypeAdapter( Member.class, deserializer ).create();
+            Gson gson = new GsonBuilder().registerTypeAdapter( type, deserializer ).create();
             T member = gson.fromJson( new InputStreamReader( stream ), type );
             stream.close();
             return member;
@@ -257,6 +252,7 @@ public class TrelloManager {
             }
         }
     }
+
 }
 
 

@@ -24,10 +24,11 @@ public class CardDAO {
     private final static String SHORT_LINK = "shortLink";
     private final static String LIST_TYPE = "listType";
     private final static String MARKED_FOR_DELETE = "markedForDelete";
-    private final static String START_TIME_FOR_CURRENT_LIST_TYPE = "startTimeForCurrentListType";
+    private final static String CURRENT_USER_DOING = "currentUserDoing";
+    private final static String CURRENT_USER_CLOCKED_OFF = "currentUserClockedOff";
 
     private String[] cols = new String[]{ ID, SERVER_ID, NAME, BOARD_ID,
-            SHORT_LINK, LIST_TYPE, START_TIME_FOR_CURRENT_LIST_TYPE, MARKED_FOR_DELETE };
+            SHORT_LINK, LIST_TYPE, CURRENT_USER_DOING, CURRENT_USER_CLOCKED_OFF, MARKED_FOR_DELETE };
 
     private SQLiteDatabase database;
 
@@ -46,7 +47,8 @@ public class CardDAO {
             BOARD_ID + " TEXT, " +
             SHORT_LINK + " TEXT, " +
             LIST_TYPE + " INTEGER NOT NULL, " +
-            START_TIME_FOR_CURRENT_LIST_TYPE + " REAL NOT NULL, " +
+            CURRENT_USER_DOING + " INTEGER NOT NULL, " +
+            CURRENT_USER_CLOCKED_OFF + " INTEGER NOT NULL, " +
             MARKED_FOR_DELETE + " INTEGER NOT NULL" +
             ");";
 
@@ -60,7 +62,8 @@ public class CardDAO {
         values.put( BOARD_ID, card.getBoardId() );
         values.put( SHORT_LINK, card.getShortLink() );
         values.put( LIST_TYPE, card.getListType().ordinal() );
-        values.put( START_TIME_FOR_CURRENT_LIST_TYPE, card.getStartTimeForCurrentListType() );
+        values.put( CURRENT_USER_DOING, card.isCurrentUserDoing() ? 1 : 0 );
+        values.put( CURRENT_USER_CLOCKED_OFF, card.isCurrentUserClockedOff() ? 1 : 0 );
         values.put( MARKED_FOR_DELETE, 0 );
         card.setId( ( int ) database.insert( TABLE_NAME, null, values ) );
     }
@@ -74,7 +77,8 @@ public class CardDAO {
     public ArrayList<Card> where( Board.ListType listType ) {
         Log.i( TAG, "Fetching all cards with list type: " + listType.ordinal() );
         Cursor cursor = database.query( true, TABLE_NAME, cols, LIST_TYPE + "=? AND " + MARKED_FOR_DELETE + "=0",
-                new String[]{ "" + listType.ordinal() }, null, null, null, null );
+                new String[]{ "" + listType.ordinal() }, null, null,
+                CURRENT_USER_DOING + " DESC, " + CURRENT_USER_CLOCKED_OFF + " DESC",  null );
         return cursorToCards( cursor );
     }
 
@@ -137,7 +141,8 @@ public class CardDAO {
                 card.setBoard( boardReg.get( cursor.getString( 3 ) ) );
                 card.setShortLink( cursor.getString( 4 ) );
                 card.setListType( Board.ListType.values()[ cursor.getInt( 5 ) ] );
-                card.setStartTimeOfCurrentListType( cursor.getLong( 6 ) );
+                card.setCurrentUserDoing( cursor.getInt( 6 ) == 1 );
+                card.setCurrentUserClockedOff( cursor.getInt( 7 ) == 1 );
                 cards.add( card );
             }
             cursor.close();

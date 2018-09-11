@@ -9,6 +9,7 @@ import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 
+import com.zode64.trellodoing.models.CardsStatus;
 import com.zode64.trellodoing.utils.TrelloManager;
 import com.zode64.trellodoing.widget.DoingWidget;
 
@@ -21,6 +22,8 @@ public class SettingsFragment extends PreferenceFragment {
 
     private ProgressDialog mProgress;
 
+    private DoingPreferences mPreferences;
+
     @Override
     public void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
@@ -31,8 +34,9 @@ public class SettingsFragment extends PreferenceFragment {
         EditTextPreference mAppKey = ( EditTextPreference ) findPreference( "app_key" );
         mGetToken = findPreference( "get_token" );
         mToken = ( EditTextPreference ) findPreference( "token" );
+        mPreferences = new DoingPreferences( getActivity() );
 
-        mTrelloManager = new TrelloManager( new DoingPreferences( getActivity() ) );
+        mTrelloManager = new TrelloManager( mPreferences );
 
         mGetAppKey.setOnPreferenceClickListener( new Preference.OnPreferenceClickListener() {
             @Override
@@ -67,6 +71,7 @@ public class SettingsFragment extends PreferenceFragment {
                 return true;
             }
         } );
+
     }
 
     @Override
@@ -115,19 +120,20 @@ public class SettingsFragment extends PreferenceFragment {
     }
 
 
-    private class TokenChecker extends AsyncTask<Void, Void, Boolean> {
+    private class TokenChecker extends AsyncTask<Void, Void, CardsStatus> {
 
         @Override
-        protected Boolean doInBackground( Void... v ) {
-            return mTrelloManager.boards() != null;
+        protected CardsStatus doInBackground( Void... v ) {
+            return mTrelloManager.boards();
         }
 
         @Override
-        protected void onPostExecute( Boolean result ) {
+        protected void onPostExecute( CardsStatus result ) {
             mProgress.dismiss();
-            if ( result && !isDetached() ) {
+            if ( result != null && result.getMemberId() != null && !isDetached() ) {
                 mToken.setEnabled( true );
                 mGetToken.setEnabled( true );
+                mPreferences.setUserId( result.getMemberId() );
                 Intent refresh = new Intent( DoingWidget.ACTION_SYNC );
                 if ( getActivity() != null ) {
                     getActivity().startService( refresh );

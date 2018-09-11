@@ -8,6 +8,8 @@ import static com.zode64.trellodoing.utils.TimeUtils.isToday;
 
 public class Card {
 
+
+
     public enum DummyType {
         NOT,
         START_DOING
@@ -19,7 +21,8 @@ public class Card {
     private Board board;
     private String boardId;
     private String serverId;
-    private Long startTimeOfCurrentListType;
+    private boolean isCurrentUserDoing = false;
+    private boolean isCurrentUserClockedOff = false;
 
     private Board.ListType listType;
 
@@ -60,7 +63,6 @@ public class Card {
     public String getShortLink() {
         return shortLink;
     }
-
     public void setShortLink( String shortLink ) {
         this.shortLink = shortLink;
     }
@@ -79,10 +81,6 @@ public class Card {
 
     void setBoardId( String boardId ) {
         this.boardId = boardId;
-    }
-
-    public boolean isClockedOn() {
-        return listType == Board.ListType.DOING;
     }
 
     String getListId() {
@@ -113,27 +111,20 @@ public class Card {
         this.listType = listType;
     }
 
-    public void setStartTimeOfCurrentListType( Long startTimeOfCurrentListType ) {
-        this.startTimeOfCurrentListType = startTimeOfCurrentListType;
+    public boolean isCurrentUserDoing() {
+        return isCurrentUserDoing;
     }
 
-    public Long getStartTimeForCurrentListType() {
-        return startTimeOfCurrentListType;
+    public void setCurrentUserDoing( boolean isCurrentUserDoing ) {
+        this.isCurrentUserDoing = isCurrentUserDoing;
     }
 
-    public boolean tooMuchTimeSpentInCurrentList( int endHour ) {
-        Calendar startTime = GregorianCalendar.getInstance();
-        startTime.setTimeInMillis( startTimeOfCurrentListType );
-        if ( Board.ListType.TODAY == getListType() ) {
-            if ( !isToday( startTime, endHour ) ) {
-                return true;
-            }
-        } else if ( Board.ListType.THIS_WEEK == getListType() ) {
-            if ( !isThisWeek( startTime, endHour ) ) {
-                return true;
-            }
-        }
-        return false;
+    public boolean isCurrentUserClockedOff() {
+        return isCurrentUserClockedOff;
+    }
+
+    public void setCurrentUserClockedOff( boolean isCurrentUserClockedOff ) {
+        this.isCurrentUserClockedOff = isCurrentUserClockedOff;
     }
 }
 

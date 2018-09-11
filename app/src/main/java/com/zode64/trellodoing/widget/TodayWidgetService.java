@@ -31,15 +31,7 @@ public class TodayWidgetService extends RemoteViewsService {
             if ( cards.size() < position ) {
                 return null;
             }
-            Card card = cards.get( position );
-            if ( card.tooMuchTimeSpentInCurrentList( preferences.getEndHour() ) ) {
-                RemoteViews view = new RemoteViews( context.getPackageName(), R.layout.doing_card_past_deadline );
-                view.setTextViewText( R.id.card_name, card.getBoardName() + ": " + card.getName() );
-                setClickListener( view, card );
-                return view;
-            } else {
-                return super.getViewAt( position );
-            }
+            return super.getViewAt( position );
         }
 
         @Override
